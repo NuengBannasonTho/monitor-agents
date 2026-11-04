@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="agent-office.gif" alt="Illustrated preview of the eight agent states" width="960">
+  <img src="agent-office-2.gif" alt="Illustrated preview of the eight agent states" width="960">
 </p>
 
 ## Quick start
