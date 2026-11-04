@@ -1,10 +1,21 @@
+import babel from '@rolldown/plugin-babel';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const SERVER_PORT = 4777;
 
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ command }) => ({
+  plugins: [
+    react(),
+    // LocatorJS, dev server only: Option/Alt-click a component in the page to open its source.
+    // React 19 no longer records where JSX came from, so this Babel pass tags each element.
+    command === 'serve' &&
+      babel({
+        include: /[\\/]src[\\/].*\.tsx$/,
+        // A path, so Babel doesn't rewrite the name to '@locator/babel-plugin-babel-jsx'.
+        plugins: ['@locator/babel-jsx/dist'],
+      }),
+  ],
   server: {
     host: '127.0.0.1',
     port: 5173,
@@ -22,4 +33,4 @@ export default defineConfig({
     // Served from 127.0.0.1 only, so a single ~200 kB (gzip) bundle is fine; no need to split.
     chunkSizeWarningLimit: 800,
   },
-});
+}));
