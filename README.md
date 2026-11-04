@@ -1,201 +1,147 @@
 # Agent Office
 
-A local, read-only monitor for the AI coding agents you run in
-Orca. Every Claude Code session becomes a little pixel worker:
-busy agents head into a pixel city and sit at its computer desks, waiting agents stroll around a
-forest glade, and the face (or costume) shows what each one is doing right now.
+A local, read-only monitor for AI coding agents in Orca. Claude Code sessions appear as pixel workers: active agents work at city desks, while idle agents wander a forest. Expressions and costumes show their activity.
 
-It does not modify Orca and never talks to the internet. Claude Code hooks send events to a
-small server on `127.0.0.1`, which pushes them to the page over a WebSocket.
+No Orca modifications or outbound calls.
 
-```
-Claude Code ──hook──▶ scripts/emit.sh ──POST /events──▶ server (127.0.0.1:4777) ──/ws──▶ browser
-               async      curl, 0.3 s max                 adapter → reducer → coalescer
+```text
+Claude Code → scripts/emit.sh → POST /events → 127.0.0.1:4777 → WebSocket → browser
 ```
 
 ## Requirements
 
-- macOS or Linux (the hook relay is a POSIX shell script; Windows is untested, use WSL)
-- Node.js 22.12 or newer, pnpm 10 or newer, `curl`
-- Claude Code with hooks (verified with 2.1.318)
+- macOS or Linux; Windows is untested (use WSL).
+- Node.js ≥22.12, pnpm ≥10, and `curl`.
+- Claude Code with hooks (verified with 2.1.318).
 
 ## Quick start
 
 ```bash
 pnpm install
-pnpm start              # builds the web app and serves it at http://127.0.0.1:4777
+pnpm start              # http://127.0.0.1:4777
 ```
 
-In a second terminal:
+In another terminal:
 
 ```bash
-pnpm install-hooks      # shows the settings.json diff and asks before writing
-pnpm diagnose           # checks every link and walks a test agent through the office
+pnpm install-hooks      # preview settings changes and confirm
+pnpm diagnose           # check setup and send a test agent
 ```
 
-Open http://127.0.0.1:4777, then start or continue Claude Code sessions in your Orca worktrees.
-Sessions started **after** installing the hooks report to the office; restart any that were
-already open.
-
-Keep `pnpm start` running while you work (a spare terminal tab or `tmux` pane is enough).
+Open http://127.0.0.1:4777 and start Claude Code in your Orca worktrees. Restart sessions opened before hook installation, and keep `pnpm start` running.
 
 ## Using the office
 
-| State     | Where  | Shown as                                    | Comes from                          |
-| --------- | ------ | ------------------------------------------- | ----------------------------------- |
-| idle      | forest | walks around                                | session start, 3 s after done       |
-| called    | city   | raised eyebrows / ninja                     | you sent a prompt                   |
-| reading   | city   | holds a document / astronaut                | Read, Grep, Glob                    |
-| running   | city   | terminal above the head / fire              | Bash                                |
-| working   | city   | focused, typing / mech                      | any other tool (Edit, Write, Agent) |
-| needs-you | city   | worried, red "!" / crying; header turns red | permission or input request         |
-| done      | forest | happy / king                                | the turn finished                   |
-| stale     | forest | asleep, faded / zombie                      | no events for 5 min                 |
+| State | Location | Trigger |
+| --- | --- | --- |
+| idle | Forest | Session start; 3 seconds after done |
+| called | City | Prompt sent |
+| reading | City | Read, Grep, Glob |
+| running | City | Bash |
+| working | City | Other tools, including Edit, Write, Agent |
+| needs-you | City | Permission or input requested |
+| done | Forest | Turn finished |
+| stale | Forest | No events for 5 minutes |
 
-In the city each agent gets a computer desk; its monitor shows code in the state's color and
-flashes a red "!" when the agent needs you.
+Each city worker has a desk with a state-colored monitor. A red `!` and header highlight indicate agents waiting on you.
 
-- The header counts agents per state; **Needs you** turns red when anyone is waiting on you.
-- Click a worker for its detail panel: agent kind, desk (worktree), folder, session, and the last
-  20 activity lines. Click another worker to switch; click again or press Escape to close.
-- **Sound** (off by default) plays a short chime when an agent starts waiting on you. Turn it on
-  with a click, since browsers only allow sound after you interact with the page.
-- Light and dark follow your system theme: day in the light theme, night (lit windows, campfire
-  glow, fireflies) in the dark one. Reduced motion turns off walking, bobbing and scene animation.
+- **Header:** counts agents by state.
+- **Worker details:** click to view agent kind, worktree, folder, session, and the last 20 activity lines. Click again or press Escape to close.
+- **Sound:** optional waiting chime, off by default; enable with a click.
+- **Appearance:** follows your system theme and reduced-motion setting.
 
-## Skins (your own characters)
+## Custom skins
 
-Skins are image packs in `~/.agent-office/skins/<pack>/`, outside the repo, so personal images
-are never committed. With a pack installed, the header shows:
+Personal packs live outside the repo in `~/.agent-office/skins/<pack>/`.
 
-- **Pixel**: built-in pixel workers.
-- **By task**: the costume shows what the agent is doing (one image per state).
-- **By desk**: each worktree keeps one costume, picked in the detail panel and remembered in the
-  browser. States in `stateOverrides` (e.g. crying for needs-you) still switch.
+- **Pixel:** built-in workers.
+- **By task:** a costume for each state.
+- **By desk:** a saved costume per worktree, selected in worker details; `stateOverrides` still apply.
 
-To make a pack, put the images (any size, plain light background) in a folder with a `skin.json`
-like [skins/example.skin.json](skins/example.skin.json), then:
+Add images with plain light backgrounds and a `skin.json` based on [the example](skins/example.skin.json), then import:
 
 ```bash
-pnpm skins:import ./my-skin-folder              # → ~/.agent-office/skins/<name>/
+pnpm skins:import ./my-skin-folder
 pnpm skins:import ./my-skin-folder --size 48 --pack my-crew
 ```
 
-The importer removes the background, crops every image with the same box (characters do not jump
-when they change state), downsamples to a square pixel grid (64 by default) and reduces the
-palette. Reload the page to pick up a new pack.
+The importer removes backgrounds, applies a shared crop, downsamples to a square pixel grid (64 by default), and reduces colors. Reload to load the pack.
 
 ## Configuration
 
 Environment variables for `pnpm start`:
 
-| Variable                     | Default           | Meaning                                              |
-| ---------------------------- | ----------------- | ---------------------------------------------------- |
-| `PORT`                       | `4777`            | Server port (also set `AGENT_OFFICE_PORT` for hooks) |
-| `STALE_AFTER_MIN`            | `5`               | Silence before an agent is shown as stale            |
-| `REMOVE_AFTER_MIN`           | `10`              | Silence before an agent is removed                   |
-| `NEEDS_YOU_REMOVE_AFTER_MIN` | `60`              | Agents waiting on you stay this long instead         |
-| `LOG_LEVEL`                  | `info`            | `debug` logs every event and every dropped one       |
-| `AGENT_OFFICE_HOME`          | `~/.agent-office` | Token and skin packs                                 |
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `4777` | Server port; also set `AGENT_OFFICE_PORT` for hooks |
+| `STALE_AFTER_MIN` | `5` | Inactivity before stale |
+| `REMOVE_AFTER_MIN` | `10` | Inactivity before removal |
+| `NEEDS_YOU_REMOVE_AFTER_MIN` | `60` | Removal timeout for waiting agents |
+| `LOG_LEVEL` | `info` | Use `debug` to inspect received/dropped events |
+| `AGENT_OFFICE_HOME` | `~/.agent-office` | Token and skins directory |
 
-`emit.sh` reads `AGENT_OFFICE_HOME` and `AGENT_OFFICE_PORT`. `install-hooks` honours
-`CLAUDE_CONFIG_DIR` and accepts `--settings <path>`, `--dry-run` and `--yes`.
+`emit.sh` reads `AGENT_OFFICE_HOME` and `AGENT_OFFICE_PORT`. Hook installation honors `CLAUDE_CONFIG_DIR` and supports `--settings <path>`, `--dry-run`, and `--yes`.
 
 ## Privacy and security
 
-- The server binds to `127.0.0.1` only, makes no outbound calls, sends no telemetry, and keeps
-  state in memory (a restart clears the office).
-- `POST /events` requires the token from `~/.agent-office/token` (0600). `emit.sh` passes it from a
-  0600 header file, so it never appears in the process list.
-- The WebSocket only accepts the app's own Origin, and every route rejects unexpected `Host`
-  headers (DNS-rebinding guard).
-- Prompts, full tool input and assistant messages are never stored or shown. Activity lines keep
-  only the tool name and a short target (relative path, search pattern, or the first 80 characters
-  of a command), with anything that looks like a secret replaced by `[REDACTED]`.
-
-## Uninstall
-
-```bash
-pnpm uninstall-hooks    # removes only Agent Office's entries, after showing the diff
-rm -rf ~/.agent-office  # token and skin packs
-```
-
-Every write to `settings.json` first saves `settings.json.bak-<timestamp>` next to it; delete those
-backups once you are happy. Then delete this folder.
+- Localhost only, no telemetry or outbound calls; state stays in memory.
+- Events require `~/.agent-office/token`; token/header files use `0600` permissions, and the token stays out of process arguments.
+- WebSocket Origin and HTTP Host checks protect local endpoints.
+- Prompts, full tool inputs, and assistant messages are never stored or displayed. Activity shows only tool names and short targets (commands limited to 80 characters), with detected secrets replaced by `[REDACTED]`.
 
 ## Troubleshooting
 
-Run `pnpm diagnose` first. It checks Node, curl, `emit.sh`, the token files, the server and the
-hooks, then sends a test agent through the real hook path.
+Run `pnpm diagnose` first to check dependencies, relay, token, server, and hooks through a real test event.
 
-| Symptom                                 | Fix                                                                                     |
-| --------------------------------------- | --------------------------------------------------------------------------------------- |
-| Header says **OFFLINE**                 | The server is not running: `pnpm start`. The page reconnects by itself.                 |
-| Office stays empty                      | Hooks only apply to sessions started after `pnpm install-hooks`; restart the session.   |
-| Diagnose: hooks point to another copy   | You moved the repo. Run `pnpm install-hooks` again; it updates the path.                |
-| An agent vanished during a long command | No hook fires while one tool runs. Raise `STALE_AFTER_MIN` / `REMOVE_AFTER_MIN`.        |
-| Port 4777 is taken                      | `PORT=4800 pnpm start` and `export AGENT_OFFICE_PORT=4800` where Claude Code runs.      |
-| install-hooks: "not valid JSON"         | Fix `~/.claude/settings.json` by hand (or restore a `.bak-` file); nothing was changed. |
-| Skin switcher missing                   | No valid pack in `~/.agent-office/skins`; check the server log for "invalid skin pack". |
-| Want to see why an event was ignored    | `LOG_LEVEL=debug pnpm start`                                                            |
-
-`install-hooks` rewrites `settings.json` with consistent indentation, so compact one-line entries
-you already had may be re-indented. Their content does not change, and the diff shows it before
-anything is written.
+| Problem | Fix |
+| --- | --- |
+| Offline | Run `pnpm start`; the page reconnects automatically |
+| Empty office | Restart Claude Code after installing hooks |
+| Repo moved / hooks target another copy | Run `pnpm install-hooks` again |
+| Agent disappears during a long tool call | Increase `STALE_AFTER_MIN` / `REMOVE_AFTER_MIN` |
+| Port occupied | Run `PORT=4800 pnpm start`; export `AGENT_OFFICE_PORT=4800` where Claude Code runs |
+| Invalid settings JSON | Fix the settings file or restore a backup; installation leaves invalid JSON untouched |
+| Skin switcher missing | Check packs under `~/.agent-office/skins` and server logs |
+| Events ignored | Run `LOG_LEVEL=debug pnpm start` |
 
 ## Development
 
 ```bash
-pnpm dev          # server (watch) + Vite at http://127.0.0.1:5173
-pnpm dev:mock     # same, plus 6 fake agents across 4 worktrees (permission prompts, subagents)
+pnpm dev             # watch server + Vite at http://127.0.0.1:5173
+pnpm dev:mock        # add 6 mock agents across 4 worktrees
 pnpm typecheck && pnpm lint && pnpm test
-pnpm build:preview  # server-less build that runs an in-browser simulator
+pnpm build:preview   # serverless build with an in-browser simulator
 ```
 
-`?gallery` shows every state in the current skin; `?mock` runs the in-browser simulator.
+Use `?gallery` to preview skin states or `?mock` for the browser simulator.
 
-```
-packages/shared   domain types + zod schemas, zone rules, skin manifest
-apps/server       Fastify: /events, adapters, pure reducer + sweeper, store, coalescer, /ws, skins
-apps/web          Vite + React + motion + Animate UI primitives (Radix flavour), CSS modules
-scripts           emit.sh, install/uninstall hooks, skin importer, diagnose
-```
+| Directory | Contents |
+| --- | --- |
+| `packages/shared` | Types, schemas, and rules |
+| `apps/server` | Events, state, WebSocket, and skins |
+| `apps/web` | React UI |
+| `scripts` | Hooks, skin importer, and diagnostics |
 
-## Adding an adapter for another agent
+### Adding another agent
 
-An adapter turns one agent's raw payload into the shared `AgentEvent`; everything after it
-(reducer, sweeper, UI) is agent-agnostic.
+1. Implement `Adapter` in `apps/server/src/adapters/<agent>.ts`: `{ kind; normalize(raw: unknown): AgentEvent | null }`. Validate with zod, ignore unsupported input, and never throw. Use `summarizeTool()` / `safeLabel()` for safe summaries.
+2. Add its `AgentKind` and UI badge if needed (`codex` already exists).
+3. Register it in `apps/server/src/main.ts` and send events through `emit.sh <kind>` (`X-Agent-Kind`).
+4. Test supported events and malformed payloads.
 
-1. Create `apps/server/src/adapters/<agent>.ts` implementing `Adapter`
-   (`{ kind; normalize(raw: unknown): AgentEvent | null }`). Validate with zod, keep only the
-   fields you need, return `null` for anything you do not understand, and never throw. Build
-   summaries with `summarizeTool()` / `safeLabel()` so redaction and truncation stay consistent.
-2. Use a kind from `AgentKind` in `packages/shared/src/domain.ts` (`codex` already exists; add a
-   new one there if needed, plus a badge in `apps/web/src/components/office/kind.ts`).
-3. Register it in `apps/server/src/main.ts`: `adapters: [createClaudeCodeAdapter(), createCodexAdapter()]`.
-4. Send its events with the matching header: `emit.sh <kind>` sets `X-Agent-Kind`.
-5. Add tests next to the adapter for every event type and for malformed input.
+The Codex example uses CLI `notify` in `~/.codex/config.toml` for `agent-turn-complete`. A wrapper adds session/workdir metadata and forwards JSON to `emit.sh codex`; the adapter maps completion to `stop`. Check current Codex docs before adding tool or approval states.
 
-**Codex example.** At the time of writing Codex CLI exposes a `notify` program in
-`~/.codex/config.toml` (`notify = ["/path/to/codex-notify.sh"]`). It receives one JSON argument
-and only fires on `agent-turn-complete`, without a session id or working directory. A wrapper can
-add those before handing the payload to `emit.sh`:
+## Limitations
 
-```sh
-#!/bin/sh
-# codex-notify.sh: Codex passes the event as $1, emit.sh reads stdin.
-printf '{"session":"codex-%s","cwd":"%s","event":%s}' "$PPID" "$PWD" "$1" \
-  | /path/to/agent-office/scripts/emit.sh codex
+- Long tool calls emit no intermediate hooks, so agents may become stale or disappear until the next event.
+- Subagent tools appear on the parent worker, labelled `(subagent …)`.
+- Restarting the server clears the office until new events arrive.
+
+## Uninstall
+
+```bash
+pnpm uninstall-hooks    # preview and remove only Agent Office hooks
+rm -rf ~/.agent-office  # remove token and personal skins
 ```
 
-The adapter then maps `event.type === "agent-turn-complete"` to `{ type: 'stop' }`, which is
-enough to show Codex agents finishing turns. Richer states (tools, approvals) need richer events
-from Codex; check its current docs before building more.
-
-## Known limitations
-
-- While a single tool call runs (for example a 15-minute test suite) no hook fires, so the agent
-  can turn stale or be removed; it reappears on its next event.
-- Subagents share their parent's session, so their tool calls appear on the parent worker,
-  labelled "(subagent …)".
-- State lives in memory: restarting the server empties the office until agents send new events.
+Settings writes first create `settings.json.bak-<timestamp>` backups and may reformat indentation without changing other settings. Delete backups when satisfied, then delete the project folder.
