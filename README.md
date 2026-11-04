@@ -33,31 +33,23 @@ Open **http://127.0.0.1:4777**, then start Claude Code in your Orca worktrees. R
 - Click a worker for session details and recent activity.
 - Optional sound alerts, custom skins, system themes, and reduced motion.
 
-<details>
-<summary>🎨 Custom skins</summary>
+## Custom skins
 
-Create a pack using [example.skin.json](skins/example.skin.json), then import:
+![Custom skins](/custom-skins.gif)
 
 ```bash
 pnpm skins:import ./my-skin-folder
 ```
 
-Reload and choose **Pixel**, **By task**, or **By desk**. Personal packs stay in `~/.agent-office/skins/`, outside the repo.
+## Useful commands
 
-</details>
-
-<details>
-<summary>🛠️ Useful commands</summary>
+![Useful commands](/useful-commands.gif)
 
 ```bash
-pnpm diagnose           # troubleshoot setup
-pnpm dev:mock           # develop with simulated agents
-pnpm uninstall-hooks    # remove Agent Office hooks
+pnpm diagnose
+pnpm dev:mock
+pnpm uninstall-hooks
 ```
-
-Hook changes are previewed before writing, with automatic settings backups.
-
-</details>
 
 ## Good to know
 
