@@ -1,0 +1,179 @@
+.character {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hop {
+  position: relative;
+  z-index: 1;
+}
+
+.bob {
+  will-change: transform;
+}
+
+.bobTable {
+  animation: bobTable 2.4s ease-in-out var(--bob-delay, 0s) infinite alternate;
+}
+
+.shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 46px;
+  height: 10px;
+  margin-left: -23px;
+  border-radius: 50%;
+  background: var(--shadow);
+  filter: blur(2px);
+}
+
+.tag {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+  padding: 3px 9px 3px 3px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  box-shadow: 0 1px 3px var(--shadow);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.kind {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 16px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.desk {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.urgent .tag {
+  background: var(--state-needs-you);
+  color: #fff;
+}
+
+.character:hover .tag,
+.character:focus-visible .tag,
+.selected .tag {
+  box-shadow:
+    0 0 0 2px var(--focus),
+    0 1px 3px var(--shadow);
+}
+
+.faceLeft {
+  transform: scaleX(-1);
+}
+
+/* Two-frame waddle while walking. */
+.walking > * {
+  animation: waddle 0.36s steps(1, end) infinite;
+}
+
+.selected .shadow {
+  background: var(--focus);
+  opacity: 0.35;
+}
+
+.tooltip {
+  z-index: 50;
+  display: grid;
+  gap: 3px;
+  max-width: 260px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 8px 24px var(--shadow);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.tooltipState {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.tooltipLast {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+.tooltipHint {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@keyframes waddle {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes bobTable {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes shadowPulse {
+  from {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  to {
+    transform: scaleX(0.82);
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bob,
+  .shadow {
+    animation: none;
+  }
+}

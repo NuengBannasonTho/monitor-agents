@@ -1,0 +1,41 @@
+{
+  "name": "agent-office",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/**\" dev",
+    "dev:mock": "AGENT_OFFICE_MOCK=1 pnpm dev",
+    "build": "pnpm --filter @agent-office/web build",
+    "build:preview": "VITE_DATA_SOURCE=mock pnpm --filter @agent-office/web build",
+    "start": "pnpm build && pnpm --filter @agent-office/server start",
+    "typecheck": "pnpm --recursive typecheck && tsc -p scripts/tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "skins:import": "tsx scripts/skins/import.ts",
+    "install-hooks": "tsx scripts/hooks/cli.ts install",
+    "uninstall-hooks": "tsx scripts/hooks/cli.ts uninstall",
+    "diagnose": "tsx scripts/diagnose.ts"
+  },
+  "devDependencies": {
+    "@agent-office/shared": "workspace:*",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.0.0",
+    "prettier": "^3.9.10",
+    "sharp": "^0.35.5",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,95 @@
+.office {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(300px, 2fr) minmax(420px, 3fr);
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  padding: 0 16px 16px;
+}
+
+@media (max-width: 860px) {
+  .office {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .tableZone {
+    min-height: 580px;
+  }
+}
+
+.zone {
+  position: relative;
+  min-height: 460px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+/* A little sign board, so the title stays readable over the pixel scenery. */
+.zoneTitle {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 5px 6px 5px 11px;
+  border-radius: 8px;
+  background: var(--tag-bg);
+  box-shadow:
+    0 0 0 2px var(--sign-edge),
+    0 3px 0 2px var(--shadow);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.zoneCount {
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 11px;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+/* Scene backgrounds paint over these; they only show before the first measurement. */
+.lounge {
+  background: var(--forest-floor);
+}
+
+.tableZone {
+  background: var(--city-floor);
+}
+
+.empty {
+  position: absolute;
+  inset: 34% 12% auto;
+  z-index: 1;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--tag-bg);
+  box-shadow: 0 0 0 2px var(--sign-edge);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ---- Shared character stage ---- */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}

@@ -1,0 +1,36 @@
+{
+  "name": "Banana crew",
+  "size": 64,
+  "images": {
+    "astronaut": "banana-astrounal.png",
+    "cry": "banana-cry.png",
+    "fire": "banana-fire.png",
+    "king": "banana-king.png",
+    "ninja": "banana-ninja.png",
+    "pool": "banana-pool.png",
+    "rich": "banana-rich.png",
+    "robot": "banana-robot.png",
+    "witch": "banana-whitch.png"
+  },
+  "byState": {
+    "idle": "pool",
+    "called": "ninja",
+    "working": "robot",
+    "reading": "astronaut",
+    "running": "fire",
+    "needs-you": "cry",
+    "done": "king",
+    "stale": "witch"
+  },
+  "costumes": [
+    "astronaut",
+    "fire",
+    "king",
+    "ninja",
+    "pool",
+    "rich",
+    "robot",
+    "witch"
+  ],
+  "stateOverrides": { "needs-you": "cry" }
+}

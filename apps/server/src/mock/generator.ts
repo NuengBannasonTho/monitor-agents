@@ -1,0 +1,215 @@
+import { randomUUID } from 'node:crypto';
+
+/**
+ * Mock mode: plays 6 fake Claude Code sessions across 4 fake worktrees and POSTs
+ * raw hook payloads (same shape Claude Code sends) to /events, so the whole
+ * pipeline (token check, adapter, reducer, coalescing, WebSocket) is exercised.
+ */
+
+const WORKTREE_ROOT = '/Users/dev/orca/worktrees';
+const WORKTREES = ['feat-auth', 'fix-flaky-tests', 'refactor-api', 'docs-site'] as const;
+const AGENT_COUNT = 6;
+
+type Payload = Readonly<Record<string, unknown>>;
+
+interface Session {
+  readonly id: string;
+  readonly cwd: string;
+}
+
+const FILES = [
+  'src/auth/session.ts',
+  'src/api/routes/users.ts',
+  'tests/flaky.spec.ts',
+  'docs/architecture.md',
+  'package.json',
+  'src/lib/cache.ts',
+];
+const BASH = [
+  'pnpm test --filter api',
+  'git status --short',
+  'pnpm lint',
+  'pnpm exec tsc --noEmit',
+  // Exercises redaction: the key below must never reach the UI.
+  'OPENAI_API_KEY=sk-mock-1234567890abcdef pnpm run eval',
+  'curl -H "Authorization: Bearer mockmockmockmock123" http://localhost:3000/health',
+];
+
+function pick<T>(items: readonly T[]): T {
+  const item = items[Math.floor(Math.random() * items.length)];
+  if (item === undefined) throw new Error('pick() on empty list');
+  return item;
+}
+
+/** Not inlined: TS narrows `signal.aborted` to false after the first check in a loop. */
+function aborted(signal: AbortSignal): boolean {
+  return signal.aborted;
+}
+
+function between(minMs: number, maxMs: number): number {
+  return minMs + Math.random() * (maxMs - minMs);
+}
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
+function base(session: Session, event: string, extra: Payload = {}): Payload {
+  return {
+    session_id: session.id,
+    transcript_path: `/Users/dev/.claude/projects/mock/${session.id}.jsonl`,
+    cwd: session.cwd,
+    permission_mode: 'default',
+    hook_event_name: event,
+    ...extra,
+  };
+}
+
+function toolCall(session: Session, subagent?: { id: string; type: string }): Payload {
+  const abs = (rel: string): string => `${session.cwd}/${rel}`;
+  const sub = subagent === undefined ? {} : { agent_id: subagent.id, agent_type: subagent.type };
+  const roll = Math.random();
+  const [toolName, toolInput]: [string, Payload] =
+    roll < 0.25
+      ? ['Read', { file_path: abs(pick(FILES)) }]
+      : roll < 0.35
+        ? ['Grep', { pattern: pick(['useSession', 'TODO', 'export function']), path: session.cwd }]
+        : roll < 0.42
+          ? ['Glob', { pattern: pick(['src/**/*.ts', '**/*.test.ts']) }]
+          : roll < 0.62
+            ? ['Edit', { file_path: abs(pick(FILES)), old_string: 'a', new_string: 'b' }]
+            : roll < 0.68
+              ? ['Write', { file_path: abs(pick(FILES)), content: 'secret=hunter2 not shown' }]
+              : roll < 0.74
+                ? ['TodoWrite', { todos: [] }]
+                : ['Bash', { command: pick(BASH), description: 'mock' }];
+  return base(session, 'PreToolUse', {
+    ...sub,
+    tool_name: toolName,
+    tool_input: toolInput,
+    tool_use_id: `toolu_${randomUUID()}`,
+  });
+}
+
+async function runAgent(
+  index: number,
+  post: (payload: Payload) => Promise<void>,
+  signal: AbortSignal,
+): Promise<void> {
+  const worktree = WORKTREES[index % WORKTREES.length] ?? WORKTREES[0];
+  await sleep(index * 900, signal);
+
+  while (!aborted(signal)) {
+    const session: Session = { id: randomUUID(), cwd: `${WORKTREE_ROOT}/${worktree}` };
+    await post(base(session, 'SessionStart', { source: 'startup', model: 'mock' }));
+    const turns = 2 + Math.floor(Math.random() * 4);
+
+    for (let turn = 0; turn < turns && !aborted(signal); turn++) {
+      await sleep(between(2_000, 7_000), signal);
+      // A prompt is sent so we can see it is never stored or displayed.
+      await post(
+        base(session, 'UserPromptSubmit', { prompt: 'MOCK PROMPT TEXT (must not appear)' }),
+      );
+      await sleep(between(600, 1_400), signal);
+
+      const steps = 4 + Math.floor(Math.random() * 6);
+      for (let step = 0; step < steps && !aborted(signal); step++) {
+        if (Math.random() < 0.12) {
+          // Subagent burst: its tool calls share the session_id but carry agent_id.
+          const subagent = { id: `agent_${randomUUID().slice(0, 8)}`, type: 'Explore' };
+          await post(
+            base(session, 'PreToolUse', {
+              tool_name: 'Agent',
+              tool_input: { subagent_type: 'Explore', description: 'Explore codebase' },
+              tool_use_id: `toolu_${randomUUID()}`,
+            }),
+          );
+          for (let s = 0; s < 3 && !aborted(signal); s++) {
+            await sleep(between(500, 1_200), signal);
+            await post(toolCall(session, subagent));
+          }
+          await post(
+            base(session, 'SubagentStop', {
+              stop_hook_active: false,
+              agent_id: subagent.id,
+              agent_type: subagent.type,
+              agent_transcript_path: `/tmp/${subagent.id}.jsonl`,
+              last_assistant_message: 'mock summary (must not appear)',
+            }),
+          );
+        } else {
+          await post(toolCall(session));
+        }
+
+        if (Math.random() < 0.08) {
+          await post(
+            base(session, 'Notification', {
+              message: 'Claude needs your permission to use Bash',
+              notification_type: 'permission_prompt',
+            }),
+          );
+          await sleep(between(5_000, 10_000), signal);
+        }
+        await sleep(between(700, 2_600), signal);
+      }
+
+      await post(
+        base(session, 'Stop', {
+          stop_hook_active: false,
+          last_assistant_message: 'All done (must not appear)',
+        }),
+      );
+      if (Math.random() < 0.3) {
+        await sleep(4_000, signal);
+        // Informational: must not pull the agent back to the table.
+        await post(
+          base(session, 'Notification', { message: 'Waiting', notification_type: 'idle_prompt' }),
+        );
+      }
+    }
+
+    await sleep(between(3_000, 8_000), signal);
+    await post(base(session, 'SessionEnd', { reason: 'prompt_input_exit' }));
+    await sleep(between(1_500, 4_000), signal);
+  }
+}
+
+export interface MockOptions {
+  readonly url: string;
+  readonly token: string;
+  readonly signal: AbortSignal;
+  readonly onError?: (error: unknown) => void;
+}
+
+export function startMockGenerator({ url, token, signal, onError }: MockOptions): Promise<void> {
+  const post = async (payload: Payload): Promise<void> => {
+    if (aborted(signal)) return;
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-token': token },
+        body: JSON.stringify(payload),
+        signal,
+      });
+    } catch (error) {
+      if (!aborted(signal)) onError?.(error);
+    }
+  };
+  return Promise.all(Array.from({ length: AGENT_COUNT }, (_, i) => runAgent(i, post, signal))).then(
+    () => undefined,
+  );
+}

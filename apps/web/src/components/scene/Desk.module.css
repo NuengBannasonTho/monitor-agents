@@ -1,0 +1,48 @@
+.desk {
+  position: absolute;
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Two-frame screen: code scrolling by, or a flashing "!" when the agent needs you. */
+.frameA {
+  animation: frameA 1.4s steps(1, end) infinite;
+}
+
+.frameB {
+  animation: frameB 1.4s steps(1, end) infinite;
+}
+
+.alert .frameA,
+.alert .frameB {
+  animation-duration: 0.7s;
+}
+
+@keyframes frameA {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes frameB {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frameA {
+    animation: none;
+  }
+
+  .frameB {
+    display: none;
+  }
+}

@@ -1,0 +1,106 @@
+.box {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Image skins can be wider than the layout box (flames, tears); let them overflow. */
+.skin {
+  overflow: visible;
+}
+
+.sprite {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  max-width: none;
+  image-rendering: pixelated;
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  left: 58%;
+  overflow: visible;
+  transform: translateX(-50%);
+  animation: float 1.6s steps(1, end) infinite;
+}
+
+.blink {
+  animation: blink 1s steps(1, end) infinite;
+}
+
+/* ---- per-state motion (same vocabulary as the pixel worker) ---- */
+
+.state-working .sprite {
+  animation: typing 0.32s steps(1, end) infinite;
+}
+
+.state-needs-you .sprite {
+  animation: bounce 0.6s steps(3, end) infinite alternate;
+}
+
+.state-done .sprite {
+  animation: hop 1.1s steps(2, end) infinite;
+}
+
+.state-stale {
+  opacity: 0.4;
+}
+
+@keyframes typing {
+  0% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 2px);
+  }
+}
+
+@keyframes bounce {
+  from {
+    transform: translate(-50%, 0);
+  }
+  to {
+    transform: translate(-50%, -8px);
+  }
+}
+
+@keyframes hop {
+  0%,
+  60% {
+    transform: translate(-50%, 0);
+  }
+  70% {
+    transform: translate(-50%, -4px);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -2px);
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box,
+  .box * {
+    animation: none !important;
+  }
+}

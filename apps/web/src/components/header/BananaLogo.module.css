@@ -1,0 +1,28 @@
+.logo {
+  display: block;
+  flex: none;
+}
+
+/* A quick blink every few seconds. */
+.lids {
+  opacity: 0;
+  animation: blink 4.2s steps(1, end) infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0;
+  }
+  94% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lids {
+    animation: none;
+  }
+}

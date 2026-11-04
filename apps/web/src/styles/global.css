@@ -1,0 +1,113 @@
+:root {
+  color-scheme: light dark;
+  --font-sans:
+    ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --bg: #f4efe9;
+  --surface: #fffdfa;
+  --surface-2: #f7f1ea;
+  --text: #2b2420;
+  --muted: #7d7068;
+  --border: #e6dbd0;
+  --accent: #e0303f;
+  --accent-contrast: #ffffff;
+  --focus: #2f6fed;
+
+  --forest-floor: #6abf4b;
+  --city-floor: #dad3c9;
+  --sign-edge: #6b4a2f;
+  --shadow: rgba(60, 30, 20, 0.18);
+
+  --tag-bg: rgba(255, 255, 255, 0.92);
+  --tag-text: #3a302a;
+
+  --state-idle: #9aa0ad;
+  --state-called: #7c8cf8;
+  --state-working: #f59e0b;
+  --state-reading: #38bdf8;
+  --state-running: #22c55e;
+  --state-needs-you: #ef233c;
+  --state-done: #a78bfa;
+  --state-stale: #c2b8ae;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #14151c;
+    --surface: #1d1f29;
+    --surface-2: #232633;
+    --text: #ece8f2;
+    --muted: #9a97a8;
+    --border: #2e3140;
+    --focus: #7aa2ff;
+
+    --forest-floor: #2b5643;
+    --city-floor: #2b2e3c;
+    --sign-edge: #3d2d2a;
+    --shadow: rgba(0, 0, 0, 0.45);
+
+    --tag-bg: rgba(36, 38, 52, 0.92);
+    --tag-text: #e6e2ee;
+
+    --state-idle: #6f7585;
+    --state-stale: #575363;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #14151c;
+  --surface: #1d1f29;
+  --surface-2: #232633;
+  --text: #ece8f2;
+  --muted: #9a97a8;
+  --border: #2e3140;
+  --focus: #7aa2ff;
+  --forest-floor: #2b5643;
+  --city-floor: #2b2e3c;
+  --sign-edge: #3d2d2a;
+  --shadow: rgba(0, 0, 0, 0.45);
+  --tag-bg: rgba(36, 38, 52, 0.92);
+  --tag-text: #e6e2ee;
+  --state-idle: #6f7585;
+  --state-stale: #575363;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

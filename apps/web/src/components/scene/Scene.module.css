@@ -1,0 +1,195 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* ---- forest ---- */
+
+.fire {
+  position: absolute;
+  width: 35px;
+  height: 40px;
+}
+
+.flame {
+  display: block;
+  overflow: visible;
+}
+
+.flame g {
+  opacity: 0;
+  animation: flame 0.45s steps(1, end) infinite;
+}
+
+.flame g:nth-child(2) {
+  animation-delay: -0.15s;
+}
+
+.flame g:nth-child(3) {
+  animation-delay: -0.3s;
+}
+
+.spark {
+  position: absolute;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  background: #ffd34a;
+  animation: spark 1.6s steps(6, end) var(--delay, 0s) infinite;
+}
+
+.firefly {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #f2ff9c;
+  box-shadow: 0 0 8px 2px rgba(214, 255, 110, 0.55);
+  animation:
+    wander var(--dur, 6s) steps(20, end) var(--delay, 0s) infinite alternate,
+    blink 2.3s steps(1, end) var(--delay, 0s) infinite;
+}
+
+.butterfly {
+  position: absolute;
+  display: block;
+  overflow: visible;
+  animation: flutter var(--dur, 8s) steps(32, end) var(--delay, 0s) infinite alternate;
+}
+
+.frameA {
+  animation: frameA 0.34s steps(1, end) infinite;
+}
+
+.frameB {
+  animation: frameB 0.34s steps(1, end) infinite;
+}
+
+/* ---- city ---- */
+
+.cloud {
+  position: absolute;
+  left: -80px;
+  display: block;
+  animation-name: drift;
+  animation-duration: var(--dur, 120s);
+  animation-delay: var(--delay, 0s);
+  animation-iteration-count: infinite;
+}
+
+.twinkle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #ffffff;
+  animation: blink 2.8s steps(1, end) var(--delay, 0s) infinite;
+}
+
+@keyframes flame {
+  0% {
+    opacity: 1;
+  }
+  33.333% {
+    opacity: 0;
+  }
+}
+
+@keyframes spark {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+}
+
+@keyframes wander {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(var(--dx, 20px), var(--dy, -10px));
+  }
+}
+
+@keyframes flutter {
+  0% {
+    transform: translate(0, 0);
+  }
+  30% {
+    transform: translate(calc(var(--dx, 40px) * 2), -20px);
+  }
+  60% {
+    transform: translate(calc(var(--dx, 40px) * 3), 10px);
+  }
+  100% {
+    transform: translate(calc(var(--dx, 40px) * 1.5), calc(var(--dy, 20px) * 2));
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.25;
+  }
+  70% {
+    opacity: 1;
+  }
+}
+
+@keyframes frameA {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes frameB {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--travel, 1000px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene *,
+  .scene *::before,
+  .scene *::after {
+    animation: none !important;
+  }
+
+  .flame g:first-child {
+    opacity: 1;
+  }
+
+  .frameB,
+  .spark {
+    display: none;
+  }
+}
