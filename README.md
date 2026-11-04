@@ -1,4 +1,22 @@
-# Agent Office
+<h1 align="center">Agent Office</h1>
+
+<p align="center">
+  <strong>Your coding agents. A little pixel office.</strong><br>
+  Local · Read-only · No telemetry
+</p>
+
+<p align="center">
+  <img src="docs/agent-office.gif" alt="Animated preview of Agent Office states" width="960">
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#using-the-office">Agent states</a> ·
+  <a href="#custom-skins">Custom skins</a> ·
+  <a href="#privacy-and-security">Privacy</a>
+</p>
+
+---
 
 A local, read-only monitor for AI coding agents in Orca. Claude Code sessions appear as pixel workers: active agents work at city desks, while idle agents wander a forest. Expressions and costumes show their activity.
 
@@ -28,20 +46,22 @@ pnpm install-hooks      # preview settings changes and confirm
 pnpm diagnose           # check setup and send a test agent
 ```
 
-Open http://127.0.0.1:4777 and start Claude Code in your Orca worktrees. Restart sessions opened before hook installation, and keep `pnpm start` running.
+Open http://127.0.0.1:4777 and start Claude Code in your Orca worktrees.
+
+> Restart sessions opened before hook installation, and keep `pnpm start` running.
 
 ## Using the office
 
 | State | Location | Trigger |
 | --- | --- | --- |
-| idle | Forest | Session start; 3 seconds after done |
-| called | City | Prompt sent |
-| reading | City | Read, Grep, Glob |
-| running | City | Bash |
-| working | City | Other tools, including Edit, Write, Agent |
-| needs-you | City | Permission or input requested |
-| done | Forest | Turn finished |
-| stale | Forest | No events for 5 minutes |
+| 💤 idle | Forest | Session start; 3 seconds after done |
+| 👋 called | City | Prompt sent |
+| 📖 reading | City | Read, Grep, Glob |
+| ⚡ running | City | Bash |
+| 🛠️ working | City | Other tools, including Edit, Write, Agent |
+| 🔴 needs-you | City | Permission or input requested |
+| ✨ done | Forest | Turn finished |
+| 🌙 stale | Forest | No events for 5 minutes |
 
 Each city worker has a desk with a state-colored monitor. A red `!` and header highlight indicate agents waiting on you.
 
@@ -54,9 +74,11 @@ Each city worker has a desk with a state-colored monitor. A red `!` and header h
 
 Personal packs live outside the repo in `~/.agent-office/skins/<pack>/`.
 
-- **Pixel:** built-in workers.
-- **By task:** a costume for each state.
-- **By desk:** a saved costume per worktree, selected in worker details; `stateOverrides` still apply.
+| Mode | Behavior |
+| --- | --- |
+| Pixel | Built-in pixel workers |
+| By task | A costume for each state |
+| By desk | A saved costume per worktree; `stateOverrides` still apply |
 
 Add images with plain light backgrounds and a `skin.json` based on [the example](skins/example.skin.json), then import:
 
@@ -67,7 +89,8 @@ pnpm skins:import ./my-skin-folder --size 48 --pack my-crew
 
 The importer removes backgrounds, applies a shared crop, downsamples to a square pixel grid (64 by default), and reduces colors. Reload to load the pack.
 
-## Configuration
+<details>
+<summary><strong>⚙️ Configuration</strong></summary>
 
 Environment variables for `pnpm start`:
 
@@ -80,7 +103,11 @@ Environment variables for `pnpm start`:
 | `LOG_LEVEL` | `info` | Use `debug` to inspect received/dropped events |
 | `AGENT_OFFICE_HOME` | `~/.agent-office` | Token and skins directory |
 
-`emit.sh` reads `AGENT_OFFICE_HOME` and `AGENT_OFFICE_PORT`. Hook installation honors `CLAUDE_CONFIG_DIR` and supports `--settings <path>`, `--dry-run`, and `--yes`.
+`emit.sh` reads `AGENT_OFFICE_HOME` and `AGENT_OFFICE_PORT`.
+
+Hook installation honors `CLAUDE_CONFIG_DIR` and supports `--settings <path>`, `--dry-run`, and `--yes`.
+
+</details>
 
 ## Privacy and security
 
@@ -89,7 +116,8 @@ Environment variables for `pnpm start`:
 - WebSocket Origin and HTTP Host checks protect local endpoints.
 - Prompts, full tool inputs, and assistant messages are never stored or displayed. Activity shows only tool names and short targets (commands limited to 80 characters), with detected secrets replaced by `[REDACTED]`.
 
-## Troubleshooting
+<details>
+<summary><strong>🔎 Troubleshooting</strong></summary>
 
 Run `pnpm diagnose` first to check dependencies, relay, token, server, and hooks through a real test event.
 
@@ -104,7 +132,12 @@ Run `pnpm diagnose` first to check dependencies, relay, token, server, and hooks
 | Skin switcher missing | Check packs under `~/.agent-office/skins` and server logs |
 | Events ignored | Run `LOG_LEVEL=debug pnpm start` |
 
-## Development
+</details>
+
+<details>
+<summary><strong>🛠️ Development & adapters</strong></summary>
+
+### Commands
 
 ```bash
 pnpm dev             # watch server + Vite at http://127.0.0.1:5173
@@ -114,6 +147,8 @@ pnpm build:preview   # serverless build with an in-browser simulator
 ```
 
 Use `?gallery` to preview skin states or `?mock` for the browser simulator.
+
+### Structure
 
 | Directory | Contents |
 | --- | --- |
@@ -129,7 +164,11 @@ Use `?gallery` to preview skin states or `?mock` for the browser simulator.
 3. Register it in `apps/server/src/main.ts` and send events through `emit.sh <kind>` (`X-Agent-Kind`).
 4. Test supported events and malformed payloads.
 
-The Codex example uses CLI `notify` in `~/.codex/config.toml` for `agent-turn-complete`. A wrapper adds session/workdir metadata and forwards JSON to `emit.sh codex`; the adapter maps completion to `stop`. Check current Codex docs before adding tool or approval states.
+The Codex example uses CLI `notify` in `~/.codex/config.toml` for `agent-turn-complete`. A wrapper adds session/workdir metadata and forwards JSON to `emit.sh codex`; the adapter maps completion to `stop`.
+
+Check current Codex docs before adding tool or approval states.
+
+</details>
 
 ## Limitations
 
@@ -137,11 +176,16 @@ The Codex example uses CLI `notify` in `~/.codex/config.toml` for `agent-turn-co
 - Subagent tools appear on the parent worker, labelled `(subagent …)`.
 - Restarting the server clears the office until new events arrive.
 
-## Uninstall
+<details>
+<summary><strong>🧹 Uninstall</strong></summary>
 
 ```bash
 pnpm uninstall-hooks    # preview and remove only Agent Office hooks
 rm -rf ~/.agent-office  # remove token and personal skins
 ```
 
-Settings writes first create `settings.json.bak-<timestamp>` backups and may reformat indentation without changing other settings. Delete backups when satisfied, then delete the project folder.
+Settings writes first create `settings.json.bak-<timestamp>` backups and may reformat indentation without changing other settings.
+
+Delete backups when satisfied, then delete the project folder.
+
+</details>
