@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Point } from '../../lib/geometry';
 import type { Rect } from '../../lib/useZoneRects';
+import type { Crowd } from './crowd';
+import type { Trajectory } from './crowd';
+import { landingSpot, planWalk, positionAt, standAt } from './crowd';
 
 export interface WanderLeg {
   readonly to: Point;
@@ -10,59 +13,121 @@ export interface WanderLeg {
 }
 
 export interface Wander {
-  /** Current walking leg, or null while the character should stand on its slot. */
+  /** Current walking leg, or null while the character should stand still. */
   readonly leg: WanderLeg | null;
+  /**
+   * Where to stand while not walking in camp: a clear landing spot on arrival, or wherever it
+   * stopped (fell asleep, say). Null means its home spot.
+   */
+  readonly rest: Point | null;
   readonly moving: boolean;
   readonly facingLeft: boolean;
   /** Call when the character reaches the point it was heading to. */
   readonly arrive: (at: Point) => void;
 }
 
-const PAUSE_MIN_MS = 900;
-const PAUSE_MAX_MS = 3_800;
+interface WanderOptions {
+  readonly id: string;
+  /** May stroll now (in Base Camp, awake, motion allowed). */
+  readonly active: boolean;
+  /** In Base Camp at all: others must walk around it even while it stands still. */
+  readonly inCamp: boolean;
+  readonly area: Rect | null;
+  /** Where it stands when not strolling. */
+  readonly home: Point;
+  readonly speedPxPerSec: number;
+  /** Shared by everyone in Base Camp, so nobody walks into anybody. */
+  readonly crowd: Crowd | null;
+}
 
-/** Pure: next leg from `from` to a random point inside `area`. */
-export function nextLeg(
-  from: Point | null,
-  area: Rect,
-  speedPxPerSec: number,
-  rand: () => number,
-): WanderLeg {
-  const to = { x: area.left + rand() * area.width, y: area.top + rand() * area.height };
-  const distance = from === null ? 0 : Math.hypot(to.x - from.x, to.y - from.y);
-  return {
-    to,
-    duration: Math.min(9, Math.max(0.5, distance / speedPxPerSec)),
-    facingLeft: from !== null && to.x < from.x,
-  };
+const PAUSE_MIN_MS = 1_200;
+const PAUSE_MAX_MS = 4_200;
+
+function pause(): number {
+  return PAUSE_MIN_MS + Math.random() * (PAUSE_MAX_MS - PAUSE_MIN_MS);
 }
 
 /**
- * Lets a character stroll around an area: pause, pick a random point, walk
- * there at a constant speed, repeat. Inactive (null leg) when `active` is
- * false, e.g. at the table, while sleeping, or with reduced motion.
+ * Lets a character stroll around Base Camp: stand a while, pick a spot whose whole route
+ * stays clear of everyone else's, walk there with a gentle start and stop, repeat. If a new
+ * plan (or a newcomer) gets in the way, it re-routes from where it is. Inactive (null leg)
+ * when `active` is false, e.g. at work, while asleep, or with reduced motion.
  */
-export function useWander(active: boolean, area: Rect | null, speedPxPerSec: number): Wander {
+export function useWander({
+  id,
+  active,
+  inCamp,
+  area,
+  home,
+  speedPxPerSec,
+  crowd,
+}: WanderOptions): Wander {
   const [leg, setLeg] = useState<WanderLeg | null>(null);
   const [moving, setMoving] = useState(false);
-  const [facingLeft, setFacingLeft] = useState(false);
-  const [arrivals, setArrivals] = useState(0);
-  const position = useRef<Point | null>(null);
+  const [rest, setRest] = useState<Point | null>(null);
+  const homeRef = useRef(home);
+  const speedRef = useRef(speedPxPerSec);
+  /** The plan in force when walking last stopped, and when: resumes a walk after a resize. */
+  const lastPath = useRef<{ readonly path: Trajectory; readonly stoppedAt: number } | null>(null);
+  useEffect(() => {
+    homeRef.current = home;
+    speedRef.current = speedPxPerSec;
+  }, [home, speedPxPerSec]);
 
-  // Leaving the lounge (or losing motion) cancels the walk immediately.
-  if (!active && leg !== null) {
-    setLeg(null);
-    setMoving(false);
-  }
+  const restRef = useRef<Point | null>(null);
+
+  // Out of camp, the resting spot is forgotten: next time it lands on its home spot.
+  if (!inCamp && rest !== null) setRest(null);
 
   const left = area?.left;
   const top = area?.top;
   const width = area?.width;
   const height = area?.height;
 
+  // Arriving in camp: land on the home spot unless someone's plan comes near it.
+  useEffect(() => {
+    if (
+      !inCamp ||
+      crowd === null ||
+      left === undefined ||
+      top === undefined ||
+      width === undefined ||
+      height === undefined
+    ) {
+      restRef.current = null;
+      return;
+    }
+    // A fresh visit: nothing from the last one carries over.
+    lastPath.current = null;
+    const spot = landingSpot(crowd, id, homeRef.current, { left, top, width, height }, Date.now());
+    restRef.current = spot;
+    setRest(spot);
+    // Only on arrival; later resizes keep the character where it is.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inCamp, crowd, id]);
+
+  // Leaving camp (or losing motion) cancels the walk immediately.
+  if (!active && leg !== null) {
+    setLeg(null);
+    setMoving(false);
+  }
+
+  // Standing still in camp (asleep, reduced motion): still an obstacle for the walkers.
+  const standX = rest?.x ?? home.x;
+  const standY = rest?.y ?? home.y;
+  useEffect(() => {
+    if (!inCamp || active || crowd === null) return;
+    const now = Date.now();
+    crowd.set(id, standAt({ x: standX, y: standY }, now), now);
+    return () => {
+      crowd.remove(id);
+    };
+  }, [inCamp, active, crowd, id, standX, standY]);
+
   useEffect(() => {
     if (
       !active ||
+      crowd === null ||
       left === undefined ||
       top === undefined ||
       width === undefined ||
@@ -70,28 +135,93 @@ export function useWander(active: boolean, area: Rect | null, speedPxPerSec: num
     ) {
       return;
     }
-    const pause = PAUSE_MIN_MS + Math.random() * (PAUSE_MAX_MS - PAUSE_MIN_MS);
-    const timer = setTimeout(() => {
-      const next = nextLeg(
-        position.current,
-        { left, top, width, height },
-        speedPxPerSec,
-        Math.random,
-      );
-      setLeg(next);
-      setMoving(true);
-      setFacingLeft(next.facingLeft);
-    }, pause);
-    return () => {
+    const book = crowd;
+    const box = { left, top, width, height };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let disposed = false;
+    const schedule = (ms: number): void => {
       clearTimeout(timer);
+      timer = setTimeout(plan, ms);
     };
-  }, [active, left, top, width, height, speedPxPerSec, arrivals]);
+    let lastPlan = 0;
+    const here = (now: number): Point => {
+      const current = book.get(id);
+      if (current !== undefined) return positionAt(current, now);
+      // Woken up or re-run: it is wherever it stopped.
+      const last = lastPath.current;
+      if (last !== null) return positionAt(last.path, last.stoppedAt);
+      return restRef.current ?? homeRef.current;
+    };
 
-  const arrive = useCallback((at: Point) => {
-    position.current = at;
+    function plan(): void {
+      if (disposed) return;
+      const now = Date.now();
+      // Two stuck characters asking each other to move must not spin.
+      if (now - lastPlan < 250) {
+        schedule(300);
+        return;
+      }
+      lastPlan = now;
+      const from = here(now);
+      const walk = planWalk(book, id, from, box, speedRef.current, now, Math.random);
+      if (walk === null) {
+        // Nowhere clear to go: stop where it is (walkers heading here re-route) and look again.
+        book.set(id, standAt(from, now), now);
+        setLeg((current) =>
+          current === null ? null : { to: from, duration: 0.35, facingLeft: current.facingLeft },
+        );
+        schedule(pause());
+        return;
+      }
+      book.set(id, walk, now, false);
+      setLeg({ to: walk.to, duration: walk.duration / 1000, facingLeft: walk.to.x < from.x });
+      setMoving(true);
+      // Stand a while at the end, then go again.
+      schedule(walk.duration + pause());
+    }
+
+    const now = Date.now();
+    const resumed = lastPath.current;
+    if (
+      resumed !== null &&
+      now - resumed.stoppedAt < 500 &&
+      now < resumed.path.start + resumed.path.duration
+    ) {
+      // Re-run mid-walk (the camp was resized): keep the walk already under way.
+      book.set(id, resumed.path, now, false);
+      schedule(resumed.path.start + resumed.path.duration - now + pause());
+    } else {
+      // Arriving in camp: claim the spot, and anyone walking into it re-routes.
+      book.set(id, standAt(here(now), now), now);
+      schedule(pause());
+    }
+    lastPath.current = null;
+    const unsubscribe = book.onConflict(id, plan);
+    return () => {
+      disposed = true;
+      clearTimeout(timer);
+      unsubscribe();
+      const last = book.get(id);
+      const stoppedAt = Date.now();
+      book.remove(id);
+      if (last !== undefined) {
+        lastPath.current = { path: last, stoppedAt };
+        // Stopping in camp (falling asleep): stay put rather than walk back home unplanned.
+        restRef.current = positionAt(last, stoppedAt);
+        setRest(restRef.current);
+      }
+    };
+  }, [active, crowd, id, left, top, width, height]);
+
+  const arrive = useCallback(() => {
     setMoving(false);
-    setArrivals((n) => n + 1);
   }, []);
 
-  return { leg: active ? leg : null, moving: active && moving, facingLeft, arrive };
+  return {
+    leg: active ? leg : null,
+    rest: inCamp ? rest : null,
+    moving: active && moving,
+    facingLeft: leg?.facingLeft ?? false,
+    arrive,
+  };
 }

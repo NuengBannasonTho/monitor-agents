@@ -1,6 +1,6 @@
 import type { AgentEvent } from '@agent-office/shared';
 import { z } from 'zod';
-import { safeLabel, summarizeTool } from '../summarize.js';
+import { formatDuration, safeLabel, summarizeTool } from '../summarize.js';
 import type { Adapter, Clock } from './types.js';
 
 /*
@@ -30,6 +30,23 @@ const HookPayload = z.discriminatedUnion('hook_event_name', [
     hook_event_name: z.literal('PreToolUse'),
     tool_name: z.string().min(1),
     tool_input: ToolInput.optional(),
+    tool_use_id: z.string().optional(),
+  }),
+  // tool_response (the tool's output) is deliberately not declared, so it is dropped.
+  Base.extend({
+    hook_event_name: z.literal('PostToolUse'),
+    tool_name: z.string().min(1),
+    tool_use_id: z.string().optional(),
+    duration_ms: z.number().nonnegative().optional(),
+  }),
+  Base.extend({
+    hook_event_name: z.literal('PostToolUseFailure'),
+    tool_name: z.string().min(1),
+    tool_use_id: z.string().optional(),
+    duration_ms: z.number().nonnegative().optional(),
+    /** Only its leading "Exit code N" is read; the text itself is never kept. */
+    error: z.string().optional(),
+    is_interrupt: z.boolean().optional(),
   }),
   Base.extend({
     hook_event_name: z.literal('Notification'),
@@ -54,6 +71,14 @@ const NEEDS_YOU_LABEL: Readonly<Record<string, string>> = {
   elicitation_dialog: 'Waiting for your input',
   agent_needs_input: 'Needs your input',
 };
+
+/** Successful tool calls at least this long get an activity line ("Bash finished after 2m 5s"). */
+export const LONG_TOOL_MS = 30_000;
+
+function exitCode(error: string | undefined): number | undefined {
+  const match = /^Exit code (\d+)/.exec(error ?? '');
+  return match?.[1] === undefined ? undefined : Number.parseInt(match[1], 10);
+}
 
 const SESSION_START_LABEL: Readonly<Record<string, string>> = {
   startup: 'Session started',
@@ -93,8 +118,41 @@ export function createClaudeCodeAdapter(now: Clock = Date.now): Adapter {
             ...base,
             type: 'tool',
             toolName: p.tool_name,
+            ...(p.tool_use_id === undefined ? {} : { toolId: p.tool_use_id }),
             summary: summarizeTool(p.tool_name, p.tool_input ?? {}, p.cwd) + subagentSuffix(p),
           };
+        case 'PostToolUse': {
+          const long = p.duration_ms !== undefined && p.duration_ms >= LONG_TOOL_MS;
+          return {
+            ...base,
+            type: 'tool-end',
+            toolName: p.tool_name,
+            ...(p.tool_use_id === undefined ? {} : { toolId: p.tool_use_id }),
+            ...(long
+              ? {
+                  summary: `${safeLabel(p.tool_name, 40)} finished after ${formatDuration(p.duration_ms ?? 0)}${subagentSuffix(p)}`,
+                }
+              : {}),
+          };
+        }
+        case 'PostToolUseFailure': {
+          const tool = safeLabel(p.tool_name, 40);
+          const code = exitCode(p.error);
+          const what =
+            p.is_interrupt === true
+              ? `${tool} interrupted`
+              : code === undefined
+                ? `${tool} failed`
+                : `${tool} failed (exit ${String(code)})`;
+          return {
+            ...base,
+            type: 'tool-end',
+            toolName: p.tool_name,
+            ...(p.tool_use_id === undefined ? {} : { toolId: p.tool_use_id }),
+            failed: true,
+            summary: what + subagentSuffix(p),
+          };
+        }
         case 'Notification': {
           const label = NEEDS_YOU_LABEL[p.notification_type ?? ''];
           if (label === undefined) return null;

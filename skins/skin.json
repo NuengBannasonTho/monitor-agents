@@ -2,35 +2,34 @@
   "name": "Banana crew",
   "size": 64,
   "images": {
-    "astronaut": "banana-astrounal.png",
-    "cry": "banana-cry.png",
-    "fire": "banana-fire.png",
-    "king": "banana-king.png",
-    "ninja": "banana-ninja.png",
-    "pool": "banana-pool.png",
-    "rich": "banana-rich.png",
-    "robot": "banana-robot.png",
-    "witch": "banana-whitch.png"
+    "idle": "idle.png",
+    "called": "called.png",
+    "working": "working.png",
+    "reading": "reading.png",
+    "running-fire": "running.png",
+    "needs-you-cry": "needs-you.png",
+    "done": "done.png",
+    "stale": "stale.png"
   },
   "byState": {
-    "idle": "pool",
-    "called": "ninja",
-    "working": "robot",
-    "reading": "astronaut",
-    "running": "fire",
-    "needs-you": "cry",
-    "done": "king",
-    "stale": "witch"
+    "idle": "idle",
+    "called": "called",
+    "working": "working",
+    "reading": "reading",
+    "running": "running-fire",
+    "needs-you": "needs-you-cry",
+    "done": "done",
+    "stale": "stale"
   },
   "costumes": [
-    "astronaut",
-    "fire",
-    "king",
-    "ninja",
-    "pool",
-    "rich",
-    "robot",
-    "witch"
+    "idle",
+    "called",
+    "working",
+    "reading",
+    "running-fire",
+    "needs-you-cry",
+    "done",
+    "stale"
   ],
-  "stateOverrides": { "needs-you": "cry" }
+  "stateOverrides": { "needs-you": "needs-you-cry" }
 }

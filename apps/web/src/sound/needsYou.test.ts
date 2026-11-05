@@ -8,6 +8,7 @@ const a = (id: string, state: Agent['state']): Agent => ({
   desk: 'd',
   cwd: '/d',
   state,
+  stateSince: 0,
   activity: [],
   lastSeen: 0,
 });

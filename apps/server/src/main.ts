@@ -21,6 +21,7 @@ async function main(): Promise<void> {
     staleAfterMs: config.staleAfterMs,
     removeAfterMs: config.removeAfterMs,
     needsYouRemoveAfterMs: config.needsYouRemoveAfterMs,
+    toolStaleAfterMs: config.toolStaleAfterMs,
   });
 
   const app = await buildApp({

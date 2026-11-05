@@ -1,74 +1,111 @@
+/*
+ * The pixel art lives inside the two scenes. Everything around them (header, panels,
+ * drawer, tags) is a plain, quiet interface so the scenes stay the focus.
+ */
+/*
+ * Soft cards floating on a pale ground: generous corners, wide gentle shadows instead of
+ * borders, bold headings, dark filled primary buttons and dark popovers. Dark mode flips the
+ * cards dark and the primary buttons and popovers light.
+ */
 :root {
   color-scheme: light dark;
-  --font-sans:
-    ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  --bg: #f4efe9;
-  --surface: #fffdfa;
-  --surface-2: #f7f1ea;
-  --text: #2b2420;
-  --muted: #7d7068;
-  --border: #e6dbd0;
-  --accent: #e0303f;
-  --accent-contrast: #ffffff;
-  --focus: #2f6fed;
+  --bg: #f1f2f5;
+  --surface: #ffffff;
+  --surface-2: #f3f4f7;
+  --text: #15161f;
+  --muted: #6c6f7d;
+  --border: #e8e9ee;
+  /* Filled buttons, "on" switches and the picked agent. */
+  --primary: #1c1d2b;
+  --primary-text: #ffffff;
+  /* Tooltips and other small floating menus. */
+  --popover: #1e1f2e;
+  --popover-text: #ffffff;
+  --popover-muted: #a9abbb;
+  --focus: #6c63ff;
+  --radius: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --shadow-sm: 0 2px 6px rgba(20, 22, 40, 0.07);
+  --shadow-card: 0 18px 48px -14px rgba(20, 22, 40, 0.16), 0 3px 10px rgba(20, 22, 40, 0.04);
+  --shadow-lg: 0 32px 80px -20px rgba(20, 22, 40, 0.4);
 
   --forest-floor: #6abf4b;
   --city-floor: #dad3c9;
-  --sign-edge: #6b4a2f;
-  --shadow: rgba(60, 30, 20, 0.18);
+  --shadow: rgba(31, 39, 64, 0.2);
 
-  --tag-bg: rgba(255, 255, 255, 0.92);
-  --tag-text: #3a302a;
+  --tag-bg: #ffffff;
+  --tag-text: #15161f;
 
-  --state-idle: #9aa0ad;
-  --state-called: #7c8cf8;
+  --state-idle: #8b93a3;
+  --state-called: #7b6cf6;
   --state-working: #f59e0b;
   --state-reading: #38bdf8;
-  --state-running: #22c55e;
-  --state-needs-you: #ef233c;
+  --state-running: #2ed39b;
+  --state-needs-you: #f0544f;
   --state-done: #a78bfa;
-  --state-stale: #c2b8ae;
+  --state-stale: #b0a79d;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #14151c;
-    --surface: #1d1f29;
-    --surface-2: #232633;
-    --text: #ece8f2;
-    --muted: #9a97a8;
-    --border: #2e3140;
-    --focus: #7aa2ff;
+    --bg: #0d0e14;
+    --surface: #1b1c28;
+    --surface-2: #262735;
+    --text: #f2f3f7;
+    --muted: #9b9dab;
+    --border: #2d2e3d;
+    --primary: #ffffff;
+    --primary-text: #1c1d2b;
+    --popover: #ffffff;
+    --popover-text: #1c1d2b;
+    --popover-muted: #6c6f7d;
+    --focus: #a59fff;
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
+    --shadow-card: 0 18px 48px -14px rgba(0, 0, 0, 0.7), 0 3px 10px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 32px 80px -20px rgba(0, 0, 0, 0.8);
 
     --forest-floor: #2b5643;
     --city-floor: #2b2e3c;
-    --sign-edge: #3d2d2a;
     --shadow: rgba(0, 0, 0, 0.45);
 
-    --tag-bg: rgba(36, 38, 52, 0.92);
-    --tag-text: #e6e2ee;
+    --tag-bg: #1b1c28;
+    --tag-text: #f2f3f7;
 
     --state-idle: #6f7585;
     --state-stale: #575363;
   }
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
 :root[data-theme='dark'] {
-  --bg: #14151c;
-  --surface: #1d1f29;
-  --surface-2: #232633;
-  --text: #ece8f2;
-  --muted: #9a97a8;
-  --border: #2e3140;
-  --focus: #7aa2ff;
+  color-scheme: dark;
+  --bg: #0d0e14;
+  --surface: #1b1c28;
+  --surface-2: #262735;
+  --text: #f2f3f7;
+  --muted: #9b9dab;
+  --border: #2d2e3d;
+  --primary: #ffffff;
+  --primary-text: #1c1d2b;
+  --popover: #ffffff;
+  --popover-text: #1c1d2b;
+  --popover-muted: #6c6f7d;
+  --focus: #a59fff;
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 18px 48px -14px rgba(0, 0, 0, 0.7), 0 3px 10px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 32px 80px -20px rgba(0, 0, 0, 0.8);
   --forest-floor: #2b5643;
   --city-floor: #2b2e3c;
-  --sign-edge: #3d2d2a;
   --shadow: rgba(0, 0, 0, 0.45);
-  --tag-bg: rgba(36, 38, 52, 0.92);
-  --tag-text: #e6e2ee;
+  --tag-bg: #1b1c28;
+  --tag-text: #f2f3f7;
   --state-idle: #6f7585;
   --state-stale: #575363;
 }
@@ -100,7 +137,7 @@ button {
 
 :focus-visible {
   outline: 2px solid var(--focus);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 .visually-hidden {
@@ -110,4 +147,11 @@ button {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Switching theme cross-fades the page (View Transitions, where supported). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: ease-out;
 }

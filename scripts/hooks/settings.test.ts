@@ -10,6 +10,7 @@ import {
   hookCommand,
   lineDiff,
   mergeHooks,
+  missingHookEvents,
   shellQuote,
   unmergeHooks,
 } from './settings.js';
@@ -55,7 +56,22 @@ describe('mergeHooks', () => {
     expect(hooks.PreToolUse?.[0]).toEqual(
       (existing.hooks as Record<string, unknown[]>).PreToolUse?.[0],
     );
-    expect(hooks.PostToolUse).toEqual((existing.hooks as Record<string, unknown[]>).PostToolUse);
+    // The user's own PostToolUse hooks stay first and untouched; ours is appended.
+    const theirs = (existing.hooks as Record<string, unknown[]>).PostToolUse ?? [];
+    expect(hooks.PostToolUse?.slice(0, theirs.length)).toEqual(theirs);
+    expect(hooks.PostToolUse).toHaveLength(theirs.length + 1);
+  });
+
+  it('lists hook events added since the last install', () => {
+    const merged = mergeHooks({}, EMIT);
+    expect(missingHookEvents(merged)).toEqual([]);
+    const hooks = { ...(merged.hooks as Record<string, unknown>) };
+    delete hooks.PostToolUse;
+    delete hooks.PostToolUseFailure;
+    expect(missingHookEvents({ hooks: hooks as JsonObject })).toEqual([
+      'PostToolUse',
+      'PostToolUseFailure',
+    ]);
   });
 
   it('keeps the original key order', () => {

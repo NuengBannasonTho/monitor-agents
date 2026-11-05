@@ -14,6 +14,15 @@ export function stateForTool(toolName: string): AgentState {
   return 'working';
 }
 
+/** "45s", "2m 13s", "1h 5m". */
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000));
+  if (total < 60) return `${total}s`;
+  const minutes = Math.floor(total / 60);
+  if (minutes < 60) return `${minutes}m ${total % 60}s`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
 /** Path relative to cwd when it lives inside cwd; otherwise the path as given. */
 export function relativeToCwd(filePath: string, cwd: string): string {
   if (cwd === '' || !path.isAbsolute(filePath)) return filePath;

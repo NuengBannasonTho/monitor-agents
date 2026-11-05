@@ -64,6 +64,7 @@ describe('Coalescer', () => {
       desk: 'a',
       cwd: '/w/a',
       state: 'working',
+      stateSince: 0,
       activity: [{ at: 0, state: 'working', summary }],
       lastSeen: 0,
     },
@@ -117,7 +118,8 @@ describe('sweeper', () => {
     const changes: Change[] = [];
     store.subscribe((c) => changes.push(c));
     store.apply(ev('start'));
-    store.apply(ev('tool', { toolName: 'Bash' }));
+    store.apply(ev('tool', { toolName: 'Bash', toolId: 't1' }));
+    store.apply(ev('tool-end', { toolName: 'Bash', toolId: 't1' }));
     store.startSweeper(policy);
 
     vi.advanceTimersByTime(4 * 60_000 + 30_000);
@@ -129,6 +131,32 @@ describe('sweeper', () => {
     vi.advanceTimersByTime(5 * 60_000); // 10:00
     expect(store.get('s1')).toBeUndefined();
     expect(changes.at(-1)).toEqual({ type: 'remove', id: 's1' });
+    store.dispose();
+  });
+
+  it('leaves an agent alone while a tool is still running', () => {
+    const store = new AgentStore();
+    store.apply(ev('start'));
+    store.apply(ev('tool', { toolName: 'Bash', toolId: 't1' }));
+    store.startSweeper({ ...policy, toolStaleAfterMs: 30 * 60_000 });
+
+    vi.advanceTimersByTime(25 * 60_000); // a long test suite, no hooks firing
+    expect(store.get('s1')?.state).toBe('running');
+    vi.advanceTimersByTime(5 * 60_000); // 30:00, past the tool limit: treat as gone
+    expect(store.get('s1')).toBeUndefined();
+    store.dispose();
+  });
+
+  it('keeps a finished agent around (asleep) until you could read its answer', () => {
+    const store = new AgentStore();
+    store.apply(ev('start'));
+    store.apply(ev('prompt'));
+    store.apply(ev('stop'));
+    store.startSweeper({ ...policy, needsYouRemoveAfterMs: 60 * 60_000 });
+    vi.advanceTimersByTime(30 * 60_000);
+    expect(store.get('s1')?.state).toBe('stale');
+    vi.advanceTimersByTime(30 * 60_000);
+    expect(store.get('s1')).toBeUndefined();
     store.dispose();
   });
 

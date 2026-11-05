@@ -17,7 +17,7 @@ export interface SkinState {
   /** Packs the server offers (empty in the static preview or when none are installed). */
   readonly packs: readonly SkinPack[];
   readonly pack: SkinPack | null;
-  /** Effective mode: always 'pixel' when no pack is available. */
+  /** Effective mode: 'pixel' exactly when no pack is available. */
   readonly mode: SkinMode;
   readonly setMode: (mode: SkinMode) => void;
   readonly setPack: (id: string) => void;
@@ -80,7 +80,9 @@ export function SkinProvider({ enabled, children }: { enabled: boolean; children
   }, []);
 
   const pack = packs.find((p) => p.id === prefs.packId) ?? packs[0] ?? null;
-  const mode: SkinMode = pack === null ? 'pixel' : prefs.mode;
+  // Pixel workers are only the fallback for when no pack is installed; a "Pixel" choice
+  // remembered from an older version shows the pack by task instead.
+  const mode: SkinMode = pack === null ? 'pixel' : prefs.mode === 'pixel' ? 'by-state' : prefs.mode;
   usePreload(pack);
 
   const value = useMemo<SkinState>(() => {

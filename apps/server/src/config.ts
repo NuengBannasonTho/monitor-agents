@@ -9,6 +9,8 @@ const EnvSchema = z.object({
   STALE_AFTER_MIN: PositiveNumber.default(5),
   REMOVE_AFTER_MIN: PositiveNumber.default(10),
   NEEDS_YOU_REMOVE_AFTER_MIN: PositiveNumber.default(60),
+  /** How long an agent with a tool still running (no hooks fire meanwhile) is kept. */
+  TOOL_STALE_AFTER_MIN: PositiveNumber.default(30),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   /** Where the token lives. */
   AGENT_OFFICE_HOME: z.string().min(1).default(path.join(os.homedir(), '.agent-office')),
@@ -27,6 +29,7 @@ export interface Config {
   readonly staleAfterMs: number;
   readonly removeAfterMs: number;
   readonly needsYouRemoveAfterMs: number;
+  readonly toolStaleAfterMs: number;
   readonly logLevel: z.infer<typeof EnvSchema>['LOG_LEVEL'];
   readonly homeDir: string;
   /** Origins allowed to open the WebSocket; also the Host values we accept. */
@@ -50,6 +53,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     staleAfterMs: e.STALE_AFTER_MIN * 60_000,
     removeAfterMs: e.REMOVE_AFTER_MIN * 60_000,
     needsYouRemoveAfterMs: e.NEEDS_YOU_REMOVE_AFTER_MIN * 60_000,
+    toolStaleAfterMs: e.TOOL_STALE_AFTER_MIN * 60_000,
     logLevel: e.LOG_LEVEL,
     homeDir: e.AGENT_OFFICE_HOME,
     allowedOrigins:

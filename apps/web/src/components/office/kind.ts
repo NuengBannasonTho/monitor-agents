@@ -2,7 +2,7 @@ import type { AgentKind } from '@agent-office/shared';
 
 export interface KindMeta {
   readonly label: string;
-  /** Two-letter badge shown in the name tag (brand-neutral on purpose). */
+  /** Two-letter badge, for agents without a provider logo (see KindBadge). */
   readonly badge: string;
   readonly color: string;
 }
