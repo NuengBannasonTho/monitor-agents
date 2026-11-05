@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SkinIndexSchema } from '@agent-office/shared';
-import { countOurHooks, hookCommand, isObject } from './hooks/settings.js';
+import { countOurHooks, hookCommand, isObject, missingHookEvents } from './hooks/settings.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const EMIT = path.resolve(here, 'emit.sh');
@@ -117,6 +117,12 @@ async function main(): Promise<void> {
         'warn',
         `${count} hooks found, but they point to another copy of emit.sh`,
         'Run: pnpm install-hooks (it updates the path)',
+      );
+    else if (missingHookEvents(settings).length > 0)
+      report(
+        'warn',
+        `Hooks installed, but not for ${missingHookEvents(settings).join(', ')}`,
+        'Run: pnpm install-hooks (adds the new ones)',
       );
     else report('ok', `${count} hooks installed in ${SETTINGS}`);
   } catch {

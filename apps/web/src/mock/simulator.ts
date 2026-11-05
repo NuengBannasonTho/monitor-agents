@@ -1,4 +1,4 @@
-import { MAX_ACTIVITY, deskFromCwd } from '@agent-office/shared';
+import { MAX_ACTIVITY, deskFromCwd, zoneOf } from '@agent-office/shared';
 import type { ActivityEntry, Agent, AgentKind, AgentState } from '@agent-office/shared';
 import { hashString, seededRandom } from '../lib/seed';
 
@@ -44,6 +44,40 @@ const SUMMARIES: Readonly<Partial<Record<AgentState, readonly string[]>>> = {
   idle: ['Idle'],
   stale: ['No events for 5 min'],
 };
+
+function withoutTiming(agent: Agent): Agent {
+  const copy = { ...agent };
+  delete copy.turnStartedAt;
+  delete copy.tool;
+  delete copy.finishedAt;
+  delete copy.lastTurnMs;
+  return copy;
+}
+
+/** Turn, tool and finish times the real server would report for this phase. */
+function timing(
+  prev: Agent,
+  state: AgentState,
+  now: number,
+  inTurn: boolean,
+): Pick<Agent, 'turnStartedAt' | 'tool' | 'finishedAt' | 'lastTurnMs'> {
+  if (state === 'done') {
+    return {
+      finishedAt: now,
+      ...(prev.turnStartedAt === undefined ? {} : { lastTurnMs: now - prev.turnStartedAt }),
+    };
+  }
+  const finished = {
+    ...(prev.finishedAt === undefined ? {} : { finishedAt: prev.finishedAt }),
+    ...(prev.lastTurnMs === undefined ? {} : { lastTurnMs: prev.lastTurnMs }),
+  };
+  if (!inTurn) return finished;
+  const tool =
+    state === 'running' || state === 'reading' || state === 'working'
+      ? { tool: { id: `t${String(now)}`, name: state === 'running' ? 'Bash' : 'Edit', since: now } }
+      : {};
+  return { ...finished, turnStartedAt: prev.turnStartedAt ?? now, ...tool };
+}
 
 interface Phase {
   readonly state: AgentState;
@@ -112,6 +146,7 @@ export class MockSimulator {
       desk: deskFromCwd(cwd),
       cwd,
       state: 'idle',
+      stateSince: now,
       activity: [],
       lastSeen: now,
     };
@@ -138,10 +173,14 @@ export class MockSimulator {
     const pool = SUMMARIES[phase.state] ?? [phase.state];
     const summary = pool[Math.floor(this.rand() * pool.length)] ?? phase.state;
     const entry: ActivityEntry = { at: now, state: phase.state, summary };
+    const prev = sim.agent;
+    const inTurn = zoneOf(phase.state) === 'table';
     sim.agent = {
-      ...sim.agent,
+      ...withoutTiming(prev),
       state: phase.state,
-      lastSeen: phase.state === 'stale' ? sim.agent.lastSeen : now,
+      stateSince: phase.state === prev.state ? prev.stateSince : now,
+      ...timing(prev, phase.state, now, inTurn),
+      lastSeen: phase.state === 'stale' ? prev.lastSeen : now,
       activity: [entry, ...sim.agent.activity].slice(0, MAX_ACTIVITY),
     };
   }

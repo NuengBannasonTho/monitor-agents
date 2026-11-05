@@ -105,6 +105,20 @@ function toolCall(session: Session, subagent?: { id: string; type: string }): Pa
   });
 }
 
+/** The PostToolUse (or, now and then for Bash, PostToolUseFailure) that ends `call`. */
+function toolEnd(session: Session, call: Payload, durationMs: number): Payload {
+  const failed = call.tool_name === 'Bash' && Math.random() < 0.15;
+  return base(session, failed ? 'PostToolUseFailure' : 'PostToolUse', {
+    tool_name: call.tool_name,
+    tool_input: call.tool_input,
+    tool_use_id: call.tool_use_id,
+    duration_ms: durationMs,
+    ...(failed
+      ? { error: 'Exit code 1\nmock failure output (must not appear)', is_interrupt: false }
+      : { tool_response: { output: 'mock tool output (must not appear)' } }),
+  });
+}
+
 async function runAgent(
   index: number,
   post: (payload: Payload) => Promise<void>,
@@ -152,17 +166,21 @@ async function runAgent(
             }),
           );
         } else {
-          await post(toolCall(session));
-        }
-
-        if (Math.random() < 0.08) {
-          await post(
-            base(session, 'Notification', {
-              message: 'Claude needs your permission to use Bash',
-              notification_type: 'permission_prompt',
-            }),
-          );
-          await sleep(between(5_000, 10_000), signal);
+          const call = toolCall(session);
+          await post(call);
+          if (Math.random() < 0.08) {
+            await post(
+              base(session, 'Notification', {
+                message: 'Claude needs your permission to use Bash',
+                notification_type: 'permission_prompt',
+              }),
+            );
+            await sleep(between(5_000, 10_000), signal);
+          }
+          const ms = between(700, 2_600);
+          await sleep(ms, signal);
+          await post(toolEnd(session, call, ms));
+          continue;
         }
         await sleep(between(700, 2_600), signal);
       }

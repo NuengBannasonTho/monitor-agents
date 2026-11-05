@@ -114,3 +114,69 @@ describe('reduce transitions', () => {
     expect(m.get('s2')?.state).toBe('called');
   });
 });
+
+describe('reduce timing', () => {
+  const agent = (m: AgentMap) => m.get('s1');
+
+  it('records when each state began', () => {
+    const start = ev('start');
+    const prompt = ev('prompt');
+    const read1 = ev('tool', { toolName: 'Read' });
+    const read2 = ev('tool', { toolName: 'Grep' });
+    const m = run(start, prompt, read1, read2);
+    // Still reading: the clock keeps the first Read.
+    expect(agent(m)?.stateSince).toBe(read1.at);
+  });
+
+  it('times the turn from your prompt to the stop', () => {
+    const prompt = ev('prompt');
+    const stop = ev('stop');
+    const m = run(ev('start'), prompt, ev('tool', { toolName: 'Edit' }), stop);
+    expect(agent(m)).toMatchObject({ finishedAt: stop.at, lastTurnMs: stop.at - prompt.at });
+    expect(agent(m)?.turnStartedAt).toBeUndefined();
+    expect(agent(m)?.tool).toBeUndefined();
+  });
+
+  it('keeps the turn start when another prompt arrives mid-turn', () => {
+    const first = ev('prompt');
+    const m = run(ev('start'), first, ev('tool', { toolName: 'Bash' }), ev('prompt'));
+    expect(agent(m)?.turnStartedAt).toBe(first.at);
+  });
+
+  it('tracks the tool in progress until it ends', () => {
+    const bash = ev('tool', { toolName: 'Bash', toolId: 't1' });
+    const running = run(ev('start'), ev('prompt'), bash);
+    expect(agent(running)?.tool).toEqual({ id: 't1', name: 'Bash', since: bash.at });
+    const ended = reduce(running, ev('tool-end', { toolName: 'Bash', toolId: 't1' }));
+    expect(agent(ended)?.tool).toBeUndefined();
+    // Another tool's end does not clear it.
+    const other = reduce(running, ev('tool-end', { toolName: 'Read', toolId: 't0' }));
+    expect(agent(other)?.tool?.id).toBe('t1');
+  });
+
+  it('a quick tool end adds no activity line; a failure does', () => {
+    const base = run(ev('start'), ev('prompt'), ev('tool', { toolName: 'Bash', toolId: 't1' }));
+    const quick = reduce(base, ev('tool-end', { toolName: 'Bash', toolId: 't1' }));
+    expect(agent(quick)?.activity).toHaveLength(agent(base)?.activity.length ?? 0);
+    const failed = reduce(
+      base,
+      ev('tool-end', { toolName: 'Bash', toolId: 't1', failed: true, summary: 'Bash failed' }),
+    );
+    expect(agent(failed)?.activity[0]).toMatchObject({ summary: 'Bash failed', failed: true });
+  });
+
+  it('leaves needs-you once the tool that asked for permission has run', () => {
+    const base = run(
+      ev('start'),
+      ev('prompt'),
+      ev('tool', { toolName: 'Bash', toolId: 't2' }),
+      ev('notify', { summary: 'Needs permission' }),
+    );
+    expect(stateOf(reduce(base, ev('tool-end', { toolName: 'Read', toolId: 't1' })))).toBe(
+      'needs-you',
+    );
+    expect(stateOf(reduce(base, ev('tool-end', { toolName: 'Bash', toolId: 't2' })))).toBe(
+      'working',
+    );
+  });
+});

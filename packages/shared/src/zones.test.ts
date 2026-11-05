@@ -35,3 +35,21 @@ describe('ServerMessageSchema', () => {
     });
   });
 });
+
+describe('AgentSchema', () => {
+  it('accepts agents from a server that predates stateSince', () => {
+    const parsed = ServerMessageSchema.parse({
+      type: 'upsert',
+      agent: {
+        id: 'a',
+        kind: 'claude-code',
+        desk: 'd',
+        cwd: '/d',
+        state: 'idle',
+        activity: [],
+        lastSeen: 42,
+      },
+    });
+    expect(parsed.type === 'upsert' && parsed.agent.stateSince).toBe(42);
+  });
+});

@@ -45,8 +45,51 @@ describe('claude-code adapter: every hook type', () => {
         tool_use_id: 'toolu_1',
       }),
     );
-    expect(event).toEqual({ ...base, type: 'tool', toolName: 'Edit', summary: 'Edit src/a.ts' });
+    expect(event).toEqual({
+      ...base,
+      type: 'tool',
+      toolName: 'Edit',
+      toolId: 'toolu_1',
+      summary: 'Edit src/a.ts',
+    });
     expect(JSON.stringify(event)).not.toContain('PRIVATE');
+  });
+
+  it('PostToolUse -> tool-end; only long calls get an activity line', () => {
+    const quick = adapter.normalize(
+      hook('PostToolUse', {
+        tool_name: 'Bash',
+        tool_use_id: 'toolu_1',
+        tool_input: { command: 'ls' },
+        tool_response: { stdout: 'SECRET OUTPUT' },
+        duration_ms: 120,
+      }),
+    );
+    expect(quick).toEqual({ ...base, type: 'tool-end', toolName: 'Bash', toolId: 'toolu_1' });
+    expect(JSON.stringify(quick)).not.toContain('SECRET');
+    const long = adapter.normalize(
+      hook('PostToolUse', { tool_name: 'Bash', tool_use_id: 'toolu_2', duration_ms: 125_000 }),
+    );
+    expect(long?.summary).toBe('Bash finished after 2m 5s');
+  });
+
+  it.each([
+    [{ error: 'Exit code 1\nnpm ERR! token=abc' }, 'Bash failed (exit 1)'],
+    [{ error: 'Something broke' }, 'Bash failed'],
+    [{ is_interrupt: true }, 'Bash interrupted'],
+  ])('PostToolUseFailure %j -> failed tool-end', (extra, summary) => {
+    const event = adapter.normalize(
+      hook('PostToolUseFailure', { tool_name: 'Bash', tool_use_id: 'toolu_3', ...extra }),
+    );
+    expect(event).toEqual({
+      ...base,
+      type: 'tool-end',
+      toolName: 'Bash',
+      toolId: 'toolu_3',
+      failed: true,
+      summary,
+    });
+    expect(JSON.stringify(event)).not.toContain('token');
   });
 
   it('PreToolUse inside a subagent is labelled', () => {
@@ -123,7 +166,8 @@ describe('claude-code adapter: malformed input', () => {
     ['string', 'hello'],
     ['array', [1, 2]],
     ['empty object', {}],
-    ['unknown event', hook('PostToolUse', { tool_name: 'Read' })],
+    ['unknown event', hook('PreCompact', { trigger: 'auto' })],
+    ['PostToolUse without tool_name', hook('PostToolUse')],
     ['missing session_id', { cwd: CWD, hook_event_name: 'Stop' }],
     ['empty session_id', hook('Stop', { session_id: '' })],
     ['numeric session_id', hook('Stop', { session_id: 42 })],

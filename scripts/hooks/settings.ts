@@ -14,6 +14,8 @@ export const HOOK_EVENTS: readonly { readonly event: string; readonly matcher?: 
   { event: 'SessionEnd' },
   { event: 'UserPromptSubmit' },
   { event: 'PreToolUse', matcher: '*' },
+  { event: 'PostToolUse', matcher: '*' },
+  { event: 'PostToolUseFailure', matcher: '*' },
   { event: 'Notification' },
   { event: 'Stop' },
   { event: 'SubagentStop' },
@@ -124,6 +126,16 @@ export function unmergeHooks(settings: JsonObject): JsonObject {
     return Object.fromEntries(Object.entries(settings).filter(([key]) => key !== 'hooks'));
   }
   return { ...settings, hooks: next };
+}
+
+/** Hook events we want but `settings` has none of ours for (e.g. added in a newer version). */
+export function missingHookEvents(settings: JsonObject): string[] {
+  const hooks = isObject(settings.hooks) ? settings.hooks : {};
+  return HOOK_EVENTS.map((e) => e.event).filter((event) => {
+    const groups = hooks[event];
+    if (!Array.isArray(groups)) return true;
+    return !groups.some((g) => isObject(g) && Array.isArray(g.hooks) && g.hooks.some(isOurHook));
+  });
 }
 
 export function countOurHooks(settings: JsonObject): number {
