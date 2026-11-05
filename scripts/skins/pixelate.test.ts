@@ -32,10 +32,24 @@ describe('pixelate', () => {
     expect(px[(2 * 6 + 2) * 4 + 3]).toBe(255); // enclosed light pixel kept
   });
 
+  it('leaves images that already have a transparent background alone', () => {
+    // Transparent border (stored as black), then a black outline and black "sunglasses".
+    const w = 6;
+    const px = new Uint8Array(w * w * 4);
+    for (let y = 1; y <= 4; y++)
+      for (let x = 1; x <= 4; x++) px.set([0, 0, 0, 255], (y * w + x) * 4);
+    const before = Uint8Array.from(px);
+    expect(removeBackground(px, w, w)).toEqual(before);
+  });
+
   it('finds the opaque bounds', () => {
     const px = removeBackground(sample(), 6, 6);
     expect(opaqueBounds(px, 6, 6)).toEqual({ left: 1, top: 1, right: 5, bottom: 5 });
     expect(opaqueBounds(new Uint8Array(16), 2, 2)).toBeNull();
+    // Faint alpha noise does not count.
+    const faint = new Uint8Array(16);
+    faint[3] = 5;
+    expect(opaqueBounds(faint, 2, 2)).toBeNull();
   });
 
   it('unions boxes and builds a bottom-aligned square', () => {

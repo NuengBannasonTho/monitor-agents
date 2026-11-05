@@ -40,6 +40,10 @@ export function estimateBackground(
  * through colors close to the background. Interior pixels of the same color
  * (eye highlights, white costume parts) are untouched because the outline
  * stops the fill. Mutates and returns `rgba`.
+ *
+ * Images whose corners are already transparent are left alone: transparent pixels
+ * usually store black, and filling "black" from the border would eat the outline
+ * and anything dark touching it (sunglasses, hair).
  */
 export function removeBackground(
   rgba: Uint8Array,
@@ -47,6 +51,8 @@ export function removeBackground(
   height: number,
   tolerance = 30,
 ): Uint8Array {
+  const corners = [0, width - 1, (height - 1) * width, height * width - 1];
+  if (corners.some((p) => (rgba[p * 4 + 3] ?? 0) < 128)) return rgba;
   const [br, bg, bb] = estimateBackground(rgba, width, height);
   const visited = new Uint8Array(width * height);
   const queue = new Int32Array(width * height);
@@ -80,15 +86,24 @@ export function removeBackground(
   return rgba;
 }
 
-/** Bounding box of pixels with alpha > 0, or null for a fully transparent image. */
-export function opaqueBounds(rgba: Uint8Array, width: number, height: number): Box | null {
+/**
+ * Bounding box of clearly visible pixels (alpha >= `minAlpha`), or null if there are none.
+ * Exported images often carry faint, invisible alpha noise far from the character; counting
+ * it would make the crop too big and the character too small.
+ */
+export function opaqueBounds(
+  rgba: Uint8Array,
+  width: number,
+  height: number,
+  minAlpha = 64,
+): Box | null {
   let left = width;
   let top = height;
   let right = -1;
   let bottom = -1;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if ((rgba[(y * width + x) * 4 + 3] ?? 0) === 0) continue;
+      if ((rgba[(y * width + x) * 4 + 3] ?? 0) < minAlpha) continue;
       if (x < left) left = x;
       if (x > right) right = x;
       if (y < top) top = y;
