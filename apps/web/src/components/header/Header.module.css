@@ -1,137 +1,125 @@
+/* Brand on the left, then floating cards: state counts, unread finishes, controls. */
 .header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px 20px;
-  padding: 14px 16px;
+  gap: 14px 16px;
+  padding: 18px 24px 8px;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-right: auto;
 }
 
 .title {
   margin: 0;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .source {
-  padding: 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.source[data-source='live'] {
-  border-color: color-mix(in srgb, var(--state-running) 50%, transparent);
-  color: var(--state-running);
-}
-
-.source[data-source='offline'] {
-  border-color: color-mix(in srgb, var(--state-needs-you) 50%, transparent);
-  color: var(--state-needs-you);
-}
-
-.counts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  padding: 3px 9px;
+  border-radius: 8px;
   background: var(--surface);
-  font-size: 12.5px;
-  font-weight: 600;
-  transition:
-    opacity 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.zero {
-  opacity: 0.5;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.label {
+  box-shadow: var(--shadow-sm);
   color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.n {
-  min-width: 1ch;
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
+.sourceDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--state-idle);
 }
 
-.urgent {
-  border-color: transparent;
+.source[data-source='live'] .sourceDot {
+  background: var(--state-running);
+}
+
+.source[data-source='offline'] {
+  color: var(--state-needs-you);
+}
+
+.source[data-source='offline'] .sourceDot {
   background: var(--state-needs-you);
-  color: #fff;
-  opacity: 1;
-  animation: urgentPulse 1.2s ease-in-out infinite;
 }
 
-.urgent .label {
-  color: #fff;
+.source[data-source='connecting'] .sourceDot {
+  animation: blink 1s ease-in-out infinite;
 }
 
-.urgent .dot {
-  background: #fff !important;
+/* Finished turns you have not opened yet. */
+.finished {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+  animation: popIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@keyframes urgentPulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 35, 60, 0.45);
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
   }
+}
+
+.finished:hover {
+  background: var(--surface-2);
+}
+
+.finished:active {
+  transform: scale(0.97);
+}
+
+.check {
+  flex: none;
+  color: var(--state-running);
+}
+
+@keyframes blink {
   50% {
-    box-shadow: 0 0 0 6px rgba(239, 35, 60, 0);
+    opacity: 0.2;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .urgent {
+  .source[data-source='connecting'] .sourceDot,
+  .finished {
     animation: none;
+    transition: none;
   }
 }
 
-/* On narrow screens keep the label for screen readers but hide it visually. */
-@media (max-width: 560px) {
-  .label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
+/* Sound, alerts and the costume mode, as one toolbar card. */
 .controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  padding: 6px 6px 6px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
 }

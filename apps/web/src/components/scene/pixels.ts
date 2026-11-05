@@ -1,11 +1,8 @@
 /**
  * Tiny software pixel buffer for the background scenes. Scenes are painted once per
- * size/theme change at "art" resolution and scaled up by PIXEL with nearest-neighbour
- * sampling, so every art pixel is the same size as a worker sprite pixel.
+ * size/theme/pixel-size change at "art" resolution and scaled up with nearest-neighbour
+ * sampling, so every art pixel is the same size as a pixel of the avatars on screen.
  */
-
-/** CSS px per art pixel. Matches the pixel workers (90 px wide / 18 cells). */
-export const PIXEL = 5;
 
 /** Packed 0xRRGGBBAA. */
 export type Color = number;
@@ -21,6 +18,19 @@ export function parseColor(hex: string): Color {
 export function withAlpha(color: Color, alpha: number): Color {
   const a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
   return Math.floor(color / 256) * 256 + a;
+}
+
+/** Opaque color `t` of the way from `a` to `b` (alpha taken from `a`). */
+export function mix(a: Color, b: Color, t: number): Color {
+  const ca = Math.floor(a / 256);
+  const cb = Math.floor(b / 256);
+  let rgb = 0;
+  for (const shift of [16, 8, 0]) {
+    const va = (ca >>> shift) & 255;
+    const vb = (cb >>> shift) & 255;
+    rgb += Math.round(va + (vb - va) * t) * 2 ** shift;
+  }
+  return rgb * 256 + (a % 256);
 }
 
 export type Palette<K extends string = string> = Readonly<Record<K, Color>>;

@@ -1,16 +1,19 @@
 import { AnimateUIProvider } from '@animate-ui/react/provider';
 import { Tooltip } from '@animate-ui/react/primitives/radix-ui/tooltip';
 import { MotionConfig } from 'motion/react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './App.module.css';
 import { Gallery } from './components/gallery/Gallery';
 import { Header } from './components/header/Header';
 import { Office } from './components/office/Office';
 import { AgentPanel } from './components/panel/AgentPanel';
-import { cx } from './lib/cx';
 import { SkinProvider } from './skins/SkinContext';
 import { useNeedsYouSound } from './sound/useNeedsYouSound';
+import { unseenFinished, waitingOnYou } from './live/attention';
 import { useAgentStream } from './live/useAgentStream';
+import { useDesktopAlerts } from './live/useDesktopAlerts';
+import { useSeenFinishes } from './live/useSeenFinishes';
+import { useTabBadge } from './live/useTabBadge';
 import { mockAgentCountFromUrl, useMockAgents } from './mock/useMockAgents';
 
 const params = new URLSearchParams(window.location.search);
@@ -42,9 +45,24 @@ export function App() {
   const toggleSelect = useCallback((id: string) => {
     setSelectedId((current) => (current === id ? null : id));
   }, []);
+  const open = useCallback((id: string) => {
+    setSelectedId(id);
+  }, []);
   const closePanel = useCallback(() => {
     setSelectedId(null);
   }, []);
+
+  // What needs your attention: shown in the header, the tab and desktop notifications.
+  const { seen, baseline, markSeen } = useSeenFinishes();
+  const waiting = useMemo(() => waitingOnYou(agents), [agents]);
+  const finished = useMemo(() => unseenFinished(agents, seen, baseline), [agents, seen, baseline]);
+  const finishedIds = useMemo(() => new Set(finished.map((a) => a.id)), [finished]);
+  useTabBadge(waiting.length, finished.length);
+  const alerts = useDesktopAlerts(agents, open);
+  // Opening an agent counts as reading its latest answer.
+  useEffect(() => {
+    if (selected !== null) markSeen(selected);
+  }, [selected, markSeen]);
 
   return (
     // Both providers read the same `motion` runtime, so one reduced-motion setting covers
@@ -53,8 +71,15 @@ export function App() {
       <AnimateUIProvider reducedMotion="user">
         <SkinProvider enabled={!USE_SIMULATOR}>
           <Tooltip.Provider delayDuration={250} skipDelayDuration={150}>
-            <div className={cx(styles.app, selected !== null && styles.withPanel)}>
-              <Header agents={agents} source={source} sound={sound} />
+            <div className={styles.app}>
+              <Header
+                waiting={waiting}
+                finished={finished}
+                onOpen={open}
+                source={source}
+                sound={sound}
+                alerts={alerts}
+              />
               <main className={styles.main}>
                 {SHOW_GALLERY ? (
                   <Gallery />
@@ -62,7 +87,10 @@ export function App() {
                   <Office
                     agents={agents}
                     selectedId={selected?.id ?? null}
+                    finishedIds={finishedIds}
+                    waiting={waiting}
                     onSelect={toggleSelect}
+                    onOpen={open}
                   />
                 )}
               </main>

@@ -1,17 +1,19 @@
 import { useLayoutEffect, useRef } from 'react';
-import { PIXEL, PixelBuffer } from './pixels';
+import { PixelBuffer } from './pixels';
 import styles from './Scene.module.css';
 
 interface PixelCanvasProps {
-  /** Size in art pixels; the canvas is shown PIXEL times larger. */
+  /** Size in art pixels; the canvas is shown `px` times larger. */
   readonly width: number;
   readonly height: number;
+  /** CSS px per art pixel. */
+  readonly px: number;
   /** Must be stable (useCallback): the scene is repainted whenever it changes. */
   readonly paint: (buf: PixelBuffer) => void;
 }
 
 /** Paints a scene once at art resolution and lets the browser upscale it with hard edges. */
-export function PixelCanvas({ width, height, paint }: PixelCanvasProps) {
+export function PixelCanvas({ width, height, px, paint }: PixelCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useLayoutEffect(() => {
@@ -28,12 +30,12 @@ export function PixelCanvas({ width, height, paint }: PixelCanvasProps) {
       className={styles.canvas}
       width={Math.max(1, width)}
       height={Math.max(1, height)}
-      style={{ width: width * PIXEL, height: height * PIXEL }}
+      style={{ width: width * px, height: height * px }}
     />
   );
 }
 
-/** Art pixels needed to cover `px` CSS pixels. */
-export function artSize(px: number): number {
-  return Math.max(1, Math.ceil(px / PIXEL));
+/** Art pixels needed to cover `css` CSS pixels at `px` CSS px per art pixel. */
+export function artSize(css: number, px: number): number {
+  return Math.max(1, Math.ceil(css / px));
 }

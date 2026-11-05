@@ -1,5 +1,6 @@
 import { useSkins } from '../../skins/SkinContext';
 import { Avatar } from '../avatar/Avatar';
+import { CostumeIcon } from '../icons';
 import styles from './CostumePicker.module.css';
 
 /**
@@ -14,6 +15,7 @@ export function CostumePicker({ desk }: { desk: string }) {
   return (
     <section aria-labelledby="costume-title">
       <h3 id="costume-title" className={styles.title}>
+        <CostumeIcon size={18} />
         Costume for {desk}
       </h3>
       <div className={styles.grid} role="radiogroup" aria-labelledby="costume-title">

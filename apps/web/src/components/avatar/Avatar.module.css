@@ -14,11 +14,28 @@
   position: absolute;
   bottom: 0;
   left: 50%;
+  display: block;
   max-width: none;
-  image-rendering: pixelated;
   transform: translateX(-50%);
   pointer-events: none;
   user-select: none;
+}
+
+.still {
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Frame strip built from the still image (see skins/skinMotion.ts). */
+.sheet {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-position: 0% 0;
+  image-rendering: pixelated;
+  animation-name: skinFrames;
+  animation-iteration-count: infinite;
 }
 
 .badge {
@@ -36,6 +53,18 @@
 
 /* ---- per-state motion (same vocabulary as the pixel worker) ---- */
 
+/* States without their own motion breathe: up one sprite pixel and back. */
+.state-idle .sprite,
+.state-called .sprite,
+.state-reading .sprite,
+.state-running .sprite {
+  animation: breathe 1.3s steps(1, end) var(--skin-delay, 0s) infinite;
+}
+
+.state-stale .sprite {
+  animation: breathe 2.6s steps(1, end) var(--skin-delay, 0s) infinite;
+}
+
 .state-working .sprite {
   animation: typing 0.32s steps(1, end) infinite;
 }
@@ -50,6 +79,24 @@
 
 .state-stale {
   opacity: 0.4;
+}
+
+@keyframes skinFrames {
+  from {
+    background-position-x: 0%;
+  }
+  to {
+    background-position-x: 100%;
+  }
+}
+
+@keyframes breathe {
+  0% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -2px);
+  }
 }
 
 @keyframes typing {

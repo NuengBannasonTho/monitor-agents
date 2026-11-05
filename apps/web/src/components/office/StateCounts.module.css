@@ -1,0 +1,102 @@
+/* Plain chips on the card; the first dot lines up with the panel title. */
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 0 -9px;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: 11px;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background-color 0.25s ease;
+}
+
+/* The state's icon, in the state's color. */
+.icon {
+  flex: none;
+}
+
+.label {
+  color: var(--muted);
+}
+
+.n {
+  min-width: 1ch;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.icon,
+.label,
+.n {
+  transition: opacity 0.25s ease;
+}
+
+.zero .icon,
+.zero .label,
+.zero .n {
+  opacity: 0.4;
+}
+
+/* The urgent chip is a button that opens whoever has waited the longest. */
+.statButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: -4px -9px;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Someone needs you. */
+.urgent {
+  background: var(--state-needs-you);
+  color: #fff;
+  animation: alarm 1.6s ease-in-out infinite;
+}
+
+.urgent .label {
+  color: #fff;
+}
+
+.urgent .icon {
+  color: #fff !important;
+}
+
+@keyframes alarm {
+  50% {
+    background: color-mix(in srgb, var(--state-needs-you) 80%, #000);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .urgent {
+    animation: none;
+  }
+}
+
+/* Narrow panels: numbers only; the label stays for screen readers. */
+@media (max-width: 560px) {
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

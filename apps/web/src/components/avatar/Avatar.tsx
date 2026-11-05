@@ -2,6 +2,7 @@ import type { AgentState } from '@agent-office/shared';
 import { memo } from 'react';
 import { cx } from '../../lib/cx';
 import { useSkins } from '../../skins/SkinContext';
+import type { SkinState } from '../../skins/SkinContext';
 import { workerPalette } from '../worker/palette';
 import { PixelWorker } from '../worker/PixelWorker';
 import type { Cell } from '../worker/sprite';
@@ -15,6 +16,7 @@ import {
   ZZZ,
 } from '../worker/sprite';
 import styles from './Avatar.module.css';
+import { SkinSprite } from './SkinSprite';
 
 export type AvatarVariant = 'office' | 'hero' | 'thumb';
 
@@ -26,7 +28,17 @@ export const AVATAR_BOX: Readonly<Record<AvatarVariant, { width: number; height:
 };
 const PIXEL_WIDTH: Readonly<Record<AvatarVariant, number>> = { office: 90, hero: 126, thumb: 36 };
 /** Integer upscale of the skin grid, so every sprite pixel stays square. */
-const SKIN_SCALE: Readonly<Record<AvatarVariant, number>> = { office: 2, hero: 3, thumb: 1 };
+const SKIN_SCALE: Readonly<Record<AvatarVariant, number>> = { office: 2, hero: 2, thumb: 1 };
+
+/**
+ * CSS px per sprite pixel of the office avatars currently shown: 5 for pixel workers,
+ * 2 for image skins. Scenery uses the same size so the two never look out of scale.
+ */
+export function officePixelSize(skins: Pick<SkinState, 'pack' | 'mode'>): number {
+  return skins.pack === null || skins.mode === 'pixel'
+    ? PIXEL_WIDTH.office / SPRITE_COLS
+    : SKIN_SCALE.office;
+}
 
 interface AvatarProps {
   readonly state: AgentState;
@@ -106,15 +118,7 @@ function AvatarImpl({ state, desk, hue, seed, variant, title, imageKey }: Avatar
       data-skin={skins.mode}
       data-state={state}
     >
-      <img
-        className={styles.sprite}
-        src={src}
-        width={px}
-        height={px}
-        alt={title ?? ''}
-        draggable={false}
-        decoding="async"
-      />
+      <SkinSprite src={src} px={px} seed={seed} {...(title === undefined ? {} : { title })} />
       {badge !== null && (
         <svg
           className={styles.badge}

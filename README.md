@@ -25,13 +25,14 @@ pnpm install-hooks
 pnpm diagnose
 ```
 
-Open **http://127.0.0.1:4777**, then start Claude Code in your Orca worktrees. Restart existing sessions after installing hooks. Keep `pnpm start` running.
+Open **http://127.0.0.1:4777**, then start Claude Code in your Orca worktrees. Restart existing sessions after installing hooks. Keep `pnpm start` running. After updating Agent Office, run `pnpm install-hooks` again to add any new hooks.
 
 ## Features
 
-- Pixel workers show agent activity and highlight permission/input requests.
-- Click a worker for session details and recent activity.
-- Optional sound alerts, custom skins, system themes, and reduced motion.
+- Busy agents sit at desks in **Agent Work**; waiting agents relax around the campfire at **Base Camp**. Collapse either half to give the other the full width.
+- Pixel workers show agent activity and highlight permission/input requests. The header, tab title and icon show who is waiting on you, and unread finishes get a green **new** flag.
+- Click a worker for session details, timing, and recent activity (failed commands in red), plus **Open in VS Code** and **Copy resume command**.
+- Optional sound and desktop alerts, custom skins, a light/dark/system theme switch, and reduced motion.
 
 ## Custom skins
 
@@ -55,5 +56,5 @@ pnpm uninstall-hooks
 
 - No outbound calls. Prompts and full messages are never stored; short activity summaries redact detected secrets.
 - Subagent activity appears on the parent worker.
-- Long tool calls may appear stale; the next event restores activity.
+- Agents stay in the office while a long tool call runs, for up to 30 minutes (`TOOL_STALE_AFTER_MIN`).
 - Restarting the server clears the office until new events arrive.

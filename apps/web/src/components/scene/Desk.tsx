@@ -1,28 +1,21 @@
 import type { AgentState } from '@agent-office/shared';
 import { memo, useMemo } from 'react';
 import { cx } from '../../lib/cx';
-import { PIXEL } from './pixels';
 import { STATE_COLOR_VAR } from '../office/stateMeta';
 import type { Cell } from '../worker/sprite';
-import type { DeskItem, DeskSide } from './deskSprite';
+import type { DeskItem, DeskSide } from './deskArt';
 import {
-  ALERT_FRAMES,
-  CODE_FRAMES,
-  DESK_COLS,
-  DESK_ROWS,
-  DESK_ROWS_ABOVE,
-  SCREEN_GLARE,
+  DESK_BOTTOM_PX,
+  DESK_TOP_PX,
+  DESK_WIDTH_PX,
+  alertFrames,
+  codeFrames,
   deskRuns,
-  mirrorCells,
-} from './deskSprite';
+  screenGlare,
+} from './deskArt';
 import styles from './Desk.module.css';
 import type { SceneTheme } from './useSceneTheme';
 
-/** Desk sprite size in CSS px. */
-export const DESK_WIDTH = DESK_COLS * PIXEL;
-export const DESK_HEIGHT = DESK_ROWS * PIXEL;
-/** The anchor (desk-top line) sits this far below the sprite's top edge. */
-export const DESK_ANCHOR_Y = DESK_ROWS_ABOVE * PIXEL;
 /**
  * A seated worker's body center sits this far above the desk-top line, which puts the
  * desk top at the worker's hands and hides the legs behind the front panel.
@@ -40,19 +33,39 @@ const DAY: DeskPalette = {
   x: 'rgba(40, 30, 20, 0.22)',
   d: '#9a663a',
   o: '#f1dcae',
+  i: '#5c3b20',
+  H: '#e8b87f',
   B: '#2d3240',
   N: '#3a3f4e',
   s: '#1b2131',
+  G: '#4b5163',
   k: '#eceae4',
+  j: '#b9b5ad',
   m: '#eceae4',
   u: '#f7f4ee',
   h: '#d8d2c6',
+  c: '#6b3d24',
   l: '#4f9a52',
   L: '#74c464',
+  e: '#2f6b3a',
   q: '#c98a5d',
   w: '#fbfaf5',
+  v: '#b9c3d6',
   g: '#3a4560',
   W: '#ffffff',
+  r: '#c08850',
+  F: '#7d522b',
+  O: '#161922',
+  b: '#4a5164',
+  S: '#262d40',
+  n: '#5ad17a',
+  J: '#a9a59c',
+  M: '#bdb8ae',
+  U: '#d9d3c7',
+  Y: '#5c5650',
+  Z: '#1c4a28',
+  Q: '#e0a679',
+  V: '#cfd3da',
 };
 
 const NIGHT: DeskPalette = {
@@ -65,18 +78,38 @@ const NIGHT: DeskPalette = {
   x: 'rgba(0, 0, 0, 0.35)',
   d: '#5c412d',
   o: '#a08a6a',
+  i: '#2e2018',
+  H: '#a37a55',
   B: '#1a1d27',
   N: '#22252f',
   s: '#0b0e17',
+  G: '#2c303d',
   k: '#8d8b86',
+  j: '#6b6964',
   m: '#8d8b86',
   u: '#a9a59c',
   h: '#86827a',
+  c: '#3a2216',
   l: '#2a5a3b',
   L: '#3a7650',
+  e: '#1b3d29',
   q: '#7a5440',
   w: '#b8b6ae',
+  v: '#7d8496',
   g: '#1d2436',
+  r: '#7d5a3d',
+  F: '#47321f',
+  O: '#07080c',
+  b: '#2a2f3d',
+  S: '#151a28',
+  n: '#3fb062',
+  J: '#5f5d58',
+  M: '#706e69',
+  U: '#8a867e',
+  Y: '#2a2725',
+  Z: '#0d2416',
+  Q: '#946850',
+  V: '#8f949f',
 };
 
 interface DeskProps {
@@ -89,6 +122,8 @@ interface DeskProps {
   /** State of the agent sitting here, or null for an empty desk. */
   readonly state: AgentState | null;
   readonly theme: SceneTheme;
+  /** CSS px per art pixel, matching the avatars on screen. */
+  readonly px: number;
 }
 
 function Cells({ cells, colors }: { cells: readonly Cell[]; colors: DeskPalette }) {
@@ -101,22 +136,27 @@ function Cells({ cells, colors }: { cells: readonly Cell[]; colors: DeskPalette 
   );
 }
 
-function DeskImpl({ x, y, zIndex, side, item, state, theme }: DeskProps) {
-  const runs = useMemo(() => deskRuns(side, item), [side, item]);
+function DeskImpl({ x, y, zIndex, side, item, state, theme, px }: DeskProps) {
+  const runs = useMemo(() => deskRuns(px, side, item), [px, side, item]);
+  const glare = useMemo(() => screenGlare(px, side), [px, side]);
+  const alert = state === 'needs-you';
+  const frames = useMemo(
+    () => (alert ? alertFrames(px, side) : codeFrames(px, side)),
+    [alert, px, side],
+  );
   const base = theme === 'night' ? NIGHT : DAY;
   const colors = useMemo<DeskPalette>(
     () => (state === null ? base : { ...base, a: STATE_COLOR_VAR[state] }),
     [base, state],
   );
-  const frames = state === 'needs-you' ? ALERT_FRAMES : CODE_FRAMES;
 
   return (
     <svg
-      className={cx(styles.desk, state === 'needs-you' && styles.alert)}
-      style={{ left: x - DESK_WIDTH / 2, top: y - DESK_ANCHOR_Y, zIndex }}
-      width={DESK_WIDTH}
-      height={DESK_HEIGHT}
-      viewBox={`0 ${-DESK_ROWS_ABOVE} ${DESK_COLS} ${DESK_ROWS}`}
+      className={cx(styles.desk, alert && styles.alert)}
+      style={{ left: x - DESK_WIDTH_PX / 2, top: y + DESK_TOP_PX, zIndex }}
+      width={DESK_WIDTH_PX}
+      height={DESK_BOTTOM_PX - DESK_TOP_PX}
+      viewBox={`0 ${Math.round(DESK_TOP_PX / px)} ${Math.round(DESK_WIDTH_PX / px)} ${Math.round((DESK_BOTTOM_PX - DESK_TOP_PX) / px)}`}
       shapeRendering="crispEdges"
       aria-hidden
       data-occupied={state === null ? undefined : 'true'}
@@ -125,11 +165,11 @@ function DeskImpl({ x, y, zIndex, side, item, state, theme }: DeskProps) {
         <rect key={`${r.x},${r.y}`} x={r.x} y={r.y} width={r.w} height={1} fill={colors[r.key]} />
       ))}
       {state === null ? (
-        <Cells cells={mirrorCells(SCREEN_GLARE, side)} colors={colors} />
+        <Cells cells={glare} colors={colors} />
       ) : (
         frames.map((frame, i) => (
           <g key={i} className={i === 0 ? styles.frameA : styles.frameB}>
-            <Cells cells={mirrorCells(frame, side)} colors={colors} />
+            <Cells cells={frame} colors={colors} />
           </g>
         ))
       )}

@@ -1,64 +1,279 @@
+/* Two equal panels; collapsing one hands its width to the other, smoothly. */
 .office {
+  --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --panel-ms: 420ms;
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(300px, 2fr) minmax(420px, 3fr);
-  gap: 16px;
+  display: flex;
+  gap: 20px;
   flex: 1;
   min-height: 0;
-  padding: 0 16px 16px;
+  padding: 14px 24px 24px;
+}
+
+/* A soft card holding the title bar and its pixel scene. */
+.panel {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  transition:
+    flex-grow var(--panel-ms) var(--panel-ease),
+    flex-basis var(--panel-ms) var(--panel-ease);
+  min-height: 520px;
+  padding: 8px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* Title and the collapse button on top, the per-state chips below. */
+.panelHeader {
+  display: grid;
+  grid-template-areas:
+    'title button'
+    'stats stats';
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 6px 6px 4px 14px;
+}
+
+.panelTitle {
+  grid-area: title;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.panelIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.collapsed .panelIcon {
+  width: 30px;
+  height: 30px;
+}
+
+.panelCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.panelCount[data-urgent='true'] {
+  background: var(--state-needs-you);
+  color: #fff;
+}
+
+.panelStats {
+  grid-area: stats;
+  min-width: 0;
+}
+
+/* Round icon button. */
+.collapse {
+  grid-area: button;
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.collapse:hover {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.collapse:active {
+  transform: scale(0.92);
+}
+
+.chevrons {
+  transition: transform var(--panel-ms) var(--panel-ease);
+}
+
+.chevrons[data-pointing='right'] {
+  transform: rotate(180deg);
+}
+
+/* The pixel scene, inset in the card with softer corners. */
+.zone {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.zone[hidden] {
+  display: none;
+}
+
+/* Collapsed: a slim card, its title running down it. */
+.collapsed {
+  flex: 0 0 64px;
+  min-height: 0;
+}
+
+/* The bar's title fades in once the card has narrowed (and the full header once it widens). */
+.panelHeader {
+  animation: settleIn 260ms ease-out 140ms both;
+}
+
+.collapsed .panelHeader {
+  animation-name: settleInBar;
+  animation-delay: 220ms;
+}
+
+/* The scene of a collapsing panel fades out while the card narrows. */
+.collapsed .zone {
+  position: absolute;
+  inset: 70px 8px 8px;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+@keyframes settleIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes settleInBar {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/*
+ * While a panel opens or shuts, the other scene keeps its last painting, stretched and
+ * softly blurred, and the characters step out; once the size settles the scene repaints
+ * crisp and everyone is back in place.
+ */
+.zone > * {
+  transition:
+    filter 220ms ease-out,
+    opacity 220ms ease-out;
+  /* A scene fades in when it first paints (page load, a panel opening). */
+  animation: sceneIn 320ms ease-out both;
+}
+
+.office[data-animating] .zone > * {
+  filter: blur(6px) saturate(0.9);
+  opacity: 0.75;
+}
+
+.office[data-animating] .zone canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@keyframes sceneIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.office[data-animating] .stage {
+  opacity: 0;
+  transition-duration: 120ms;
+}
+
+.collapsed .panelHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 4px 0 14px;
+}
+
+.collapsed .collapse {
+  order: -1;
+}
+
+.collapsed .panelTitle {
+  writing-mode: vertical-rl;
+}
+
+.collapsed .panelCount {
+  min-width: 26px;
+  height: auto;
+  min-height: 26px;
+  padding: 6px 0;
+  /* Keep the number upright inside the vertical title. */
+  text-combine-upright: all;
 }
 
 @media (max-width: 860px) {
   .office {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
+    flex-direction: column;
+    padding: 12px 16px 20px;
+  }
+
+  .panel,
+  .collapsed {
+    flex: 0 0 auto;
   }
 
   .tableZone {
     min-height: 580px;
   }
-}
 
-.zone {
-  position: relative;
-  min-height: 460px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-}
+  /* Stacked: a collapsed panel keeps just its title bar. */
+  .collapsed .panelHeader {
+    flex-direction: row;
+    justify-content: space-between;
+    height: auto;
+    padding: 6px 6px 6px 14px;
+  }
 
-/* A little sign board, so the title stays readable over the pixel scenery. */
-.zoneTitle {
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 5px 6px 5px 11px;
-  border-radius: 8px;
-  background: var(--tag-bg);
-  box-shadow:
-    0 0 0 2px var(--sign-edge),
-    0 3px 0 2px var(--shadow);
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+  .collapsed .collapse {
+    order: 0;
+  }
 
-.zoneCount {
-  min-width: 20px;
-  padding: 1px 7px;
-  border-radius: 6px;
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 11px;
-  text-align: center;
-  letter-spacing: 0;
+  .collapsed .panelTitle {
+    writing-mode: horizontal-tb;
+  }
+
+  .collapsed .panelCount {
+    height: 26px;
+    min-height: 0;
+    padding: 0 8px;
+    text-combine-upright: none;
+  }
 }
 
 /* Scene backgrounds paint over these; they only show before the first measurement. */
@@ -70,15 +285,21 @@
   background: var(--city-floor);
 }
 
+.emptyIcon {
+  display: block;
+  margin: 0 auto 8px;
+  color: var(--state-working);
+}
+
 .empty {
   position: absolute;
   inset: 34% 12% auto;
   z-index: 1;
   margin: 0;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: var(--tag-bg);
-  box-shadow: 0 0 0 2px var(--sign-edge);
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
   color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
@@ -92,4 +313,21 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
+  transition: opacity 260ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .stage,
+  .zone > *,
+  .chevrons,
+  .collapsed .zone {
+    transition: none;
+    animation: none;
+  }
+
+  .panelHeader,
+  .collapsed .panelHeader {
+    animation: none;
+  }
 }

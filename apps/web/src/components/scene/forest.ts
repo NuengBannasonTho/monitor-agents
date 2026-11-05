@@ -1,8 +1,15 @@
 import { seededRandom } from '../../lib/seed';
-import type { Color, Palette, Sprite } from './pixels';
-import type { PixelBuffer } from './pixels';
+import type { Color, Palette, PixelBuffer, Sprite } from './pixels';
 import { bayer, hash2, parsePalette, sprite, valueNoise, withAlpha } from './pixels';
+import type { Disc, Tones } from './raster';
+import { blob, eachPixel, ellipseCss, pine, rectCss } from './raster';
 import type { SceneTheme } from './useSceneTheme';
+
+/*
+ * The lounge as a forest glade. Every size below is in CSS px; `px` (CSS px per art pixel)
+ * only decides how finely it is drawn. Only the tiny props (flowers, tufts, mushrooms) have
+ * hand-drawn sprites, one coarse set and one fine set.
+ */
 
 /* ------------------------------------------------------------------ */
 /* Palettes                                                            */
@@ -18,10 +25,12 @@ type ForestKey =
   | 'pathDark'
   | 'pathEdge'
   | 'pebble'
+  | 'canopyEdge'
   | 'canopyDark'
   | 'canopy'
   | 'canopyLight'
   | 'canopyHi'
+  | 'pineEdge'
   | 'pineDark'
   | 'pine'
   | 'pineLight'
@@ -37,6 +46,7 @@ type ForestKey =
   | 'cap'
   | 'capDot'
   | 'mushStem'
+  | 'rockEdge'
   | 'rock'
   | 'rockDark'
   | 'rockLight'
@@ -67,10 +77,12 @@ const DAY: Palette<ForestKey> = parsePalette({
   pathDark: '#c59d63',
   pathEdge: '#a8834f',
   pebble: '#ecd5a6',
+  canopyEdge: '#1b4a2b',
   canopyDark: '#245f37',
   canopy: '#2f7d44',
   canopyLight: '#48a052',
   canopyHi: '#74c464',
+  pineEdge: '#153f2a',
   pineDark: '#1c5236',
   pine: '#276b47',
   pineLight: '#3d8d59',
@@ -86,6 +98,7 @@ const DAY: Palette<ForestKey> = parsePalette({
   cap: '#d9443b',
   capDot: '#fff3e8',
   mushStem: '#f1e1c6',
+  rockEdge: '#5f616b',
   rock: '#a5a6ad',
   rockDark: '#7e8089',
   rockLight: '#cacbd1',
@@ -117,10 +130,12 @@ const NIGHT: Palette<ForestKey> = parsePalette({
   pathDark: '#51495c',
   pathEdge: '#413a4b',
   pebble: '#706879',
+  canopyEdge: '#09201b',
   canopyDark: '#0e2622',
   canopy: '#15372e',
   canopyLight: '#1f4c3c',
   canopyHi: '#2c6450',
+  pineEdge: '#071a17',
   pineDark: '#0b221f',
   pine: '#12322b',
   pineLight: '#1c4639',
@@ -136,6 +151,7 @@ const NIGHT: Palette<ForestKey> = parsePalette({
   cap: '#93363a',
   capDot: '#c7bfd0',
   mushStem: '#a9a0a8',
+  rockEdge: '#2c2e3b',
   rock: '#55586a',
   rockDark: '#3e4152',
   rockLight: '#6d7086',
@@ -157,86 +173,50 @@ const NIGHT: Palette<ForestKey> = parsePalette({
   glow: '#ffa53d',
 });
 
-/* ------------------------------------------------------------------ */
-/* Sprites                                                             */
-/* ------------------------------------------------------------------ */
-
-const ROUND_TREE = sprite([
-  '.....ddddd.....',
-  '...ddmmlmmdd...',
-  '..dmmllhllmmd..',
-  '.dmmlhhhllmmmd.',
-  '.dmllhhlllmmmd.',
-  'dmmllllllmmmmmd',
-  'dmmlllllmmmmmmd',
-  'dmmmllmmmmmmmdd',
-  'dmmmmmmmmmmmmdd',
-  '.dmmmmmmmmmmdd.',
-  '.ddmmmmmmmmddd.',
-  '..dddmmmmdddd..',
-  '....ddddddd....',
-  '......tTT......',
-  '......tTT......',
-  '......tTT......',
-  '.....ttTTT.....',
-  '...sstTTTTss...',
-]);
-
-const PINE_TREE = sprite([
-  '.....d.....',
-  '....dld....',
-  '...dlmmd...',
-  '..dllmmmd..',
-  '...dlmmd...',
-  '..dllmmmd..',
-  '.dllmmmmmd.',
-  '..dlmmmmd..',
-  '.dllmmmmmd.',
-  'dllmmmmmmmd',
-  '.dlmmmmmmd.',
-  'dllmmmmmmdd',
-  'dlmmmmmmmmd',
-  'ddddmmmdddd',
-  '....ddd....',
-  '....tTT....',
-  '....tTT....',
-  '...stTTs...',
-]);
-
-const BUSH = sprite(['..ddddd..', '.dmlhlmd.', 'dmllmmmmd', 'dmmmmmmdd', '.ddddddd.']);
-const BERRIES = sprite(['.........', '...r.....', '.r....r..', '.....r...', '.........']);
-const FLOWER = sprite(['.p.', 'pcp', '.s.']);
-const MUSHROOM = sprite(['.rr.', 'rwrr', '.ss.']);
-const ROCK = sprite(['.hgg.', 'hgggk', 'gggkk']);
-const TUFT = sprite(['k.k.k', '.kkk.']);
-const LOG = sprite(['eebbbbbbb', 'erBbbbBbb', 'eeBBBBBBB']);
-const FIRE_PIT = sprite(['...L.L...', '.g.LLL.g.', 'gGgLLLgGg', '.gGgGgGg.']);
-const LILY = sprite(['.ll', 'lfl', 'll.']);
-
-/** Lookup tables from sprite keys to scene colors. */
-function treeColors(p: Palette<ForestKey>, pine: boolean): Readonly<Record<string, Color>> {
-  return pine
-    ? {
-        d: p.pineDark,
-        m: p.pine,
-        l: p.pineLight,
-        t: p.trunk,
-        T: p.trunkDark,
-        s: p.shadow,
-      }
-    : {
-        d: p.canopyDark,
-        m: p.canopy,
-        l: p.canopyLight,
-        h: p.canopyHi,
-        t: p.trunk,
-        T: p.trunkDark,
-        s: p.shadow,
-      };
+export function forestPalette(theme: SceneTheme): Palette<ForestKey> {
+  return theme === 'night' ? NIGHT : DAY;
 }
 
 /* ------------------------------------------------------------------ */
-/* Layout                                                              */
+/* Tiny props: one sprite set per detail level                         */
+/* ------------------------------------------------------------------ */
+
+interface SmallProps {
+  readonly flower: Sprite;
+  readonly mushroom: Sprite;
+  readonly tuft: Sprite;
+  readonly berries: readonly (readonly [number, number])[];
+}
+
+const COARSE: SmallProps = {
+  flower: sprite(['.p.', 'pcp', '.s.']),
+  mushroom: sprite(['.rr.', 'rwrr', '.ss.']),
+  tuft: sprite(['k.k.k', '.kkk.']),
+  berries: [
+    [-1, -1],
+    [1, 0],
+  ],
+};
+
+const FINE: SmallProps = {
+  flower: sprite(['.p.p.', 'ppcpp', '.ppp.', '..s..', '.ss..', '..s..']),
+  mushroom: sprite(['..rrr..', '.rrwrr.', 'rwrrrwr', 'rrrrrrr', '..sss..', '..sss..']),
+  tuft: sprite(['k....k...k', '.k..k.k.k.', '.k.k..kk..', '..kk...k..']),
+  berries: [
+    [-2, -1],
+    [1, -2],
+    [3, 0],
+    [-1, 1],
+  ],
+};
+
+/** Fine sprites once pixels are small enough to show them. */
+function smallProps(px: number): SmallProps {
+  return px <= 3 ? FINE : COARSE;
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout (CSS px)                                                     */
 /* ------------------------------------------------------------------ */
 
 export interface Ellipse {
@@ -247,7 +227,7 @@ export interface Ellipse {
 }
 
 export interface ForestLandmarks {
-  /** Center of the fire pit, art px. The flames are drawn on top by the DOM overlay. */
+  /** Center of the fire pit. The flames are drawn on top by the DOM overlay. */
   readonly camp: { readonly x: number; readonly y: number };
   readonly clearing: Ellipse;
   readonly pond: Ellipse | null;
@@ -255,28 +235,20 @@ export interface ForestLandmarks {
   readonly treeLine: number;
 }
 
-function clampInt(value: number, min: number, max: number): number {
-  return Math.round(Math.min(max, Math.max(min, value)));
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 /** Fixed spots shared by the painted ground and the animated overlay. */
 export function forestLandmarks(width: number, height: number): ForestLandmarks {
-  const treeLine = clampInt(height * 0.1, 8, 14);
-  const camp = {
-    x: Math.round(width * 0.54),
-    y: Math.round(treeLine + (height - treeLine) * 0.48),
-  };
-  const crx = clampInt(width * 0.15, 9, 16);
-  const clearing = { x: camp.x, y: camp.y + 1, rx: crx, ry: Math.round(crx * 0.6) };
-  const prx = clampInt(width * 0.11, 6, 13);
+  const treeLine = clamp(height * 0.1, 40, 70);
+  const camp = { x: width * 0.54, y: treeLine + (height - treeLine) * 0.48 };
+  const crx = clamp(width * 0.15, 45, 80);
+  const clearing = { x: camp.x, y: camp.y + 5, rx: crx, ry: crx * 0.6 };
+  const prx = clamp(width * 0.11, 30, 65);
   const pond =
-    width >= 50 && height >= 60
-      ? {
-          x: Math.round(width * 0.2),
-          y: Math.round(height * 0.8),
-          rx: prx,
-          ry: Math.max(3, Math.round(prx * 0.5)),
-        }
+    width >= 250 && height >= 300
+      ? { x: width * 0.2, y: height * 0.8, rx: prx, ry: Math.max(15, prx * 0.5) }
       : null;
   return { camp, clearing, pond, treeLine };
 }
@@ -287,7 +259,7 @@ function ellipseDist(e: Ellipse, x: number, y: number): number {
   return dx * dx + dy * dy;
 }
 
-/** Horizontal center and half-width of the dirt trail at row y, or null where there is none. */
+/** Center and half-width of the dirt trail at height y, or null where there is none. */
 function trailAt(l: ForestLandmarks, width: number, height: number, y: number) {
   const { camp, treeLine } = l;
   if (y >= camp.y) {
@@ -295,13 +267,13 @@ function trailAt(l: ForestLandmarks, width: number, height: number, y: number) {
     const t = (y - camp.y) / Math.max(1, height - camp.y);
     return {
       cx: camp.x + Math.sin(t * Math.PI * 1.5) * width * 0.12 * Math.min(1, t * 2),
-      half: 2 + t * 1.6,
+      half: 10 + t * 8,
     };
   }
   if (y >= treeLine) {
     // Up and to the left, disappearing into the tree line.
     const t = (camp.y - y) / Math.max(1, camp.y - treeLine);
-    return { cx: camp.x - t * width * 0.2 + Math.sin(t * 4) * 2, half: 2 - t * 0.6 };
+    return { cx: camp.x - t * width * 0.2 + Math.sin(t * 4) * 10, half: 10 - t * 3 };
   }
   return null;
 }
@@ -315,214 +287,328 @@ interface Prop {
   readonly draw: () => void;
 }
 
-export function forestPalette(theme: SceneTheme): Palette<ForestKey> {
-  return theme === 'night' ? NIGHT : DAY;
-}
-
-export function paintForest(buf: PixelBuffer, theme: SceneTheme): void {
+export function paintForest(buf: PixelBuffer, px: number, theme: SceneTheme): void {
   const p = forestPalette(theme);
-  const { width: w, height: h } = buf;
+  const small = smallProps(px);
+  const fine = px <= 3;
+  const w = buf.width * px;
+  const h = buf.height * px;
   const l = forestLandmarks(w, h);
+  const c = l.clearing;
   const rand = seededRandom(0xf0e57);
   const night = theme === 'night';
+  const canopyTones: Tones = {
+    edge: p.canopyEdge,
+    dark: p.canopyDark,
+    mid: p.canopy,
+    light: p.canopyLight,
+    hi: p.canopyHi,
+  };
+  const pineTones: Tones = {
+    edge: p.pineEdge,
+    dark: p.pineDark,
+    mid: p.pine,
+    light: p.pineLight,
+    hi: p.pineLight,
+  };
+  const all = { left: 0, top: 0, right: w, bottom: h };
 
   // Ground: soft value-noise patches, quantised with ordered dithering.
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const n = valueNoise(x / 9, y / 7, 11) * 0.75 + valueNoise(x / 3, y / 3, 12) * 0.25;
-      const v = n + (bayer(x, y) - 0.5) * 0.22;
-      buf.set(x, y, v < 0.36 ? p.grassDark : v > 0.68 ? p.grassLight : p.grass);
+  eachPixel(buf, px, all, (ax, ay, x, y) => {
+    const n = valueNoise(x / 45, y / 35, 11) * 0.75 + valueNoise(x / 15, y / 15, 12) * 0.25;
+    const v = n + (bayer(ax, ay) - 0.5) * 0.22;
+    let color = v < 0.36 ? p.grassDark : v > 0.68 ? p.grassLight : p.grass;
+    if (fine) {
+      // Single blades of grass catch the light.
+      const r = hash2(ax, ay, 13);
+      if (r < 0.03) color = p.grassDark;
+      else if (r > 0.975) color = p.grassLight;
     }
-  }
+    buf.set(ax, ay, color);
+  });
 
   // Clearing around the fire, with a ragged dithered edge.
-  const c = l.clearing;
-  for (let y = c.y - c.ry - 1; y <= c.y + c.ry + 1; y++) {
-    for (let x = c.x - c.rx - 1; x <= c.x + c.rx + 1; x++) {
-      const d = ellipseDist(c, x, y) + (hash2(x, y, 21) - 0.5) * 0.25;
-      if (d < 0.72) buf.set(x, y, hash2(x, y, 22) < 0.12 ? p.pathDark : p.path);
-      else if (d < 1 && bayer(x, y) < (1 - d) * 3) buf.set(x, y, p.pathDark);
-    }
-  }
+  eachPixel(
+    buf,
+    px,
+    {
+      left: c.x - c.rx - px,
+      top: c.y - c.ry - px,
+      right: c.x + c.rx + px,
+      bottom: c.y + c.ry + px,
+    },
+    (ax, ay, x, y) => {
+      const d = ellipseDist(c, x, y) + (hash2(ax, ay, 21) - 0.5) * 0.25;
+      if (d < 0.72) buf.set(ax, ay, hash2(ax, ay, 22) < 0.12 ? p.pathDark : p.path);
+      else if (d < 1 && bayer(ax, ay) < (1 - d) * 3) buf.set(ax, ay, p.pathDark);
+    },
+  );
 
   // Trail.
-  for (let y = 0; y < h; y++) {
+  eachPixel(buf, px, all, (ax, ay, x, y) => {
     const seg = trailAt(l, w, h, y);
-    if (seg === null) continue;
-    for (let x = Math.floor(seg.cx - seg.half - 1); x <= Math.ceil(seg.cx + seg.half + 1); x++) {
-      const dist = Math.abs(x + 0.5 - seg.cx);
-      if (dist > seg.half + 0.6) continue;
-      if (dist > seg.half - 0.4) {
-        if (hash2(x, y, 31) < 0.7) buf.set(x, y, p.pathEdge);
-      } else {
-        const r = hash2(x, y, 32);
-        buf.set(x, y, r < 0.08 ? p.pebble : r < 0.22 ? p.pathDark : p.path);
-      }
+    if (seg === null) return;
+    const dist = Math.abs(x - seg.cx);
+    if (dist > seg.half + px * 0.6) return;
+    if (dist > seg.half - px * 0.4) {
+      if (hash2(ax, ay, 31) < 0.7) buf.set(ax, ay, p.pathEdge);
+    } else {
+      const r = hash2(ax, ay, 32);
+      buf.set(ax, ay, r < 0.08 ? p.pebble : r < 0.22 ? p.pathDark : p.path);
     }
-  }
+  });
 
   // Pond.
   if (l.pond !== null) {
     const pond = l.pond;
-    const shore: Ellipse = { ...pond, rx: pond.rx + 1.5, ry: pond.ry + 1.2 };
-    for (let y = pond.y - pond.ry - 2; y <= pond.y + pond.ry + 2; y++) {
-      for (let x = pond.x - pond.rx - 2; x <= pond.x + pond.rx + 2; x++) {
+    const shore: Ellipse = { ...pond, rx: pond.rx + 7, ry: pond.ry + 6 };
+    eachPixel(
+      buf,
+      px,
+      {
+        left: shore.x - shore.rx,
+        top: shore.y - shore.ry,
+        right: shore.x + shore.rx,
+        bottom: shore.y + shore.ry,
+      },
+      (ax, ay, x, y) => {
         const d = ellipseDist(pond, x, y);
         if (d <= 1) {
-          const ripple = hash2(Math.floor(x / 3), y, 41) < 0.09 && d < 0.6;
-          buf.set(
-            x,
-            y,
-            ripple ? p.waterLight : d > 0.62 || y < pond.y - pond.ry * 0.3 ? p.waterDeep : p.water,
-          );
+          const ripple = hash2(Math.floor(x / 15), ay, 41) < 0.09 && d < 0.6;
+          const deep = d > 0.62 || y < pond.y - pond.ry * 0.3;
+          buf.set(ax, ay, ripple ? p.waterLight : deep ? p.waterDeep : p.water);
         } else if (ellipseDist(shore, x, y) <= 1) {
-          buf.set(x, y, p.shore);
+          buf.set(ax, ay, p.shore);
         }
-      }
-    }
+      },
+    );
     if (night) {
       // Moon on the water.
-      buf.rect(pond.x + 1, pond.y - 1, 3, 1, p.waterLight);
-      buf.rect(pond.x, pond.y + 1, 2, 1, p.waterLight);
+      rectCss(buf, px, pond.x + 5, pond.y - 5, 15, Math.max(px, 4), p.waterLight);
+      rectCss(buf, px, pond.x, pond.y + 5, 10, Math.max(px, 4), p.waterLight);
     }
-    const lilyColors = { l: p.lily, f: p.lilyFlower };
-    buf.sprite(LILY, lilyColors, pond.x - Math.round(pond.rx * 0.5), pond.y - 1);
-    if (pond.rx >= 8)
-      buf.sprite(LILY, lilyColors, pond.x + Math.round(pond.rx * 0.35), pond.y + 1, true);
+    // Lily pads with a notch, one in flower.
+    for (const [dx, dy, flower] of [
+      [-0.5, -0.1, true],
+      [0.35, 0.25, false],
+    ] as const) {
+      const lx = pond.x + pond.rx * dx;
+      const ly = pond.y + pond.ry * dy;
+      ellipseCss(buf, px, lx, ly, 8, 6, p.lily);
+      rectCss(buf, px, lx, ly - 6, Math.max(px, 4), 6, p.water);
+      if (flower)
+        ellipseCss(
+          buf,
+          px,
+          lx - 2,
+          ly - 1,
+          Math.max(px / 2, 2.5),
+          Math.max(px / 2, 2.5),
+          p.lilyFlower,
+        );
+    }
     // Reeds on the far side.
-    for (const dx of [-pond.rx + 1, -pond.rx + 3, pond.rx - 2]) {
+    const reedW = Math.max(px, 3);
+    for (const dx of [-pond.rx + 5, -pond.rx + 15, pond.rx - 10]) {
       const rx = pond.x + dx;
-      const ry = pond.y - Math.round(pond.ry * 0.7);
-      buf.rect(rx, ry - 3, 1, 4, p.reed);
-      buf.set(rx, ry - 4, p.cattail);
-      buf.set(rx, ry - 5, p.cattail);
+      const ry = pond.y - pond.ry * 0.7;
+      rectCss(buf, px, rx, ry - 15, reedW, 20, p.reed);
+      rectCss(buf, px, rx - (fine ? px / 2 : 0), ry - 27, reedW + (fine ? px : 0), 12, p.cattail);
     }
   }
 
   // Warm light around the fire after dark.
   if (night) {
-    const radius = Math.max(c.rx + 6, 14);
-    for (let y = l.camp.y - radius; y <= l.camp.y + radius; y++) {
-      for (let x = l.camp.x - radius; x <= l.camp.x + radius; x++) {
+    const radius = Math.max(c.rx + 30, 70);
+    eachPixel(
+      buf,
+      px,
+      {
+        left: l.camp.x - radius,
+        top: l.camp.y - radius,
+        right: l.camp.x + radius,
+        bottom: l.camp.y + radius,
+      },
+      (ax, ay, x, y) => {
         const dist = Math.hypot(x - l.camp.x, (y - l.camp.y) * 1.5) / radius;
-        if (dist >= 1) continue;
-        const level = Math.floor((1 - dist) * 4 + bayer(x, y));
-        if (level > 0) buf.set(x, y, withAlpha(p.glow, Math.min(4, level) * 0.07));
-      }
-    }
+        if (dist >= 1) return;
+        const level = Math.floor((1 - dist) * 4 + bayer(ax, ay));
+        if (level > 0) buf.set(ax, ay, withAlpha(p.glow, Math.min(4, level) * 0.07));
+      },
+    );
   }
 
   const blocked = (x: number, y: number, margin = 0): boolean => {
-    if (y < l.treeLine + 3 || x < 2 || x > w - 3) return true;
+    if (y < l.treeLine + 15 || x < 10 || x > w - 15) return true;
     if (ellipseDist({ ...c, rx: c.rx + margin, ry: c.ry + margin }, x, y) < 1.1) return true;
     if (l.pond !== null) {
       const pd = l.pond;
-      if (ellipseDist({ ...pd, rx: pd.rx + 2 + margin, ry: pd.ry + 2 + margin }, x, y) < 1)
+      if (ellipseDist({ ...pd, rx: pd.rx + 10 + margin, ry: pd.ry + 10 + margin }, x, y) < 1) {
         return true;
+      }
     }
     const seg = trailAt(l, w, h, y);
-    return seg !== null && Math.abs(x - seg.cx) < seg.half + 2 + margin;
+    return seg !== null && Math.abs(x - seg.cx) < seg.half + 10 + margin;
   };
 
   const props: Prop[] = [];
-  const addTree = (cx: number, baseY: number, pine: boolean, salt: number): void => {
-    const s = pine ? PINE_TREE : ROUND_TREE;
-    const colors = treeColors(p, pine);
-    const flip = hash2(salt, 7, 51) < 0.5;
-    props.push({
-      baseY,
-      draw: () => {
-        buf.sprite(s, colors, cx - Math.floor(s.width / 2), baseY - s.height + 1, flip);
-      },
+  const add = (baseY: number, draw: () => void): void => {
+    props.push({ baseY, draw });
+  };
+
+  const shadow = (cx: number, baseY: number, rx: number): void => {
+    ellipseCss(buf, px, cx, baseY, rx, rx * 0.3, p.shadow);
+  };
+
+  const roundTree = (cx: number, baseY: number, size: number, salt: number): void => {
+    add(baseY, () => {
+      const r = size * 0.5;
+      const trunkW = Math.max(px * 2, size * 0.2);
+      const trunkH = size * 0.42;
+      shadow(cx, baseY, r * 0.75);
+      rectCss(buf, px, cx - trunkW / 2, baseY - trunkH, trunkW / 2, trunkH, p.trunk);
+      rectCss(buf, px, cx, baseY - trunkH, trunkW / 2, trunkH, p.trunkDark);
+      const cy = baseY - trunkH - r * 0.7;
+      const j = (k: number): number => (hash2(salt, k, 52) - 0.5) * r * 0.25;
+      const discs: Disc[] = [
+        { x: cx + j(1), y: cy + j(2), r },
+        { x: cx - r * 0.58 + j(3), y: cy + r * 0.28, r: r * 0.62 },
+        { x: cx + r * 0.58 + j(4), y: cy + r * 0.24, r: r * 0.6 },
+        { x: cx - r * 0.22 + j(5), y: cy - r * 0.55, r: r * 0.56 },
+        { x: cx + r * 0.3 + j(6), y: cy - r * 0.42, r: r * 0.5 },
+      ];
+      blob(buf, px, discs, canopyTones, { salt, texture: fine ? 0.45 : 0.2 });
     });
   };
-  const addSprite = (
-    s: Sprite,
-    colors: Readonly<Record<string, Color>>,
-    x: number,
-    y: number,
-    flip = false,
-  ): void => {
-    props.push({
-      baseY: y + s.height - 1,
-      draw: () => {
-        buf.sprite(s, colors, x, y, flip);
-      },
+
+  const pineTree = (cx: number, baseY: number, size: number): void => {
+    add(baseY, () => {
+      shadow(cx, baseY, size * 0.28);
+      pine(buf, px, cx, baseY, size, size * 0.6, pineTones, { light: p.trunk, dark: p.trunkDark });
+    });
+  };
+
+  const tree = (cx: number, baseY: number, isPine: boolean, size: number, salt: number): void => {
+    if (isPine) pineTree(cx, baseY, size * 1.2);
+    else roundTree(cx, baseY, size, salt);
+  };
+
+  const bush = (cx: number, baseY: number, size: number, salt: number, berries: boolean): void => {
+    add(baseY, () => {
+      const r = size * 0.32;
+      const discs: Disc[] = [
+        { x: cx, y: baseY - r * 0.9, r },
+        { x: cx - r * 0.85, y: baseY - r * 0.55, r: r * 0.72 },
+        { x: cx + r * 0.85, y: baseY - r * 0.5, r: r * 0.7 },
+      ];
+      blob(buf, px, discs, canopyTones, { salt, texture: fine ? 0.35 : 0.15, flatBottom: baseY });
+      if (!berries) return;
+      for (const [bx, by] of small.berries) {
+        rectCss(buf, px, cx + bx * px * 2, baseY - r + by * px * 2, px, px, p.berry);
+      }
     });
   };
 
   // Dense forest behind the front tree line.
-  for (let y = 0; y < l.treeLine - 2; y++) {
-    for (let x = 0; x < w; x++) {
-      const v = valueNoise(x / 4, y / 3, 61) + (bayer(x, y) - 0.5) * 0.3;
-      buf.set(x, y, v < 0.5 ? p.deep : p.canopyDark);
-    }
+  eachPixel(buf, px, { left: 0, top: 0, right: w, bottom: l.treeLine - 10 }, (ax, ay, x, y) => {
+    const v = valueNoise(x / 20, y / 15, 61) + (bayer(ax, ay) - 0.5) * 0.3;
+    buf.set(ax, ay, v < 0.5 ? p.deep : p.canopyDark);
+  });
+  for (let i = 0, x = -30; x < w + 40; i++, x += 35 + Math.floor(hash2(i, 0, 62) * 20)) {
+    tree(x, l.treeLine - 25 + hash2(i, 1, 62) * 15, hash2(i, 2, 62) < 0.45, 70, i + 100);
   }
-  for (let i = 0, x = -6; x < w + 8; i++, x += 7 + Math.floor(hash2(i, 0, 62) * 4)) {
-    addTree(x, l.treeLine - 5 + Math.floor(hash2(i, 1, 62) * 3), hash2(i, 2, 62) < 0.45, i + 100);
-  }
-  for (let i = 0, x = -2; x < w + 8; i++, x += 9 + Math.floor(hash2(i, 0, 63) * 5)) {
-    addTree(x, l.treeLine + 1 + Math.floor(hash2(i, 1, 63) * 3), hash2(i, 2, 63) < 0.5, i + 200);
+  for (let i = 0, x = -10; x < w + 40; i++, x += 45 + Math.floor(hash2(i, 0, 63) * 25)) {
+    tree(x, l.treeLine + 5 + hash2(i, 1, 63) * 15, hash2(i, 2, 63) < 0.5, 75, i + 200);
   }
 
   // Trees along both sides.
-  for (let i = 0, y = l.treeLine + 14; y < h + 6; i++, y += 12 + Math.floor(hash2(i, 0, 64) * 6)) {
-    addTree(1 + Math.floor(hash2(i, 1, 64) * 4) - 2, y, hash2(i, 2, 64) < 0.5, i + 300);
-    addTree(w - 2 + Math.floor(hash2(i, 3, 64) * 4) - 1, y + 5, hash2(i, 4, 64) < 0.5, i + 400);
+  for (let i = 0, y = l.treeLine + 70; y < h + 30; i++, y += 60 + hash2(i, 0, 64) * 30) {
+    tree(5 + hash2(i, 1, 64) * 20 - 10, y, hash2(i, 2, 64) < 0.5, 75, i + 300);
+    tree(w - 10 + hash2(i, 3, 64) * 20 - 5, y + 25, hash2(i, 4, 64) < 0.5, 75, i + 400);
   }
 
   // A lone tree inside the glade when there is room for it.
-  if (w >= 90 && h >= 100) addTree(Math.round(w * 0.8), Math.round(h * 0.4), false, 500);
+  if (w >= 450 && h >= 500) roundTree(w * 0.8, h * 0.4, 80, 500);
 
   // Bushes along the bottom, leaving the trail open.
-  const bushColors = { d: p.canopyDark, m: p.canopy, l: p.canopyLight, h: p.canopyHi };
-  const bottomTrail = trailAt(l, w, h, h - 1);
-  for (let i = 0, x = -3; x < w; i++, x += 10 + Math.floor(hash2(i, 0, 65) * 6)) {
-    if (bottomTrail !== null && Math.abs(x + 4 - bottomTrail.cx) < 9) continue;
-    const by = h - 4 + Math.floor(hash2(i, 1, 65) * 2);
-    addSprite(BUSH, bushColors, x, by);
-    if (hash2(i, 2, 65) < 0.4) addSprite(BERRIES, { r: p.berry }, x, by);
+  const bottomTrail = trailAt(l, w, h, h - px);
+  for (let i = 0, x = -15; x < w; i++, x += 50 + hash2(i, 0, 65) * 30) {
+    if (bottomTrail !== null && Math.abs(x + 20 - bottomTrail.cx) < 45) continue;
+    bush(x + 22, h + 2 - hash2(i, 1, 65) * 10, 45, i + 600, hash2(i, 2, 65) < 0.4);
   }
 
-  // Scattered details.
+  // Scattered details. Finer pixels make smaller props, so place more of them.
+  const area = (w * h) / (fine ? 2800 : 4250);
   const scatter = (
     count: number,
     margin: number,
     place: (x: number, y: number, r: number) => void,
   ) => {
     for (let i = 0, tries = 0; i < count && tries < count * 6; tries++) {
-      const x = Math.floor(rand() * w);
-      const y = Math.floor(l.treeLine + 3 + rand() * (h - l.treeLine - 4));
+      const x = rand() * w;
+      const y = l.treeLine + 15 + rand() * (h - l.treeLine - 20);
       const r = rand();
       if (blocked(x, y, margin)) continue;
       place(x, y, r);
       i++;
     }
   };
+  const spriteAt = (
+    s: Sprite,
+    colors: Readonly<Record<string, Color>>,
+    x: number,
+    y: number,
+    flip = false,
+  ) => {
+    const ax = Math.round(x / px - s.width / 2);
+    const ay = Math.round(y / px) - s.height + 1;
+    add(y, () => {
+      buf.sprite(s, colors, ax, ay, flip);
+    });
+  };
   const flowerKeys = [p.flowerA, p.flowerB, p.flowerC, p.flowerD] as const;
-  scatter(Math.round((w * h) / 120), 0, (x, y) => {
-    addSprite(TUFT, { k: p.tuft }, x - 2, y - 1);
+  scatter(Math.round(area * 1.4), 0, (x, y, r) => {
+    spriteAt(small.tuft, { k: p.tuft }, x, y, r < 0.5);
   });
-  scatter(Math.round((w * h) / 170), 0, (x, y, r) => {
+  scatter(Math.round(area), 0, (x, y, r) => {
     const petal = flowerKeys[Math.floor(r * flowerKeys.length)] ?? p.flowerA;
-    addSprite(FLOWER, { p: petal, c: p.flowerEye, s: p.stem }, x - 1, y - 2);
+    spriteAt(small.flower, { p: petal, c: p.flowerEye, s: p.stem }, x, y);
   });
-  scatter(3, 1, (x, y, r) => {
-    addSprite(ROCK, { h: p.rockLight, g: p.rock, k: p.rockDark }, x - 2, y - 2, r < 0.5);
+  scatter(Math.max(2, Math.round(w / 150)), 5, (x, y, r) => {
+    spriteAt(small.mushroom, { r: p.cap, w: p.capDot, s: p.mushStem }, x, y, r < 0.5);
   });
-  scatter(Math.max(2, Math.round(w / 30)), 1, (x, y) => {
-    addSprite(MUSHROOM, { r: p.cap, w: p.capDot, s: p.mushStem }, x - 1, y - 2);
+  scatter(3, 5, (x, y, r) => {
+    add(y, () => {
+      const size = (fine ? 9 : 12) + r * 6;
+      blob(
+        buf,
+        px,
+        [
+          { x, y: y - size * 0.4, r: size },
+          { x: x + size * 0.7, y: y - size * 0.2, r: size * 0.7 },
+        ],
+        { edge: p.rockEdge, dark: p.rockDark, mid: p.rock, light: p.rockLight, hi: p.rockLight },
+        { flatBottom: y },
+      );
+    });
   });
-  scatter(2, 2, (x, y, r) => {
-    addSprite(BUSH, bushColors, x - 4, y - 4, r < 0.5);
-    if (r < 0.5) addSprite(BERRIES, { r: p.berry }, x - 4, y - 4, true);
+  scatter(2, 10, (x, y, r) => {
+    bush(x, y, 40, 700 + Math.round(r * 100), r < 0.5);
   });
 
-  // Campfire with two log benches.
-  const logColors = { e: p.logEnd, r: p.logRing, b: p.bark, B: p.barkDark };
-  addSprite(FIRE_PIT, { L: p.bark, g: p.stone, G: p.stoneDark }, l.camp.x - 4, l.camp.y - 2);
-  addSprite(LOG, logColors, l.camp.x - 15, l.camp.y - 2);
-  addSprite(LOG, logColors, l.camp.x + 6, l.camp.y + 1, true);
+  // The fire pit.
+  add(l.camp.y + 8, () => {
+    // Two crossed logs inside a ring of stones.
+    rectCss(buf, px, l.camp.x - 14, l.camp.y - 2, 28, 6, p.bark);
+    rectCss(buf, px, l.camp.x - 6, l.camp.y - 6, 12, 10, p.barkDark);
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      const sx = l.camp.x + Math.cos(a) * 19;
+      const sy = l.camp.y + 3 + Math.sin(a) * 7;
+      if (Math.sin(a) < -0.3) continue; // the back of the ring hides behind the flames
+      ellipseCss(buf, px, sx, sy, 5, 4, k % 2 === 0 ? p.stone : p.stoneDark);
+    }
+  });
 
   props.sort((a, b) => a.baseY - b.baseY);
   for (const prop of props) prop.draw();
