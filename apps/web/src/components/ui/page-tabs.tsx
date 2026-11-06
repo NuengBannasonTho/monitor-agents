@@ -23,7 +23,7 @@ interface PageTabsProps<T extends string> {
  * Views of one page (agent filters, settings sections): a row of tabs over a hairline, the
  * picked one underlined; the underline slides between tabs.
  */
-export function PageTabs<T extends string>({ tabs, value, onChange, label }: PageTabsProps<T>) {
+export function PageTabs<T extends string>({ tabs, value, onChange, label }: PageTabsProps<T>): React.JSX.Element {
   const underline = useId();
   return (
     <div className={styles.tabs} role="tablist" aria-label={label}>

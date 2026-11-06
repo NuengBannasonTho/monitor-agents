@@ -132,7 +132,7 @@ interface UsagePageProps {
  * time, how full each session's context is, and which skills, subagents and tools did the
  * work, from Claude Code's own transcripts on this machine.
  */
-export function UsagePage({ section, agents, onOpen, preview }: UsagePageProps) {
+export function UsagePage({ section, agents, onOpen, preview }: UsagePageProps): React.JSX.Element {
   const [range, setRange] = useRange();
   const { state, reload } = useUsage(preview ? null : range);
   const now = useNow(30_000);

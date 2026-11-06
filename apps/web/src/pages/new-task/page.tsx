@@ -77,7 +77,7 @@ export function NewTaskPage({
 }: {
   readonly preview: boolean;
   readonly helper?: string | null;
-}) {
+}): React.JSX.Element {
   const [places, setPlaces] = useState<TaskPlaces | null>(null);
   const [helpers, setHelpers] = useState<CustomAgentList | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);

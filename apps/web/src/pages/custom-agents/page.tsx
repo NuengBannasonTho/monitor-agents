@@ -29,7 +29,7 @@ function homeShortener(scopes: readonly CustomAgentScope[]): (dir: string) => st
  * Claude Code subagents: yours (~/.claude/agents) and those of each project an agent is
  * working in. Pick one to edit its file, or create one.
  */
-export function CustomAgentsPage({ preview }: { readonly preview: boolean }) {
+export function CustomAgentsPage({ preview }: { readonly preview: boolean }): React.JSX.Element {
   const [list, setList] = useState<CustomAgentList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection>(null);

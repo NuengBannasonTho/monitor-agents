@@ -46,7 +46,7 @@ export function ZonePanel({
   zoneRef,
   zoneClassName,
   children,
-}: ZonePanelProps) {
+}: ZonePanelProps): React.JSX.Element {
   const titleId = `${id}-title`;
   const zoneId = `${id}-zone`;
   const countLabel = urgent > 0 ? `${String(count)}, ${String(urgent)} need you` : String(count);

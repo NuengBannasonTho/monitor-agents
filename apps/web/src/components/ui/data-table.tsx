@@ -32,7 +32,7 @@ export function DataTable<T>({
   onRowClick,
   selectedKey,
   empty,
-}: DataTableProps<T>) {
+}: DataTableProps<T>): React.JSX.Element {
   return (
     <div className={styles.scroll}>
       <table className={styles.table} aria-label={label}>

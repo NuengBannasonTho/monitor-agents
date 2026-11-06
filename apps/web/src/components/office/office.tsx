@@ -106,7 +106,7 @@ export function Office({
   waiting = [],
   onSelect,
   onOpen,
-}: OfficeProps) {
+}: OfficeProps): React.JSX.Element {
   const officeRef = useRef<HTMLDivElement>(null);
   const loungeRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);

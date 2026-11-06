@@ -13,7 +13,7 @@ interface PixelCanvasProps {
 }
 
 /** Paints a scene once at art resolution and lets the browser upscale it with hard edges. */
-export function PixelCanvas({ width, height, px, paint }: PixelCanvasProps) {
+export function PixelCanvas({ width, height, px, paint }: PixelCanvasProps): React.JSX.Element {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useLayoutEffect(() => {

@@ -154,7 +154,7 @@ const ALERTS_HINT: Readonly<Record<AlertPermission, string>> = {
  * Every preference on a page of its own (/?page=settings&section=…): the sections on the
  * left, the chosen one on the right. Changes apply right away.
  */
-export function SettingsPage({ section, ...props }: SettingsPageProps) {
+export function SettingsPage({ section, ...props }: SettingsPageProps): React.JSX.Element {
   const skins = useSkins();
   // Costumes only once the server has a skin pack installed.
   const sections = SECTIONS.filter((s) => s.id !== 'costumes' || skins.packs.length > 0);

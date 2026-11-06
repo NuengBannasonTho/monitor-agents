@@ -10,7 +10,7 @@ interface MeterProps {
 }
 
 /** How much of something is used: a label and percent over a bar that warms as it fills. */
-export function Meter({ label, percent, detail }: MeterProps) {
+export function Meter({ label, percent, detail }: MeterProps): React.JSX.Element {
   const clamped = Math.max(0, Math.min(100, percent));
   const tone = clamped >= 85 ? 'high' : clamped >= 60 ? 'mid' : 'low';
   return (

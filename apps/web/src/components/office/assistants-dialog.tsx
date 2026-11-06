@@ -16,7 +16,7 @@ interface Props {
 }
 
 /** Saved assistants are launch choices; live sessions remain in the office scene. */
-export function AssistantsDialog({ helpers, onClose, onAssignHelper, onAssignProvider }: Props) {
+export function AssistantsDialog({ helpers, onClose, onAssignHelper, onAssignProvider }: Props): React.JSX.Element {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;

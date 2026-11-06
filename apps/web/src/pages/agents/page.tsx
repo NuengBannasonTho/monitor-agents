@@ -57,7 +57,7 @@ const filterOf = (value: string | null): AgentFilter =>
  * Every agent the server sees, as a table to scan rather than a scene to watch: the counts
  * on top, who needs you first. Click a row for its details.
  */
-export function AgentsPage({ agents, filter, selectedId, finishedIds, onOpen }: AgentsPageProps) {
+export function AgentsPage({ agents, filter, selectedId, finishedIds, onOpen }: AgentsPageProps): React.JSX.Element {
   const [query, setQuery] = useState('');
   const now = useNow(15_000);
   const current = filterOf(filter);

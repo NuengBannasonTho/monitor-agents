@@ -17,7 +17,7 @@ interface StatCardProps {
 }
 
 /** One number at a glance: large, its label, and how much of the whole it is. */
-export function StatCard({ value, display, label, detail, icon, total, color }: StatCardProps) {
+export function StatCard({ value, display, label, detail, icon, total, color }: StatCardProps): React.JSX.Element {
   const filled =
     total === undefined || total === 0
       ? 0

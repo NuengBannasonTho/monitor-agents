@@ -65,7 +65,7 @@ interface StateVars extends CSSProperties {
  * Drawer over the office: it slides in on top of a dimmed backdrop and never resizes the
  * scenes. Click the backdrop, press Escape or use the close button to dismiss it.
  */
-export function AgentPanel({ agent, onClose }: AgentPanelProps) {
+export function AgentPanel({ agent, onClose }: AgentPanelProps): React.JSX.Element {
   const narrow = useMediaQuery(NARROW_QUERY);
   // Keep showing the last agent while the drawer animates closed.
   const [shown, setShown] = useState<Agent | null>(agent);

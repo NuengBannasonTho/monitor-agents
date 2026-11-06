@@ -156,7 +156,7 @@ function menuHandler(agent: Agent, onMenu: WalkerProps['onMenu']) {
 }
 
 /** One agent as a banana walking along the bottom of the screen, its subagents in tow. */
-export function Walker({ agent, width, onMenu }: WalkerProps) {
+export function Walker({ agent, width, onMenu }: WalkerProps): React.JSX.Element {
   const { leg, moving, facingLeft } = useStroll(agent.id, width, PACE[agent.state]);
   const urgent = agent.state === 'needs-you';
   const subs = agent.subagents ?? [];

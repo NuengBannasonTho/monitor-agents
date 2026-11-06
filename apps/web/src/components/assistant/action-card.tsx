@@ -58,7 +58,7 @@ function agentName(agents: readonly Agent[], id: string): Agent | null {
 }
 
 /** One thing MON MANG proposes: what it is, then its button or what became of it. */
-export function ActionCard(props: ActionCardProps) {
+export function ActionCard(props: ActionCardProps): React.JSX.Element {
   const { action, outcome, onSettled, agents, preview } = props;
   const [busy, setBusy] = useState(false);
   const run = async (go: () => Promise<Outcome>) => {

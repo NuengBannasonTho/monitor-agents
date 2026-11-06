@@ -36,7 +36,7 @@ export function Button({
   className,
   children,
   ...props
-}: ButtonProps) {
+}: ButtonProps): React.JSX.Element {
   return (
     <button
       type={type}

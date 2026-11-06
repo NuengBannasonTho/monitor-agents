@@ -42,7 +42,7 @@ export function niceTicks(max: number, count = 4): number[] {
  * Stacked columns over time (one per hour or day), the first series at the base. Hover or
  * focus a column for its numbers; a hidden table carries them for screen readers.
  */
-export function ColumnChart({ series, columns, format, label }: ColumnChartProps) {
+export function ColumnChart({ series, columns, format, label }: ColumnChartProps): React.JSX.Element {
   const total = (c: ChartColumn) => series.reduce((sum, s) => sum + (c.values[s.key] ?? 0), 0);
   const ticks = niceTicks(Math.max(0, ...columns.map(total)));
   const top = ticks.at(-1) ?? 1;

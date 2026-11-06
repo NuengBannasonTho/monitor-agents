@@ -41,7 +41,7 @@ export function WalkerMenu({
   onOpen,
   onHideAll,
   onClose,
-}: WalkerMenuProps) {
+}: WalkerMenuProps): React.JSX.Element {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const later = (ms: number): void => {
     clearTimeout(timer.current);

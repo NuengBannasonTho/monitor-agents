@@ -24,6 +24,25 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      // TypeScript standard: what a module exports says what it returns.
+      '@typescript-eslint/explicit-module-boundary-types': 'error',
+      // Coding standard: camelCase values, PascalCase types and components, UPPER_SNAKE_CASE
+      // constants. Object keys are left alone (JSON, CSS variables, HTTP headers).
+      '@typescript-eslint/naming-convention': [
+        'error',
+        { selector: 'default', format: ['camelCase'], leadingUnderscore: 'allow' },
+        { selector: 'variable', format: ['camelCase', 'UPPER_CASE', 'PascalCase'] },
+        { selector: 'function', format: ['camelCase', 'PascalCase'] },
+        { selector: 'parameter', format: ['camelCase', 'PascalCase'], leadingUnderscore: 'allow' },
+        { selector: 'typeLike', format: ['PascalCase'] },
+        { selector: 'enumMember', format: ['PascalCase', 'UPPER_CASE'] },
+        { selector: 'import', format: null },
+        {
+          selector: ['objectLiteralProperty', 'objectLiteralMethod', 'typeProperty', 'typeMethod'],
+          format: null,
+        },
+        { selector: ['classProperty', 'classMethod', 'accessor'], format: ['camelCase', 'UPPER_CASE'] },
+      ],
     },
   },
   {

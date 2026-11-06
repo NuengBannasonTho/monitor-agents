@@ -16,7 +16,7 @@ interface SkinSpriteProps {
 type SpriteVars = CSSProperties & Readonly<Record<'--skin-delay', string>>;
 
 /** A skin image that comes alive once its animation strip is ready. */
-export function SkinSprite({ src, px, seed, title }: SkinSpriteProps) {
+export function SkinSprite({ src, px, seed, title }: SkinSpriteProps): React.JSX.Element {
   const sheet = useSkinSheet(src);
   const style: SpriteVars = {
     width: px,

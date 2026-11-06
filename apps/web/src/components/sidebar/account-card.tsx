@@ -40,7 +40,7 @@ function usageLine(status: AccountStatus | null): string | null {
  * The bottom of the sidebar: the Claude account the agents run on, its usage, and the
  * connection. Opens a card with every account Orca knows and the usage windows in full.
  */
-export function AccountCard({ source, collapsed }: { source: Source; collapsed: boolean }) {
+export function AccountCard({ source, collapsed }: { source: Source; collapsed: boolean }): React.JSX.Element {
   const status = useAccount(source !== 'preview');
   const active = status?.accounts.find((a) => a.active) ?? null;
   const sessionWindow = status?.usage.session ?? null;

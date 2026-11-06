@@ -117,7 +117,7 @@ export class PixelBuffer {
   }
 
   /** Draws a sprite with its top-left at (x, y); `flip` mirrors it horizontally. */
-  sprite(s: Sprite, palette: Readonly<Record<string, Color>>, x: number, y: number, flip = false) {
+  sprite(s: Sprite, palette: Readonly<Record<string, Color>>, x: number, y: number, flip = false): void {
     const ox = Math.round(x);
     const oy = Math.round(y);
     for (const [dx, dy, key] of s.cells) {

@@ -23,7 +23,7 @@ export function SpriteSvg({
   className,
   frameClassNames,
   style,
-}: SpriteSvgProps) {
+}: SpriteSvgProps): React.JSX.Element {
   const first = frames[0] ?? [];
   const cols = first[0]?.length ?? 0;
   const rows = first.length;

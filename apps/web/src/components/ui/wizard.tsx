@@ -53,7 +53,7 @@ export function Wizard({
   secondary,
   status,
   header,
-}: WizardProps) {
+}: WizardProps): React.JSX.Element | null {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [refused, setRefused] = useState<string | null>(null);

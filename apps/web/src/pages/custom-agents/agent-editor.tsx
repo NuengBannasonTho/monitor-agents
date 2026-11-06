@@ -44,7 +44,7 @@ export function AgentEditor({
   onDeleted,
   onDirtyChange,
   justSaved = false,
-}: AgentEditorProps) {
+}: AgentEditorProps): React.JSX.Element {
   const initial = agent === null ? NEW_DRAFT : draftOf(agent);
   const [draft, setDraft] = useState<Draft>(initial);
   const [scopeId, setScopeId] = useState(agent?.scope ?? scopes[0]?.id ?? 'user');

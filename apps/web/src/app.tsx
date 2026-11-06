@@ -35,7 +35,7 @@ const USE_SIMULATOR =
 const MOCK_COUNT = mockAgentCountFromUrl(window.location.search, window.location.hash);
 const SHOW_GALLERY = params.has('gallery') || window.location.hash === '#gallery';
 
-export function App() {
+export function App(): React.JSX.Element {
   const simulated = useMockAgents(MOCK_COUNT, USE_SIMULATOR);
   const stream = useAgentStream(!USE_SIMULATOR);
   const agents = USE_SIMULATOR ? simulated : stream.agents;

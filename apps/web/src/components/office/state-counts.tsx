@@ -15,7 +15,7 @@ interface StateCountsProps {
 }
 
 /** How many agents are in each state, as small chips in a panel's title bar. */
-export function StateCounts({ states, agents, waiting = [], onOpen }: StateCountsProps) {
+export function StateCounts({ states, agents, waiting = [], onOpen }: StateCountsProps): React.JSX.Element {
   return (
     <ul className={styles.counts} aria-label="Agents by state">
       {states.map((state) => {

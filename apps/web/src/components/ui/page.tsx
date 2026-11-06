@@ -21,7 +21,7 @@ interface PageProps {
  * meet in one line across the screen) with the breadcrumb and the page's buttons, then the
  * title and the content, always the full width.
  */
-export function Page({ trail, title, subtitle, actions, fill = false, children }: PageProps) {
+export function Page({ trail, title, subtitle, actions, fill = false, children }: PageProps): React.JSX.Element {
   const crumbs = [APP_NAME, ...trail];
   return (
     <div className={styles.page} data-fill={fill || undefined}>

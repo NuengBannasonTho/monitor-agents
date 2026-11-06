@@ -17,7 +17,7 @@ interface ActivityListProps {
  * The agent's steps, newest first, one line each. Open a line to see everything behind it:
  * the command and its output, the diff, the prompt or Claude's reply. Several can be open.
  */
-export function ActivityList({ entries, now }: ActivityListProps) {
+export function ActivityList({ entries, now }: ActivityListProps): React.JSX.Element {
   const keys = activityKeys(entries);
   // A server recording details gives most lines one; an older one gives none at all.
   const recording = entries.some((e) => e.detail !== undefined);

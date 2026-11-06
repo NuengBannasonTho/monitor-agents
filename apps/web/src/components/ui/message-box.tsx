@@ -126,7 +126,7 @@ export function MessageBox({
   hintKind,
   variant = 'drawer',
   ref,
-}: MessageBoxProps) {
+}: MessageBoxProps): React.JSX.Element {
   const [files, setFiles] = useState<readonly Attachment[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);

@@ -5,7 +5,7 @@ import { STATE_COLOR_VAR, STATE_LABEL } from '../office/state-meta';
 import styles from './subagent-list.module.css';
 
 /** The subagents this agent has at work, each with what it is doing and for how long. */
-export function SubagentList({ subagents, now }: { subagents: readonly Subagent[]; now: number }) {
+export function SubagentList({ subagents, now }: { subagents: readonly Subagent[]; now: number }): React.JSX.Element {
   return (
     <section aria-labelledby="subagents-title">
       <h3 id="subagents-title" className={styles.title}>

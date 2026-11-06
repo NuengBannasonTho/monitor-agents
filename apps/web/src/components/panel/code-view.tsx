@@ -46,7 +46,7 @@ interface CodeViewProps {
  * A highlighted code block (a command, a diff, file content, output) with its label and a
  * copy button. The plain text shows until the highlighter has loaded.
  */
-export function CodeView({ label, code, lang }: CodeViewProps) {
+export function CodeView({ label, code, lang }: CodeViewProps): React.JSX.Element {
   const theme = useTheme().resolved;
   const typeOut = code.length <= TYPE_OUT_MAX_CHARS && KNOWN_LANGS.has(lang);
   const langLabel = LANG_LABEL[lang] ?? lang;

@@ -19,7 +19,7 @@ const plural = (n: number): string => `${String(n)} file${n === 1 ? '' : 's'}`;
  * a prompt, as if you had typed it there, with any files you attach, paste or drop pointed at
  * by @path. Enter sends, Shift+Enter is a new line; the button stops it, like Esc.
  */
-export function Composer({ agent }: { agent: Agent }) {
+export function Composer({ agent }: { agent: Agent }): React.JSX.Element {
   const [text, setText] = useState('');
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const reachable = agent.kind === 'claude-code' && agent.terminal !== undefined;

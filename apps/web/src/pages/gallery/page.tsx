@@ -8,7 +8,7 @@ import styles from './page.module.css';
 const SAMPLE_IDS = ['a1b2c3', 'session-42', 'f00dbabe', 'orca-7', 'zz-top', 'q9'];
 
 /** Review page for every worker state and the per-agent variety. Open with `?gallery`. */
-export function GalleryPage() {
+export function GalleryPage(): React.JSX.Element {
   return (
     <div className={styles.page}>
       <h2 className={styles.heading}>States</h2>

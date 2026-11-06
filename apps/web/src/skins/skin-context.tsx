@@ -67,7 +67,7 @@ function usePreload(pack: SkinPack | null): void {
   }, [pack]);
 }
 
-export function SkinProvider({ enabled, children }: { enabled: boolean; children: ReactNode }) {
+export function SkinProvider({ enabled, children }: { enabled: boolean; children: ReactNode }): React.JSX.Element {
   const packs = useSkinPacks(enabled);
   const [prefs, setPrefs] = useState<SkinPrefs>(() => loadPrefs(safeStorage()));
 

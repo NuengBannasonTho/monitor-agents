@@ -29,7 +29,7 @@ export function loadDesktopPrefs(file: string | undefined): DesktopPrefs {
 }
 
 /** Saves them for next time; a failure only means they are not remembered. */
-export async function saveDesktopPrefs(file: string | undefined, prefs: DesktopPrefs) {
+export async function saveDesktopPrefs(file: string | undefined, prefs: DesktopPrefs): Promise<void> {
   if (file === undefined) return;
   try {
     await mkdir(path.dirname(file), { recursive: true });

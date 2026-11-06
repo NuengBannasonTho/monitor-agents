@@ -9,7 +9,7 @@ interface TextareaProps extends ComponentProps<'textarea'> {
 }
 
 /** The app's one multi-line field. */
-export function Textarea({ invalid = false, mono = false, className, ...props }: TextareaProps) {
+export function Textarea({ invalid = false, mono = false, className, ...props }: TextareaProps): React.JSX.Element {
   return (
     <textarea
       className={cx(styles.textarea, className)}

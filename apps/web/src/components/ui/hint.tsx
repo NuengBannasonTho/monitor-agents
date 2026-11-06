@@ -11,7 +11,7 @@ interface HintProps {
 }
 
 /** A small dark label over something, on hover or focus: the app's one tooltip. */
-export function Hint({ content, side = 'top', children }: HintProps) {
+export function Hint({ content, side = 'top', children }: HintProps): React.JSX.Element {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>

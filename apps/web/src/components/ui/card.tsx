@@ -8,6 +8,6 @@ interface CardProps extends ComponentProps<'section'> {
 }
 
 /** A white panel with a hairline border: the one container pages build with. */
-export function Card({ padding = 'md', className, ...props }: CardProps) {
+export function Card({ padding = 'md', className, ...props }: CardProps): React.JSX.Element {
   return <section className={cx(styles.card, className)} data-padding={padding} {...props} />;
 }

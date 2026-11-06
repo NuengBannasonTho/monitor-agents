@@ -40,7 +40,7 @@ interface ActivityDetailProps {
  * Claude's reply. A line without a detail shows the whole line and when it happened, and
  * says why there is nothing more when the server is not recording details.
  */
-export function ActivityDetail({ entry, recording }: ActivityDetailProps) {
+export function ActivityDetail({ entry, recording }: ActivityDetailProps): React.JSX.Element {
   const parts = entry.detail ?? [];
   const when: FieldPart = { type: 'field', label: 'At', value: formatClock(entry.at) };
 

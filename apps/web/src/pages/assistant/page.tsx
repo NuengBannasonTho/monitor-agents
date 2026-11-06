@@ -141,7 +141,7 @@ export interface AssistantPageProps {
  * you gave it and lines up the actions; harmless ones happen at once, the rest wait for your
  * click. Beside the chat: who needs you now and what to ask.
  */
-export function AssistantPage({ preview, agents, onOpen, sound, alerts }: AssistantPageProps) {
+export function AssistantPage({ preview, agents, onOpen, sound, alerts }: AssistantPageProps): React.JSX.Element {
   const persona = usePersona();
   const [messages, setMessages] = useState<Message[]>(savedMessages);
   const [input, setInput] = useState('');

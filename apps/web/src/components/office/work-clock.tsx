@@ -44,7 +44,7 @@ function scheduleHint(hours: WorkHours): string {
  * The clock in a panel's title bar: the time, and whether it is work, lunch or off hours,
  * with when that ends. Agent Work counts anyone working through lunch or after hours.
  */
-export function WorkClock({ zone, period, working }: WorkClockProps) {
+export function WorkClock({ zone, period, working }: WorkClockProps): React.JSX.Element {
   const hours = useWorkHours();
   const now = new Date(useNow(15_000));
   const Icon = ICON[period.kind];

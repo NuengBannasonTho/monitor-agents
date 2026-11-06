@@ -92,7 +92,7 @@ export function Sidebar({
   finished,
   onOpen,
   source,
-}: SidebarProps) {
+}: SidebarProps): React.JSX.Element {
   const route = useRoute();
   const [collapsedChoice, toggle] = useCollapsed();
   const narrow = useMediaQuery("(max-width: 760px)");

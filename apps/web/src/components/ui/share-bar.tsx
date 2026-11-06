@@ -15,7 +15,7 @@ interface ShareBarProps {
  * How one row compares with the rest of its column: its number, then a thin bar as long as
  * its share of the largest. For "which is used most", not for "how full".
  */
-export function ShareBar({ label, value, max, note }: ShareBarProps) {
+export function ShareBar({ label, value, max, note }: ShareBarProps): React.JSX.Element {
   const width = max <= 0 || value <= 0 ? 0 : Math.max(2, (Math.min(value, max) / max) * 100);
   return (
     <span className={styles.share}>

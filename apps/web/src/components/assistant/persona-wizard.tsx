@@ -43,7 +43,7 @@ function Preview({ persona }: { readonly persona: AssistantPersona }) {
  * MON MANG's personality in steps: who it is, how it talks, its color, then a look at how
  * it will greet you. Every step can be opened, since there is always a personality to edit.
  */
-export function PersonaWizard() {
+export function PersonaWizard(): React.JSX.Element {
   const saved = usePersona();
   const [draft, setDraft] = useState<AssistantPersona>(saved);
   const [savedAt, setSavedAt] = useState<number | null>(null);

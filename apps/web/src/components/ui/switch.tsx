@@ -10,7 +10,7 @@ interface SwitchProps {
 }
 
 /** An on/off switch with a springy thumb. */
-export function Switch({ id, checked, disabled, onChange }: SwitchProps) {
+export function Switch({ id, checked, disabled, onChange }: SwitchProps): React.JSX.Element {
   return (
     <SwitchPrimitive.Root
       id={id}

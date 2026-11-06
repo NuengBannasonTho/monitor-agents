@@ -12,7 +12,7 @@ interface ColorSwatchesProps {
 }
 
 /** A row of round color swatches (the app's subagent colors), one picked. */
-export function ColorSwatches({ value, onChange, id, label }: ColorSwatchesProps) {
+export function ColorSwatches({ value, onChange, id, label }: ColorSwatchesProps): React.JSX.Element {
   return (
     <RadioGroup.Root
       id={id}

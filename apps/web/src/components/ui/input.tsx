@@ -11,7 +11,7 @@ interface InputProps extends ComponentProps<'input'> {
 }
 
 /** The app's one text field (search, names, times). */
-export function Input({ icon, invalid = false, pill = false, className, ...props }: InputProps) {
+export function Input({ icon, invalid = false, pill = false, className, ...props }: InputProps): React.JSX.Element {
   return (
     <span
       className={cx(styles.frame, className)}

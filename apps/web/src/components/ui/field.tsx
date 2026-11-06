@@ -12,7 +12,7 @@ interface FieldProps {
 }
 
 /** A label, the control, then a hint or what is wrong with it. */
-export function Field({ id, label, hint, error, children }: FieldProps) {
+export function Field({ id, label, hint, error, children }: FieldProps): React.JSX.Element {
   return (
     <div className={styles.field} data-invalid={error !== undefined || undefined}>
       <label className={styles.label} htmlFor={id}>

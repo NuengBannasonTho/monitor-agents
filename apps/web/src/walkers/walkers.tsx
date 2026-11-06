@@ -136,7 +136,7 @@ function useHidden(fromServer: readonly string[] | undefined): {
  * busy ones bustling, ones waiting on you standing still with a "!". Shown by the desktop
  * app (apps/desktop) in a see-through strip; open /?walkers in a browser to preview it.
  */
-export function Walkers() {
+export function Walkers(): React.JSX.Element {
   const simulated = useMockAgents(MOCK_COUNT, USE_SIMULATOR);
   const stream = useAgentStream(!USE_SIMULATOR, IN_DESKTOP_APP ? 'desktop' : undefined);
   const agents = USE_SIMULATOR ? simulated : stream.agents;

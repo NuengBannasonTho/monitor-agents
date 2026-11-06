@@ -375,7 +375,7 @@ export function toolResultDetail(
 }
 
 /** Why a tool call failed. */
-export function toolFailureDetail(error: string | undefined, durationMs: number | undefined) {
+export function toolFailureDetail(error: string | undefined, durationMs: number | undefined): DetailPart[] {
   const parts: DetailPart[] = [];
   if (durationMs !== undefined) parts.push(field('Took', formatDuration(durationMs)));
   if (error !== undefined && error.trim() !== '') {

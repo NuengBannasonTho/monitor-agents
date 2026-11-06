@@ -27,7 +27,7 @@ interface KindBadgeProps {
  * Which agent this is, drawn in its brand color with no backdrop: the provider's logo when
  * Reicon has it, otherwise its two-letter badge, or a chip for unknown agents.
  */
-export function KindBadge({ kind, className, size = 12 }: KindBadgeProps) {
+export function KindBadge({ kind, className, size = 12 }: KindBadgeProps): React.JSX.Element {
   const meta = KIND_META[kind];
   const logo = LOGO[kind];
   return (

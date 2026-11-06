@@ -29,7 +29,7 @@ export function ChoiceCards<T extends string>({
   value,
   onChange,
   label,
-}: ChoiceCardsProps<T>) {
+}: ChoiceCardsProps<T>): React.JSX.Element {
   return (
     <RadioGroup.Root
       className={styles.grid}

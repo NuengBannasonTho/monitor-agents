@@ -46,7 +46,7 @@ export function Select<T extends string>({
   placeholder,
   disabled,
   className,
-}: SelectProps<T>) {
+}: SelectProps<T>): React.JSX.Element {
   return (
     <Primitive.Root
       value={toItem(value)}

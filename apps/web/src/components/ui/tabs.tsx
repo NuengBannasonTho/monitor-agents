@@ -31,7 +31,7 @@ export function Tabs<T extends string>({
   onChange,
   label,
   stretch = false,
-}: TabsProps<T>) {
+}: TabsProps<T>): React.JSX.Element {
   const theme = useTheme().resolved;
   return (
     <ToggleGroup.Root

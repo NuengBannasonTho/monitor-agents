@@ -7,7 +7,7 @@ interface MonLogoProps {
 }
 
 /** The app mark: a MANG from above on a dark rounded tile (see lib/brand). */
-export function MonLogo({ size = 32 }: MonLogoProps) {
+export function MonLogo({ size = 32 }: MonLogoProps): React.JSX.Element {
   return (
     <svg
       className={styles.logo}

@@ -11,7 +11,7 @@ interface MonAvatarProps {
 }
 
 /** MON MANG's face: the app's mangosteen on a tile in the color you picked for it. */
-export function MonAvatar({ color, size = 32, busy = false }: MonAvatarProps) {
+export function MonAvatar({ color, size = 32, busy = false }: MonAvatarProps): React.JSX.Element {
   return (
     <svg
       className={styles.avatar}

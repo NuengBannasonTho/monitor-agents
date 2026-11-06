@@ -7,7 +7,7 @@ import styles from './costume-picker.module.css';
  * In "By desk" mode, pick which costume this desk (worktree) wears. The choice
  * is remembered per desk name, so it survives new sessions in the same worktree.
  */
-export function CostumePicker({ desk }: { desk: string }) {
+export function CostumePicker({ desk }: { desk: string }): React.JSX.Element | null {
   const skins = useSkins();
   if (skins.pack === null || skins.mode !== 'by-agent') return null;
   const current = skins.costumeFor(desk);
