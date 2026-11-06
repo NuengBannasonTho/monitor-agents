@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { createClaudeCodeAdapter } from './claude-code.js';
 
 const NOW = 1_800_000_000_000;
-const adapter = createClaudeCodeAdapter(() => NOW);
+// Summaries alone (ACTIVITY_DETAILS=off): nothing beyond the short line is kept.
+const adapter = createClaudeCodeAdapter(() => NOW, { details: false });
 const CWD = '/Users/dev/orca/worktrees/feat-auth';
 
 /** Shape of a real Claude Code hook payload (common fields). */
@@ -19,7 +20,7 @@ function hook(event: string, extra: Record<string, unknown> = {}): Record<string
 
 const base = { sessionId: 'sess-1', kind: 'claude-code', cwd: CWD, at: NOW };
 
-describe('claude-code adapter: every hook type', () => {
+describe('claude-code adapter, details off: every hook type', () => {
   it('SessionStart -> start', () => {
     expect(adapter.normalize(hook('SessionStart', { source: 'startup', model: 'x' }))).toEqual({
       ...base,
@@ -148,7 +149,34 @@ describe('claude-code adapter: every hook type', () => {
           agent_transcript_path: '/tmp/a1.jsonl',
         }),
       ),
-    ).toEqual({ ...base, type: 'subagent-stop', summary: 'Subagent finished: Explore' });
+    ).toEqual({
+      ...base,
+      type: 'subagent-stop',
+      subagentId: 'a1',
+      subagentType: 'Explore',
+      summary: 'Subagent finished: Explore',
+    });
+  });
+
+  it('SubagentStart -> subagent-start, and its steps carry its id', () => {
+    expect(
+      adapter.normalize(hook('SubagentStart', { agent_id: 'a1', agent_type: 'Explore' })),
+    ).toEqual({
+      ...base,
+      type: 'subagent-start',
+      subagentId: 'a1',
+      subagentType: 'Explore',
+      summary: 'Subagent started: Explore',
+    });
+    const step = adapter.normalize(
+      hook('PreToolUse', {
+        agent_id: 'a1',
+        agent_type: 'Explore',
+        tool_name: 'Read',
+        tool_input: { file_path: `${CWD}/a.ts` },
+      }),
+    );
+    expect(step).toMatchObject({ type: 'tool', subagentId: 'a1', subagentType: 'Explore' });
   });
 
   it('SessionEnd -> end', () => {
@@ -175,5 +203,100 @@ describe('claude-code adapter: malformed input', () => {
     ['PreToolUse without tool_name', hook('PreToolUse')],
   ])('%s -> null', (_label, raw) => {
     expect(adapter.normalize(raw)).toBeNull();
+  });
+});
+
+describe('claude-code adapter, details on', () => {
+  const detailed = createClaudeCodeAdapter(() => NOW);
+
+  it('keeps the prompt in the detail, never in the summary', () => {
+    const event = detailed.normalize(hook('UserPromptSubmit', { prompt: 'Fix the login bug' }));
+    expect(event?.summary).toBe('Prompt received');
+    expect(event?.detail).toEqual([{ type: 'text', label: 'Prompt', text: 'Fix the login bug' }]);
+  });
+
+  it('shows the full command, redacted', () => {
+    const command = 'API_KEY=sk-live-0123456789 pnpm deploy --prod && echo done';
+    const event = detailed.normalize(
+      hook('PreToolUse', {
+        tool_name: 'Bash',
+        tool_input: { command, description: 'Deploy' },
+        tool_use_id: 'toolu_1',
+      }),
+    );
+    expect(event?.detail).toEqual([
+      { type: 'field', label: 'What', value: 'Deploy' },
+      {
+        type: 'code',
+        label: 'Command',
+        code: 'API_KEY=[REDACTED] pnpm deploy --prod && echo done',
+        lang: 'shellscript',
+      },
+    ]);
+  });
+
+  it('shows an edit as a diff, keeping ordinary code that mentions keys', () => {
+    const event = detailed.normalize(
+      hook('PreToolUse', {
+        tool_name: 'Edit',
+        tool_input: {
+          file_path: `${CWD}/src/List.tsx`,
+          old_string: '<li>{item}</li>',
+          new_string: '<li key={item.id}>{item.name}</li>',
+        },
+      }),
+    );
+    expect(event?.detail).toEqual([
+      { type: 'field', label: 'File', value: 'src/List.tsx' },
+      {
+        type: 'code',
+        label: 'Change',
+        code: '- <li>{item}</li>\n+ <li key={item.id}>{item.name}</li>',
+        lang: 'diff',
+      },
+    ]);
+  });
+
+  it('redacts everything written to a .env file', () => {
+    const event = detailed.normalize(
+      hook('PreToolUse', {
+        tool_name: 'Write',
+        tool_input: { file_path: `${CWD}/.env.local`, content: 'DB_PASSWORD=hunter2hunter2\n' },
+      }),
+    );
+    expect(JSON.stringify(event)).not.toContain('hunter2');
+  });
+
+  it('keeps the end of a command output, with how long it took', () => {
+    const stdout = `${'x'.repeat(5_000)}\nAll 12 tests passed`;
+    const event = detailed.normalize(
+      hook('PostToolUse', {
+        tool_name: 'Bash',
+        tool_use_id: 'toolu_1',
+        duration_ms: 2_500,
+        tool_response: { stdout, stderr: '', interrupted: false },
+      }),
+    );
+    expect(event?.summary).toBeUndefined();
+    const [took, output] = event?.detail ?? [];
+    expect(took).toEqual({ type: 'field', label: 'Took', value: '3s' });
+    expect(output?.type).toBe('code');
+    const code = output?.type === 'code' ? output.code : '';
+    expect(code.startsWith('… earlier output trimmed\n')).toBe(true);
+    expect(code.endsWith('All 12 tests passed')).toBe(true);
+  });
+
+  it("keeps Claude's reply when it stops", () => {
+    const event = detailed.normalize(hook('Stop', { last_assistant_message: 'Done: 3 files.' }));
+    expect(event?.detail).toEqual([{ type: 'text', label: 'Reply', text: 'Done: 3 files.' }]);
+  });
+
+  it('shows the input of an unknown tool as JSON', () => {
+    const event = detailed.normalize(
+      hook('PreToolUse', { tool_name: 'mcp__docs__search', tool_input: { query: 'hooks' } }),
+    );
+    expect(event?.detail).toEqual([
+      { type: 'code', label: 'Input', code: '{\n  "query": "hooks"\n}', lang: 'json' },
+    ]);
   });
 });

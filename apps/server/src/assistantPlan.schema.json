@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reply", "matches", "draft"],
+  "properties": {
+    "reply": { "type": "string" },
+    "matches": { "type": "array", "items": { "type": "string" } },
+    "draft": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["task", "provider", "repoId"],
+          "properties": {
+            "task": { "type": "string" },
+            "provider": { "type": "string", "enum": ["claude", "codex"] },
+            "repoId": { "type": ["string", "null"] }
+          }
+        }
+      ]
+    }
+  }
+}

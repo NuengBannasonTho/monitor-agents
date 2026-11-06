@@ -1,5 +1,5 @@
 import { zoneOf } from '@agent-office/shared';
-import type { ActivityEntry, Agent } from '@agent-office/shared';
+import type { Agent } from '@agent-office/shared';
 import {
   CopyButton,
   CopyButtonIcon,
@@ -9,7 +9,6 @@ import { Drawer } from '@animate-ui/react/primitives/radix-ui/drawer';
 import { AnimatePresence, motion } from 'motion/react';
 import type { CSSProperties } from 'react';
 import { useRef, useState } from 'react';
-import { cx } from '../../lib/cx';
 import { hueForSession } from '../../lib/hue';
 import { formatClock, formatRelative } from '../../lib/relativeTime';
 import { editorUrl, resumeCommand } from '../../lib/sessionLinks';
@@ -26,10 +25,13 @@ import { CostumePicker } from './CostumePicker';
 import { KindBadge } from '../office/KindBadge';
 import { KIND_META } from '../office/kind';
 import { STATE_COLOR_VAR, STATE_LABEL } from '../office/stateMeta';
+import { ActivityList } from './ActivityList';
+import { Composer } from './Composer';
+import { SubagentList } from './SubagentList';
 import { activityKeys } from './activityKeys';
+import { buttonLook } from '../ui/Button';
 import styles from './AgentPanel.module.css';
 import {
-  ACTIVITY_ICON,
   ActivityIcon,
   AgentIcon,
   CloseIcon,
@@ -45,7 +47,6 @@ import {
   TimerIcon,
   WaitingIcon,
 } from '../icons';
-import { activityKind } from '../../live/activityKind';
 
 /** Below this width the panel slides up from the bottom instead of the right. */
 export const NARROW_QUERY = '(max-width: 720px)';
@@ -94,8 +95,11 @@ export function AgentPanel({ agent, onClose }: AgentPanelProps) {
 function PanelBody({ agent }: { agent: Agent }) {
   const now = useNow(5_000);
   const kind = KIND_META[agent.kind];
-  const keys = activityKeys(agent.activity);
-  const stateVars: StateVars = { '--state-color': STATE_COLOR_VAR[agent.state] };
+  // Changes with each new step, so the "now" line can animate in.
+  const latestKey = activityKeys(agent.activity)[0] ?? 'none';
+  const stateVars: StateVars = {
+    '--state-color': STATE_COLOR_VAR[agent.state],
+  };
   const resume = resumeCommand(agent);
   const StateIcon = STATE_ICON[agent.state];
 
@@ -121,7 +125,7 @@ function PanelBody({ agent }: { agent: Agent }) {
             </span>
             <AnimatePresence mode="wait" initial={false}>
               <motion.p
-                key={keys[0] ?? 'none'}
+                key={latestKey}
                 className={styles.now}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -145,13 +149,13 @@ function PanelBody({ agent }: { agent: Agent }) {
         </section>
 
         <div className={styles.actions}>
-          <a className={cx(styles.action, styles.primary)} href={editorUrl(agent.cwd)}>
+          <a {...buttonLook('primary', 'md', styles.action)} href={editorUrl(agent.cwd)}>
             <EditorIcon />
             Open in VS Code
           </a>
           {resume !== null && (
             <CopyButton
-              className={styles.action}
+              {...buttonLook('secondary', 'md', styles.action)}
               content={resume}
               title={resume}
               aria-label="Copy a command that resumes this conversation in a terminal"
@@ -170,7 +174,7 @@ function PanelBody({ agent }: { agent: Agent }) {
             </dt>
             <dd className={styles.agentKind}>
               <KindBadge kind={agent.kind} className={styles.factBadge} size={11} />
-              {kind.label}
+              {kind.label} · {kind.provider}
             </dd>
           </div>
           <div className={styles.fact}>
@@ -208,6 +212,10 @@ function PanelBody({ agent }: { agent: Agent }) {
 
         <CostumePicker desk={agent.desk} />
 
+        {agent.subagents !== undefined && agent.subagents.length > 0 && (
+          <SubagentList subagents={agent.subagents} now={now} />
+        )}
+
         <section aria-labelledby="activity-title">
           <h3 id="activity-title" className={styles.sectionTitle}>
             <ActivityIcon size={18} />
@@ -216,35 +224,11 @@ function PanelBody({ agent }: { agent: Agent }) {
           {agent.activity.length === 0 ? (
             <p className={styles.empty}>Nothing yet. Events appear here as the agent works.</p>
           ) : (
-            <ol className={styles.activity}>
-              <AnimatePresence initial={false}>
-                {agent.activity.map((entry, i) => (
-                  <motion.li
-                    key={keys[i]}
-                    layout="position"
-                    className={styles.entry}
-                    data-failed={entry.failed === true ? 'true' : undefined}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.22 }}
-                  >
-                    <EntryIcon entry={entry} />
-                    <span className={styles.entrySummary}>{entry.summary}</span>
-                    <time
-                      className={styles.entryTime}
-                      dateTime={new Date(entry.at).toISOString()}
-                      title={formatClock(entry.at)}
-                    >
-                      {formatRelative(entry.at, now)}
-                    </time>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ol>
+            <ActivityList entries={agent.activity} now={now} />
           )}
         </section>
       </div>
+      <Composer key={agent.id} agent={agent} />
     </>
   );
 }
@@ -279,18 +263,6 @@ function HeroBanner({ agent }: { agent: Agent }) {
         />
       </div>
     </div>
-  );
-}
-
-/** The line's icon: what kind of step it was. */
-function EntryIcon({ entry }: { entry: ActivityEntry }) {
-  const Icon = ACTIVITY_ICON[activityKind(entry)];
-  // Plain text color (white in dark mode); only a failed step stands out, in red.
-  const color = entry.failed === true ? 'var(--state-needs-you)' : 'var(--text)';
-  return (
-    <span className={styles.entryIcon} style={{ color }}>
-      <Icon size={15} />
-    </span>
   );
 }
 

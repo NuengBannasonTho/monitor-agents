@@ -237,3 +237,10 @@
     animation: none;
   }
 }
+
+/* Resting over your lunch break. */
+.lunch {
+  display: inline-grid;
+  place-items: center;
+  color: var(--state-working);
+}

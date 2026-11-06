@@ -4,10 +4,11 @@
   --panel-ms: 420ms;
   position: relative;
   display: flex;
-  gap: 20px;
+  gap: 16px;
   flex: 1;
   min-height: 0;
-  padding: 14px 24px 24px;
+  /* The same side margins as every page's title, so the scenes line up under the bar. */
+  padding: 22px 32px 24px;
 }
 
 /* A soft card holding the title bar and its pixel scene. */
@@ -24,18 +25,21 @@
     flex-basis var(--panel-ms) var(--panel-ease);
   min-height: 520px;
   padding: 8px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
+  /* Its width comes from the flex layout, so the title bar can adapt to it. */
+  container-type: inline-size;
 }
 
 /* Title and the collapse button on top, the per-state chips below. */
 .panelHeader {
   display: grid;
   grid-template-areas:
-    'title button'
-    'stats stats';
-  grid-template-columns: minmax(0, 1fr) auto;
+    "title aside button"
+    "stats stats stats";
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px 12px;
   padding: 6px 6px 4px 14px;
@@ -83,7 +87,7 @@
   font-weight: 800;
 }
 
-.panelCount[data-urgent='true'] {
+.panelCount[data-urgent="true"] {
   background: var(--state-needs-you);
   color: #fff;
 }
@@ -91,6 +95,30 @@
 .panelStats {
   grid-area: stats;
   min-width: 0;
+}
+
+/* The clock sits at the right, next to the collapse button, and gives way first. */
+.panelAside {
+  grid-area: aside;
+  display: flex;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+/* A narrow panel gives the clock a line of its own under the title. */
+@container (max-width: 520px) {
+  .panelHeader {
+    grid-template-areas:
+      "title button"
+      "aside aside"
+      "stats stats";
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .panelAside {
+    justify-content: flex-start;
+    margin-left: -4px;
+  }
 }
 
 /* Round icon button. */
@@ -124,7 +152,7 @@
   transition: transform var(--panel-ms) var(--panel-ease);
 }
 
-.chevrons[data-pointing='right'] {
+.chevrons[data-pointing="right"] {
   transform: rotate(180deg);
 }
 
@@ -305,6 +333,7 @@
   line-height: 1.5;
   text-align: center;
 }
+
 
 /* ---- Shared character stage ---- */
 

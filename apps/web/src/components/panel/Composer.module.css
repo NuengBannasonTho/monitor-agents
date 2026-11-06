@@ -1,0 +1,358 @@
+/* Pinned under the drawer's scrolling body: a soft card, files peeking out from behind it. */
+.composer {
+  position: relative;
+  display: grid;
+  flex: none;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 18px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* ---- Attached files: a fanned little stack tucked behind the card's top edge ---- */
+
+.stack {
+  position: relative;
+  z-index: 0;
+  height: 40px;
+  margin: 4px 0 -16px 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--i) * 40px);
+  display: grid;
+  width: 48px;
+  height: 58px;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 6px 16px -6px rgba(20, 22, 40, 0.35);
+  transform: rotate(var(--tilt, 0deg)) translateY(14px);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: tileIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tile:hover,
+.tile:focus-within {
+  z-index: 2;
+  transform: rotate(0deg) translateY(2px);
+}
+
+@keyframes tileIn {
+  from {
+    opacity: 0;
+    transform: rotate(var(--tilt, 0deg)) translateY(34px);
+  }
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.doc {
+  display: grid;
+  gap: 2px;
+  place-items: center;
+  color: var(--muted);
+}
+
+.ext {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.moreTile {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.removeTile {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(13, 14, 22, 0.72);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.tile:hover .removeTile,
+.removeTile:focus-visible {
+  opacity: 1;
+}
+
+/* ---- The card: one row (attach · text · send) that grows into text over a row of tools ---- */
+
+.card {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --morph: 0.24s;
+  position: relative;
+  z-index: 1;
+  padding: 8px;
+  border: 1px solid var(--border);
+  /* One line: a full pill (half of its 60px height). 30px rather than 999px, so the corners
+     ease into the rounded box as it grows instead of snapping at the end. */
+  border-radius: 30px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  transition:
+    padding-bottom var(--morph) var(--ease),
+    border-radius var(--morph) var(--ease),
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+/* Past one line: a row below the text for the buttons. */
+.card[data-roomy='true'] {
+  padding-bottom: 58px;
+  border-radius: 24px;
+}
+
+.card:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.composer[data-dragging='true'] .card {
+  border: 1px dashed var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.card[data-disabled='true'] {
+  opacity: 0.6;
+}
+
+/* The text sits between the buttons on one line, then takes the full width. */
+.line {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 50px 0 44px;
+  transition: margin var(--morph) var(--ease);
+}
+
+.card[data-roomy='true'] .line {
+  margin: 0 8px;
+}
+
+/* "3 files": how many go with the message; click to drop them all. */
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip svg {
+  opacity: 0.5;
+}
+
+.chip:hover svg {
+  opacity: 1;
+}
+
+/* One line is exactly as tall as the buttons (22px line + 10px above and below). */
+.input,
+.mirror {
+  box-sizing: border-box;
+  padding: 10px 0;
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  transition: height var(--morph) var(--ease);
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: none;
+}
+
+.input::placeholder {
+  overflow: hidden;
+  color: var(--muted);
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* An invisible copy of the text, to know how tall it will be at a given width. */
+.mirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Anchored to the card's bottom corners: on one line they flank the text, and they slide
+   down with the bottom edge as the box grows. */
+.tool,
+.send {
+  position: absolute;
+  bottom: 8px;
+}
+
+.tool {
+  left: 8px;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tool:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.tool:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.picker {
+  display: none;
+}
+
+/* Send: a round dark (light in dark mode) disc with an arrow. */
+.send {
+  right: 8px;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-text);
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.send:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.send:not(:disabled):active,
+.tool:not(:disabled):active {
+  transform: scale(0.94);
+}
+
+/* The icon swaps (arrow / stop square) with a quick pop, so the change is noticed. */
+.sendIcon {
+  display: grid;
+  place-items: center;
+  animation: iconSwap 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.send[data-mode='stop'] .sendIcon {
+  animation-name: iconSwapStop;
+}
+
+@keyframes iconSwap {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes iconSwapStop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.stopSquare {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.status {
+  margin: 0;
+  padding-left: 6px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.status[data-kind='error'],
+.status[data-kind='stopped'] {
+  color: var(--state-needs-you);
+}
+
+.status[data-kind='sent'] {
+  color: var(--state-running);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .line,
+  .input {
+    transition: none;
+  }
+
+  .sendIcon {
+    animation: none;
+  }
+
+  .tile {
+    animation: none;
+    transition: none;
+  }
+}

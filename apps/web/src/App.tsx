@@ -1,16 +1,29 @@
 import { AnimateUIProvider } from '@animate-ui/react/provider';
+import type { CustomAgent } from '@agent-office/shared';
 import { Tooltip } from '@animate-ui/react/primitives/radix-ui/tooltip';
 import { MotionConfig } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './App.module.css';
 import { Gallery } from './components/gallery/Gallery';
-import { Header } from './components/header/Header';
+import { AgentsPage } from './components/agents/AgentsPage';
+import { CustomAgentsPage } from './components/customAgents/CustomAgentsPage';
 import { Office } from './components/office/Office';
+import { AssistantsDialog } from './components/office/AssistantsDialog';
+import { AssistantPage } from './components/assistant/AssistantPage';
 import { AgentPanel } from './components/panel/AgentPanel';
+import { SettingsPage } from './components/settings/SettingsPage';
+import { NewTaskPage } from './components/tasks/NewTaskPage';
+import { UsagePage } from './components/usage/UsagePage';
+import { Sidebar } from './components/sidebar/Sidebar';
+import { navigate, useRoute } from './lib/route';
+import { CustomAgentsIcon, NewTaskIcon } from './components/icons';
+import { Button } from './components/ui/Button';
+import { Page } from './components/ui/Page';
 import { SkinProvider } from './skins/SkinContext';
 import { useNeedsYouSound } from './sound/useNeedsYouSound';
 import { unseenFinished, waitingOnYou } from './live/attention';
 import { useAgentStream } from './live/useAgentStream';
+import { fetchCustomAgents } from './live/customAgents';
 import { useDesktopAlerts } from './live/useDesktopAlerts';
 import { useSeenFinishes } from './live/useSeenFinishes';
 import { useTabBadge } from './live/useTabBadge';
@@ -34,7 +47,28 @@ export function App() {
   const agents = USE_SIMULATOR ? simulated : stream.agents;
   const source = USE_SIMULATOR ? 'preview' : stream.status;
   const sound = useNeedsYouSound(agents);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // /?page=… picks what fills the space beside the sidebar; none is the office.
+  const route = useRoute();
+  const [showAssistants, setShowAssistants] = useState(false);
+  const [helpers, setHelpers] = useState<readonly CustomAgent[]>([]);
+  useEffect(() => {
+    if (route.page !== 'office' || USE_SIMULATOR) return;
+    let live = true;
+    const refresh = () => {
+      void fetchCustomAgents().then((result) => {
+        if (live && result.ok)
+          setHelpers(result.value.agents.filter((agent) => agent.problem === null));
+      });
+    };
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => {
+      live = false;
+      window.removeEventListener('focus', refresh);
+    };
+  }, [route.page]);
+  // /?agent=<id> (from a banana on the desktop) opens straight to that agent.
+  const [selectedId, setSelectedId] = useState<string | null>(() => params.get('agent'));
 
   // If the selected agent disappears (removed by the sweeper later), the panel closes.
   const selected = useMemo(
@@ -72,26 +106,98 @@ export function App() {
         <SkinProvider enabled={!USE_SIMULATOR}>
           <Tooltip.Provider delayDuration={250} skipDelayDuration={150}>
             <div className={styles.app}>
-              <Header
+              <Sidebar
+                agents={agents}
                 waiting={waiting}
                 finished={finished}
                 onOpen={open}
                 source={source}
-                sound={sound}
-                alerts={alerts}
               />
               <main className={styles.main}>
-                {SHOW_GALLERY ? (
-                  <Gallery />
-                ) : (
-                  <Office
+                {route.page === 'assistant' ? (
+                  <AssistantPage preview={USE_SIMULATOR} />
+                ) : route.page === 'settings' ? (
+                  <SettingsPage
+                    section={route.section}
+                    sound={sound}
+                    alerts={alerts}
+                    desktop={USE_SIMULATOR ? null : stream.desktop}
                     agents={agents}
+                  />
+                ) : route.page === 'agents' ? (
+                  <AgentsPage
+                    agents={agents}
+                    filter={route.section}
                     selectedId={selected?.id ?? null}
                     finishedIds={finishedIds}
-                    waiting={waiting}
-                    onSelect={toggleSelect}
                     onOpen={open}
                   />
+                ) : route.page === 'usage' ? (
+                  <UsagePage
+                    section={route.section}
+                    agents={agents}
+                    onOpen={open}
+                    preview={USE_SIMULATOR}
+                  />
+                ) : route.page === 'new-task' ? (
+                  <NewTaskPage preview={USE_SIMULATOR} helper={route.helper} />
+                ) : route.page === 'custom-agents' ? (
+                  <CustomAgentsPage preview={USE_SIMULATOR} />
+                ) : SHOW_GALLERY ? (
+                  <Gallery />
+                ) : (
+                  <Page
+                    trail={['Office']}
+                    fill
+                    actions={
+                      <>
+                        <Button
+                          size="sm"
+                          icon={<CustomAgentsIcon size={16} />}
+                          onClick={() => {
+                            setShowAssistants(true);
+                          }}
+                        >
+                          Assistants
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={<NewTaskIcon size={16} />}
+                          onClick={() => {
+                            navigate('new-task');
+                          }}
+                        >
+                          New task
+                        </Button>
+                      </>
+                    }
+                  >
+                    <Office
+                      agents={agents}
+                      selectedId={selected?.id ?? null}
+                      finishedIds={finishedIds}
+                      waiting={waiting}
+                      onSelect={toggleSelect}
+                      onOpen={open}
+                    />
+                    {showAssistants && (
+                      <AssistantsDialog
+                        helpers={helpers}
+                        onClose={() => {
+                          setShowAssistants(false);
+                        }}
+                        onAssignHelper={(helper) => {
+                          setShowAssistants(false);
+                          navigate('new-task', null, `${helper.scope}\n${helper.file}`);
+                        }}
+                        onAssignProvider={(provider) => {
+                          setShowAssistants(false);
+                          navigate('new-task', null, `@provider:${provider}`);
+                        }}
+                      />
+                    )}
+                  </Page>
                 )}
               </main>
               <AgentPanel agent={selected} onClose={closePanel} />

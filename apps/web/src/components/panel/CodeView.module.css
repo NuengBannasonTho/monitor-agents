@@ -1,0 +1,96 @@
+/* A soft card: a small header (what it is, the language, copy) over the code. */
+.frame {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.label {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.lang {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.copy {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.copy:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.copy:active {
+  transform: scale(0.94);
+}
+
+.scroll {
+  max-height: 320px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* The plain text, until the highlighter has painted (or for a language it lacks). */
+.fallback,
+.code :global(pre) {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.fallback {
+  color: var(--text);
+}
+
+.scroll[data-wrap='true'] .fallback,
+.scroll[data-wrap='true'] .code :global(pre) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.scroll:has(.code :global(pre)) .fallback,
+.scroll:has(.code[data-writing='true']) .fallback {
+  display: none;
+}
+
+/* Shiki paints its own page color; the card's shows through instead. */
+.code :global(pre.shiki) {
+  background-color: transparent !important;
+}
+
+.code :global(code) {
+  font-family: inherit;
+}

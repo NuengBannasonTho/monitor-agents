@@ -1,0 +1,77 @@
+.card {
+  --tone: var(--text);
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.value {
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.detail {
+  margin-top: -4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 18px;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.label svg {
+  flex: none;
+}
+
+.label svg {
+  color: var(--tone);
+}
+
+.bar {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+}
+
+.segment {
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.segment[data-on] {
+  background: var(--tone);
+}
+
+/* A narrow card has room for the number and its label only. */
+@media (max-width: 760px) {
+  .bar {
+    display: none;
+  }
+}

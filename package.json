@@ -12,6 +12,7 @@
     "build": "pnpm --filter @agent-office/web build",
     "build:preview": "VITE_DATA_SOURCE=mock pnpm --filter @agent-office/web build",
     "start": "pnpm build && pnpm --filter @agent-office/server start",
+    "desktop": "pnpm --filter @agent-office/desktop start",
     "typecheck": "pnpm --recursive typecheck && tsc -p scripts/tsconfig.json",
     "lint": "eslint .",
     "format": "prettier --write .",

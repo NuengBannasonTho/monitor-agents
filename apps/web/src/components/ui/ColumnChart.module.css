@@ -1,0 +1,162 @@
+.chart {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 16px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* Tick labels on the left of the plot; day or hour labels under it. */
+.frame {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(200px, 1fr) auto;
+  column-gap: 10px;
+  row-gap: 8px;
+}
+
+.axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* Each label centred on its gridline. */
+  margin-block: -0.6em;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.plot {
+  position: relative;
+  min-width: 0;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.grid span {
+  height: 1px;
+  background: var(--border);
+}
+
+.columns,
+.labels {
+  display: grid;
+  grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+}
+
+.columns {
+  position: absolute;
+  inset: 0;
+}
+
+/* The whole slot is the hover target, wider than the bar in it. */
+.column {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  border-radius: 6px;
+  outline-offset: -2px;
+}
+
+.column:hover,
+.column:focus-visible {
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+}
+
+/* Segments bottom up, 2px of surface between them; only the top end is rounded. */
+.stack {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  width: min(24px, 64%);
+  height: 100%;
+}
+
+.segment {
+  display: block;
+  flex: none;
+  min-height: 2px;
+}
+
+.segment:last-child {
+  border-radius: 4px 4px 0 0;
+}
+
+.labels {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.labels span {
+  overflow: visible;
+}
+
+.tip {
+  display: grid;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.tipRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--popover-muted);
+}
+
+.tipValue {
+  margin-left: auto;
+  color: var(--popover-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .frame {
+    grid-template-rows: minmax(160px, 1fr) auto;
+  }
+}

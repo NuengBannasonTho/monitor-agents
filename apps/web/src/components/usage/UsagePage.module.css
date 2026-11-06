@@ -1,0 +1,206 @@
+.report {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  transition: opacity 0.2s;
+}
+
+/* The previous range's numbers, while the new range loads. */
+.report[data-stale] {
+  opacity: 0.55;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* The chart takes the width; the plan, models and token kinds sit beside it. */
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 12px;
+}
+
+/* The chart grows to the height of the card beside it. */
+.chartCard {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.side {
+  gap: 22px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.block {
+  display: grid;
+  gap: 12px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listRow {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.listName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listName svg {
+  flex: none;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--state-working) 14%, var(--surface));
+  font-size: 13.5px;
+}
+
+.tableNote {
+  margin: 0;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.stacked {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.path,
+.code {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.path {
+  color: var(--muted);
+}
+
+.code {
+  font-weight: 500;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* "107 tools  2 skills  0 subagents": wraps between counts, never inside one. */
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.counts > span {
+  white-space: nowrap;
+}
+
+.number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.live {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--state-running) 16%, var(--surface));
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report {
+    transition: none;
+  }
+}

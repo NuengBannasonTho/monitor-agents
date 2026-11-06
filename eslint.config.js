@@ -33,7 +33,7 @@ export default tseslint.config(
     rules: reactHooks.configs.recommended.rules,
   },
   {
-    files: ['apps/server/**/*.ts', 'scripts/**/*.{js,ts}', '*.js'],
+    files: ['apps/server/**/*.ts', 'apps/desktop/**/*.{ts,cts}', 'scripts/**/*.{js,ts}', '*.js'],
     languageOptions: { globals: globals.node },
   },
   {

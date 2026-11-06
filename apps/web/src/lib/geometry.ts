@@ -79,6 +79,108 @@ export function deskGrid(zone: Size, horizon: number, needed: number): DeskGrid 
 }
 
 /* ------------------------------------------------------------------ */
+/* Subagent desks                                                      */
+/* ------------------------------------------------------------------ */
+
+/** Two subagent desks share the place of one desk in a row. */
+export const MINI_DESKS_PER_PLACE = 2;
+/** How far each of the pair sits from the middle of the place. */
+export const MINI_DESK_OFFSET_X = 28;
+
+/** An agent and its subagents, seated together. */
+export interface Team {
+  readonly id: string;
+  /** The place of the agent's own desk, or null when it is not at work (in Base Camp). */
+  readonly home: number | null;
+  readonly subagents: number;
+}
+
+export interface MiniSeat {
+  /** The desk place it shares. */
+  readonly place: number;
+  /** Offset from the middle of that place, in px. */
+  readonly dx: number;
+}
+
+/** Places a team's small desks take: one per pair of subagents. */
+export function placesForSubagents(subagents: number): number {
+  return Math.ceil(subagents / MINI_DESKS_PER_PLACE);
+}
+
+/**
+ * Seats every team's subagents at small desks next to the agent's own desk, in the same row:
+ * the free places to its right, then to its left, until something is in the way; anywhere
+ * free and nearest after that. Agents keep their own desks; subagents never take one.
+ * Returns, per team id, where each of its subagents sits (in order).
+ */
+export function seatSubagents(
+  grid: DeskGrid,
+  teams: readonly Team[],
+): ReadonlyMap<string, readonly MiniSeat[]> {
+  const taken = new Set<number>();
+  for (const t of teams) if (t.home !== null) taken.add(t.home);
+  const free = (place: number): boolean =>
+    place >= 0 && place < grid.desks.length && !taken.has(place);
+  const seats = new Map<string, MiniSeat[]>();
+
+  for (const team of teams) {
+    const need = placesForSubagents(team.subagents);
+    if (need === 0) continue;
+    const places: number[] = [];
+
+    if (team.home !== null) {
+      const row = Math.floor(team.home / grid.cols);
+      const col = team.home % grid.cols;
+      let right = true;
+      let left = true;
+      for (let d = 1; d < grid.cols && places.length < need && (right || left); d++) {
+        for (const [dir, open] of [
+          [1, right],
+          [-1, left],
+        ] as const) {
+          if (!open || places.length >= need) continue;
+          const c = col + dir * d;
+          const place = row * grid.cols + c;
+          if (c >= 0 && c < grid.cols && free(place)) places.push(place);
+          else if (dir === 1) right = false;
+          else left = false;
+        }
+      }
+    }
+
+    if (places.length < need) {
+      // Nearest free places anywhere, or the middle of the plaza first without a home desk.
+      const home = team.home;
+      const distance = (p: number): number => {
+        if (home === null) return grid.fillOrder.indexOf(p);
+        const dc = (p % grid.cols) - (home % grid.cols);
+        const dr = Math.floor(p / grid.cols) - Math.floor(home / grid.cols);
+        return dc * dc + dr * dr * 4;
+      };
+      const rest = grid.fillOrder
+        .filter((p) => free(p) && !places.includes(p))
+        .sort((a, b) => distance(a) - distance(b));
+      places.push(...rest.slice(0, need - places.length));
+    }
+
+    for (const p of places) taken.add(p);
+    const list: MiniSeat[] = [];
+    for (let i = 0; i < team.subagents; i++) {
+      const place = places[Math.floor(i / MINI_DESKS_PER_PLACE)];
+      if (place === undefined) break;
+      const pairStart = i - (i % MINI_DESKS_PER_PLACE);
+      const alone = team.subagents - pairStart === 1;
+      list.push({
+        place,
+        dx: alone ? 0 : i % MINI_DESKS_PER_PLACE === 0 ? -MINI_DESK_OFFSET_X : MINI_DESK_OFFSET_X,
+      });
+    }
+    seats.set(team.id, list);
+  }
+  return seats;
+}
+
+/* ------------------------------------------------------------------ */
 /* Lounge                                                              */
 /* ------------------------------------------------------------------ */
 

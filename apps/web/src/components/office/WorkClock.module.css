@@ -1,0 +1,56 @@
+/* The day's clock in a panel's title bar: a soft pill, the icon in the period's color. */
+.clock {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: clockIn 260ms ease-out both;
+}
+
+@keyframes clockIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+.icon {
+  flex: none;
+  color: var(--state-running);
+}
+
+.clock[data-period='lunch'] .icon {
+  color: var(--state-working);
+}
+
+.clock[data-period='off'] .icon {
+  color: var(--state-called);
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.text {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+}
+
+/* Someone is working through lunch or after hours. */
+.clock[data-overtime='true'] .text {
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock {
+    animation: none;
+  }
+}

@@ -1,12 +1,16 @@
 .app {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
   min-height: 100%;
 }
 
+/* Beside the sidebar: the office fills the screen; the other pages scroll the window. */
 .main {
   display: flex;
   flex: 1;
   flex-direction: column;
-  min-height: 0;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
 }

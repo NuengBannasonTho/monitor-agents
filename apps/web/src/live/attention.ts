@@ -1,5 +1,6 @@
 import { zoneOf } from '@agent-office/shared';
 import type { Agent } from '@agent-office/shared';
+import { APP_NAME } from '../lib/brand';
 
 /*
  * What deserves your attention, as plain functions of the agent list: who is waiting on
@@ -52,11 +53,9 @@ export function justFinished(
   return { current, finished };
 }
 
-export const APP_TITLE = 'MO BANANA';
-
 /** Browser tab title: waiting agents first, then unread finishes. */
 export function tabTitle(waiting: number, finished: number): string {
-  if (waiting > 0) return `(${String(waiting)}) Needs you – ${APP_TITLE}`;
-  if (finished > 0) return `(${String(finished)}) Finished – ${APP_TITLE}`;
-  return APP_TITLE;
+  if (waiting > 0) return `(${String(waiting)}) Needs you – ${APP_NAME}`;
+  if (finished > 0) return `(${String(finished)}) Finished – ${APP_NAME}`;
+  return APP_NAME;
 }

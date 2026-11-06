@@ -1,0 +1,17 @@
+.logo {
+  display: block;
+  flex: none;
+  /* The tile's own corners (18 of 64), so the ring below follows them. */
+  border-radius: 28%;
+}
+
+/* On a dark sidebar the black tile needs a faint edge to stand off it. */
+:root[data-theme="dark"] .logo {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .logo {
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12);
+  }
+}

@@ -1,0 +1,90 @@
+.detail {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 2px 0 14px 30px;
+}
+
+/* Short facts: label on the left, value on the right. */
+.fields {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 12px;
+}
+
+.field dt {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.field dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+/* A prompt or a reply, as it was written. */
+.prose {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.proseLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.text {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.text code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+/* The whole line, for a step with nothing more behind it. */
+.line {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--state-needs-you) 10%, transparent);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.note code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+}
