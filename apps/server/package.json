@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "AGENT_OFFICE_DEV_ORIGIN=http://127.0.0.1:4778 tsx watch src/main.ts",
+    "dev": "AGENT_OFFICE_DEV_ORIGIN=http://127.0.0.1:1111 tsx watch src/main.ts",
     "start": "tsx src/main.ts",
     "typecheck": "tsc -p tsconfig.json"
   },

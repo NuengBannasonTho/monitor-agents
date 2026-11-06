@@ -18,8 +18,9 @@ export default defineConfig(({ command }) => ({
   ],
   server: {
     host: "0.0.0.0",
-    // Next to the server's 4777, not Vite's usual 5173: another project's dev server often
-    // holds that one, and http://localhost:5173 would open it instead of this app.
+    // Not Vite's usual 5173: another project's dev server often holds that one, and
+    // http://localhost:5173 would open it instead of this app. The server's dev script
+    // (apps/server/package.json, AGENT_OFFICE_DEV_ORIGIN) must name the same port.
     port: 1111,
     strictPort: true,
     // The dev server forwards the WebSocket, skin API and sprites to the Fastify server.
