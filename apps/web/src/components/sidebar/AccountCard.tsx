@@ -1,6 +1,7 @@
 import type { AccountStatus, ClaudeAccount } from '@agent-office/shared';
 import { Popover } from '@animate-ui/react/primitives/radix-ui/popover';
 import type { CSSProperties } from 'react';
+import { APP_NAME } from '../../lib/brand';
 import { useAccount } from '../../live/account';
 import { CopiedIcon, ExpandIcon } from '../icons';
 import { Meter } from '../ui/Meter';
@@ -18,8 +19,8 @@ const SOURCE_LABEL: Readonly<Record<Source, string>> = {
 
 const SOURCE_HINT: Readonly<Record<Source, string>> = {
   preview: 'Simulated agents running in your browser',
-  connecting: 'Connecting to the MO BANANA server…',
-  live: 'Connected to the MO BANANA server',
+  connecting: `Connecting to the ${APP_NAME} server…`,
+  live: `Connected to the ${APP_NAME} server`,
   offline: 'Server not reachable. Start it with pnpm start; reconnecting automatically.',
 };
 

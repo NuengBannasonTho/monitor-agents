@@ -4,11 +4,13 @@ import { Tooltip } from '@animate-ui/react/primitives/radix-ui/tooltip';
 import { motion } from 'motion/react';
 import { useCallback, useState } from 'react';
 import type { IconProps } from 'reicon-react/createIcon';
+import { APP_WORDMARK } from '../../lib/brand';
 import type { Page } from '../../lib/route';
 import { navigate, useRoute } from '../../lib/route';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import {
   AgentsIcon,
+  AssistantIcon,
   CampIcon,
   CustomAgentsIcon,
   FinishedIcon,
@@ -22,7 +24,7 @@ import {
 } from '../icons';
 import type { Source } from './AccountCard';
 import { AccountCard } from './AccountCard';
-import { BananaLogo } from './BananaLogo';
+import { MonLogo } from './MonLogo';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
@@ -96,6 +98,7 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
     {
       title: 'Work',
       items: [
+        { id: 'assistant', label: 'Assistant', Icon: AssistantIcon, page: 'assistant' },
         {
           id: 'new-task',
           label: 'New task',
@@ -184,7 +187,7 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
               aria-label="Expand sidebar"
             >
               <span className={styles.logoArt}>
-                <BananaLogo />
+                <MonLogo />
               </span>
               <span className={styles.logoToggle}>
                 <SidebarIcon size={18} />
@@ -193,10 +196,13 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
           </Hint>
         ) : (
           <span className={styles.logo}>
-            <BananaLogo />
+            <MonLogo />
           </span>
         )}
-        <span className={styles.title}>MO BANANA</span>
+        <span className={styles.title}>
+          <span className={styles.titleMain}>{APP_WORDMARK.main}</span>{' '}
+          <span className={styles.titleSub}>{APP_WORDMARK.sub}</span>
+        </span>
         {!collapsed && (
           <Hint label="Collapse sidebar" enabled>
             <button

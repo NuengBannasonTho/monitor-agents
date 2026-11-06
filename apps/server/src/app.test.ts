@@ -453,12 +453,13 @@ describe('typing to an agent', () => {
 describe('custom agents', () => {
   let dir: string;
   let agentsApp: App;
-  const build = async (editable: boolean) => {
+  const build = async (editable: boolean, agentLauncher?: AgentLauncher) => {
     agentsApp = await buildApp({
       token: TOKEN,
       store,
       adapters: [createClaudeCodeAdapter(Date.now, { details: false })],
       allowedOrigins: [ORIGIN],
+      agentLauncher,
       customAgents: {
         userDir: path.join(dir, 'agents'),
         trashDir: path.join(dir, 'trash'),
@@ -501,6 +502,24 @@ describe('custom agents', () => {
       scopes: { id: string }[];
       agents: { file: string; modifiedAt: number }[];
     }>();
+
+  it('keeps project helpers available when no session is running', async () => {
+    const project = path.join(dir, 'project');
+    await mkdir(path.join(project, '.claude', 'agents'), { recursive: true });
+    const launcher: AgentLauncher = {
+      places: () =>
+        Promise.resolve({
+          repos: [{ id: 'repo', path: project, name: 'Project' }],
+          worktrees: [],
+        }),
+      startInNewWorktree: () => Promise.resolve({ ok: true }),
+      startInWorktree: () => Promise.resolve({ ok: true }),
+    };
+    await build(true, launcher);
+    expect((await list()).scopes.map((scope) => scope.id)).toContain(`project:${project}`);
+    expect((await send('POST', { scope: `project:${project}`, agent })).statusCode).toBe(201);
+    expect((await list()).agents.map((saved) => saved.file)).toContain('reviewer.md');
+  });
 
   it('creates, updates and trashes an agent of yours', async () => {
     await build(true);
@@ -568,7 +587,13 @@ function postEventTo(target: App, body: unknown) {
 describe('starting a task', () => {
   let dir: string;
   let taskApp: App;
-  let calls: { kind: string; target: string; name?: string; prompt: string }[];
+  let calls: {
+    kind: string;
+    target: string;
+    name?: string;
+    prompt: string;
+    provider?: string;
+  }[];
   const places: Places = {
     repos: [{ id: 'r1', name: 'app', path: '/code/app' }],
     worktrees: [
@@ -584,12 +609,12 @@ describe('starting a task', () => {
   };
   const launcher: AgentLauncher = {
     places: () => Promise.resolve(places),
-    startInNewWorktree: (repoId, name, prompt) => {
-      calls.push({ kind: 'new', target: repoId, name, prompt });
+    startInNewWorktree: (repoId, name, prompt, provider) => {
+      calls.push({ kind: 'new', target: repoId, name, prompt, provider });
       return Promise.resolve({ ok: true });
     },
-    startInWorktree: (worktreeId, prompt) => {
-      calls.push({ kind: 'existing', target: worktreeId, prompt });
+    startInWorktree: (worktreeId, prompt, provider) => {
+      calls.push({ kind: 'existing', target: worktreeId, prompt, provider });
       return Promise.resolve({ ok: true });
     },
   };
@@ -607,6 +632,12 @@ describe('starting a task', () => {
       adapters: [],
       allowedOrigins: [ORIGIN],
       agentLauncher: launcher,
+      assistantPlanner: (request, repos) =>
+        Promise.resolve({
+          reply: `Found ${repos[0]?.name ?? 'nothing'} for ${request.message}`,
+          matches: ['r1', 'unknown'],
+          draft: { task: 'Fix login', provider: 'codex', repoId: 'unknown' },
+        }),
       customAgents: {
         userDir: path.join(dir, 'agents'),
         trashDir: dir,
@@ -635,6 +666,25 @@ describe('starting a task', () => {
     expect(res.json()).toEqual({ enabled: true, reachable: true, ...places });
   });
 
+  it('chats about known projects without trusting project IDs from the planner', async () => {
+    const chat = (body: unknown, origin = ORIGIN) =>
+      taskApp.fastify.inject({
+        method: 'POST',
+        url: '/api/assistant/chat',
+        headers: { host: HOST, origin, 'content-type': 'application/json' },
+        payload: JSON.stringify(body),
+      });
+    expect((await chat({ message: 'find app' }, 'https://other.example')).statusCode).toBe(403);
+    expect((await chat({ message: '' })).statusCode).toBe(400);
+    const response = await chat({ message: 'find app', history: [] });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      reply: 'Found app for find app',
+      matches: [{ id: 'r1', name: 'app' }],
+      draft: { task: 'Fix login', provider: 'codex', repoId: null },
+    });
+  });
+
   it('starts Claude Code in a new worktree, telling the lead about its team', async () => {
     const res = await start({
       task: 'Add a settings page',
@@ -658,7 +708,28 @@ describe('starting a task', () => {
       where: { kind: 'existing', worktreeId: 'w1' },
     });
     expect(res.statusCode).toBe(201);
-    expect(calls).toEqual([{ kind: 'existing', target: 'w1', prompt: 'Fix it' }]);
+    expect(calls).toEqual([
+      { kind: 'existing', target: 'w1', prompt: 'Fix it', provider: 'claude' },
+    ]);
+  });
+
+  it('starts Codex and keeps Claude-only custom agents off its team', async () => {
+    const where = { kind: 'existing', worktreeId: 'w1' };
+    expect((await start({ provider: 'codex', task: 'Fix it', where })).statusCode).toBe(201);
+    expect(calls).toEqual([
+      { kind: 'existing', target: 'w1', prompt: 'Fix it', provider: 'codex' },
+    ]);
+    expect(
+      (
+        await start({
+          provider: 'codex',
+          task: 'Fix it',
+          where,
+          team: ['reviewer'],
+        })
+      ).statusCode,
+    ).toBe(400);
+    expect(calls).toHaveLength(1);
   });
 
   it('refuses other sites, places Orca did not list, and unknown helpers', async () => {

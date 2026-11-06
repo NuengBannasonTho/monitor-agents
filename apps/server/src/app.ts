@@ -3,6 +3,7 @@ import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import {
   AgentKindSchema,
+  AssistantChatRequestSchema,
   DeleteCustomAgentSchema,
   DesktopPatchSchema,
   SaveCustomAgentSchema,
@@ -15,6 +16,7 @@ import {
 } from '@agent-office/shared';
 import type {
   AccountStatus,
+  AssistantChatResponse,
   AgentKind,
   CustomAgentList,
   CustomAgentScope,
@@ -40,6 +42,7 @@ import {
 } from './customAgents.js';
 import { applyDesktopPatch, loadDesktopPrefs, saveDesktopPrefs } from './desktopPrefs.js';
 import type { AgentLauncher } from './orcaLauncher.js';
+import type { AssistantPlanner } from './assistantPlanner.js';
 import type { TerminalSender } from './orcaTerminal.js';
 import { listSkinPacks } from './skins.js';
 import { UploadTooLarge, messageWithFiles, saveUploads } from './uploads.js';
@@ -72,6 +75,8 @@ export interface AppOptions {
   readonly uploadsDir?: string;
   /** Starts Claude Code on a task (New task); absent turns that off (START_AGENTS=off). */
   readonly agentLauncher?: AgentLauncher;
+  /** Read-only chat coordinator; absent turns the Assistant page off. */
+  readonly assistantPlanner?: AssistantPlanner;
   /** The Claude account and its usage, as Orca reports it. */
   readonly accountReader?: () => Promise<AccountStatus>;
   /** Tokens, estimated cost, skills and subagents, from the transcripts; absent with USAGE=off. */
@@ -371,14 +376,17 @@ export async function buildApp(options: AppOptions): Promise<App> {
   });
 
   const customAgents = options.customAgents;
-  /** Yours, plus the project folder of every agent here now. */
-  const agentFolders = async (): Promise<CustomAgentScope[]> =>
-    customAgents === undefined
-      ? []
-      : agentScopes(
-          customAgents.userDir,
-          options.store.snapshot().map((a) => a.cwd),
-        );
+  /** Keep project helpers available after their last live session has ended. */
+  const agentFolders = async (): Promise<CustomAgentScope[]> => {
+    if (customAgents === undefined) return [];
+    const places = await options.agentLauncher?.places();
+    const projects = [
+      ...options.store.snapshot().map((a) => a.cwd),
+      ...(places?.repos.map((repo) => repo.path) ?? []),
+      ...(places?.worktrees.map((worktree) => worktree.path) ?? []),
+    ];
+    return agentScopes(customAgents.userDir, projects);
+  };
 
   fastify.get('/api/custom-agents', async (): Promise<CustomAgentList> => {
     const scopes = await agentFolders();
@@ -407,7 +415,7 @@ export async function buildApp(options: AppOptions): Promise<App> {
     const scope = (await agentFolders()).find((s) => s.id === scopeId);
     if (scope === undefined) {
       await reply.code(404).send({
-        error: 'That folder is not known here any more (its agent may have left).',
+        error: 'That folder is not available here.',
       });
       return null;
     }
@@ -479,6 +487,48 @@ export async function buildApp(options: AppOptions): Promise<App> {
     return reader(range.data);
   });
 
+  /** A read-only Codex turn answers and drafts work using Orca's known projects. */
+  fastify.post(
+    '/api/assistant/chat',
+    async (request, reply): Promise<AssistantChatResponse | FastifyReply> => {
+      const origin = headerValue(request.headers.origin);
+      if (origin !== undefined && !allowedOrigins.has(origin)) return reply.code(403).send();
+      const parsed = AssistantChatRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Write a shorter message.' });
+      if (options.assistantPlanner === undefined || options.agentLauncher === undefined)
+        return reply.code(503).send({ error: 'The assistant is not available on this server.' });
+      const places = await options.agentLauncher.places();
+      if (places === null) return reply.code(502).send({ error: 'Orca is not reachable.' });
+      try {
+        const plan = await options.assistantPlanner(parsed.data, places.repos);
+        const byId = new Map(places.repos.map((repo) => [repo.id, repo]));
+        const matches = [...new Set(plan.matches)].flatMap((id) => {
+          const repo = byId.get(id);
+          return repo === undefined ? [] : [repo];
+        });
+        return {
+          reply: plan.reply,
+          matches,
+          draft:
+            plan.draft === null
+              ? null
+              : {
+                  ...plan.draft,
+                  repoId:
+                    plan.draft.repoId !== null && byId.has(plan.draft.repoId)
+                      ? plan.draft.repoId
+                      : null,
+                },
+        };
+      } catch (error) {
+        request.log.warn({ err: error }, 'assistant chat failed');
+        return reply
+          .code(502)
+          .send({ error: 'Codex could not answer. Check its account and try again.' });
+      }
+    },
+  );
+
   /** Where a task can run: Orca's repos and worktrees. */
   fastify.get('/api/tasks/places', async (): Promise<TaskPlaces> => {
     const launcher = options.agentLauncher;
@@ -508,7 +558,10 @@ export async function buildApp(options: AppOptions): Promise<App> {
         error: parsed.error.issues[0]?.message ?? 'That task is not valid.',
       });
     }
-    const { task, where, team } = parsed.data;
+    const { task, where, team, provider } = parsed.data;
+    if (provider === 'codex' && team.length > 0) {
+      return reply.code(400).send({ error: 'Custom agents can only join Claude Code tasks.' });
+    }
 
     // Only places Orca listed: the ids never reach Orca unchecked.
     const places = await launcher.places();
@@ -547,12 +600,13 @@ export async function buildApp(options: AppOptions): Promise<App> {
     const prompt = leadPrompt(task, members);
     const started =
       where.kind === 'new'
-        ? await launcher.startInNewWorktree(where.repoId, where.name, prompt)
-        : await launcher.startInWorktree(where.worktreeId, prompt);
+        ? await launcher.startInNewWorktree(where.repoId, where.name, prompt, provider)
+        : await launcher.startInWorktree(where.worktreeId, prompt, provider);
     request.log.info(
       {
         where: where.kind === 'new' ? `${projectDir} → ${where.name}` : projectDir,
         team,
+        provider,
       },
       started.ok ? 'started an agent' : 'starting an agent failed',
     );

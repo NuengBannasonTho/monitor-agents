@@ -37,8 +37,8 @@
 .panelHeader {
   display: grid;
   grid-template-areas:
-    'title aside button'
-    'stats stats stats';
+    "title aside button"
+    "stats stats stats";
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px 12px;
@@ -87,7 +87,7 @@
   font-weight: 800;
 }
 
-.panelCount[data-urgent='true'] {
+.panelCount[data-urgent="true"] {
   background: var(--state-needs-you);
   color: #fff;
 }
@@ -109,9 +109,9 @@
 @container (max-width: 520px) {
   .panelHeader {
     grid-template-areas:
-      'title button'
-      'aside aside'
-      'stats stats';
+      "title button"
+      "aside aside"
+      "stats stats";
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
@@ -152,7 +152,7 @@
   transition: transform var(--panel-ms) var(--panel-ease);
 }
 
-.chevrons[data-pointing='right'] {
+.chevrons[data-pointing="right"] {
   transform: rotate(180deg);
 }
 
@@ -333,6 +333,7 @@
   line-height: 1.5;
   text-align: center;
 }
+
 
 /* ---- Shared character stage ---- */
 

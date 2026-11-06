@@ -83,7 +83,10 @@ const ZONE_TEXT = {
 const MIN_LOUNGE_CELLS = 6;
 const LOUNGE_MIN_CELL_PX = 128;
 /** Keeps sprites (and their name tag) inside the lounge while standing or walking. */
-const LOUNGE_PADDING = { x: CHARACTER_WIDTH / 2 + 18, y: CHARACTER_HEIGHT / 2 + 20 };
+const LOUNGE_PADDING = {
+  x: CHARACTER_WIDTH / 2 + 18,
+  y: CHARACTER_HEIGHT / 2 + 20,
+};
 
 /** A zone just opening has no size yet; its scene waits until it does. */
 function hasRoom(rect: Rect): boolean {
@@ -141,7 +144,10 @@ export function Office({
     const grid = deskGrid(rects.table, cityHorizonPx(rects.table.height, px), seatsNeeded);
     // Snap desks onto the scenery's pixel grid so their pixels line up with the floor's.
     const snap = (v: number): number => Math.round(v / px) * px;
-    return { ...grid, desks: grid.desks.map((d) => ({ x: snap(d.x), y: snap(d.y) })) };
+    return {
+      ...grid,
+      desks: grid.desks.map((d) => ({ x: snap(d.x), y: snap(d.y) })),
+    };
   }, [rects, seatsNeeded, px]);
 
   // Where waiting agents may stroll: the lounge minus room for the sprite and its name tag.
@@ -181,13 +187,20 @@ export function Office({
           agent,
           zone,
           desk: deskIndex,
-          target: { x: table.left + desk.x, y: table.top + desk.y - SEAT_ABOVE_DESK_PX },
+          target: {
+            x: table.left + desk.x,
+            y: table.top + desk.y - SEAT_ABOVE_DESK_PX,
+          },
         });
       } else {
         const slot = loungeSlots.get(agent.id);
         if (slot === undefined) continue;
         const p = loungeSlotPosition(lounge, grid, slot, LOUNGE_PADDING, agent.id);
-        result.push({ agent, zone, target: { x: lounge.left + p.x, y: lounge.top + p.y } });
+        result.push({
+          agent,
+          zone,
+          target: { x: lounge.left + p.x, y: lounge.top + p.y },
+        });
       }
     }
     return result;
@@ -219,7 +232,10 @@ export function Office({
         const sub = list[i];
         const place = desks.desks[seat.place];
         if (sub === undefined || place === undefined) return;
-        const desk = { x: rects.table.left + place.x + seat.dx, y: rects.table.top + place.y };
+        const desk = {
+          x: rects.table.left + place.x + seat.dx,
+          y: rects.table.top + place.y,
+        };
         out.push({
           sub,
           parent: a,
@@ -295,7 +311,7 @@ export function Office({
         {agents.length === 0 && (
           <p className={styles.empty}>
             <CampIcon size={28} className={styles.emptyIcon} />
-            Nobody here yet. Start a Claude Code session in an Orca worktree and it will show up.
+            No agent is running. Open Assistants to start a task.
           </p>
         )}
       </ZonePanel>

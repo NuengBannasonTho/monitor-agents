@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Fragment } from 'react';
-import { APP_TITLE } from '../../live/attention';
+import { APP_NAME } from '../../lib/brand';
 import styles from './Page.module.css';
 
 interface PageProps {
@@ -22,7 +22,7 @@ interface PageProps {
  * title and the content, always the full width.
  */
 export function Page({ trail, title, subtitle, actions, fill = false, children }: PageProps) {
-  const crumbs = [APP_TITLE, ...trail];
+  const crumbs = [APP_NAME, ...trail];
   return (
     <div className={styles.page} data-fill={fill || undefined}>
       <header className={styles.bar}>

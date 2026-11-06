@@ -4,7 +4,7 @@ import type { Rectangle } from 'electron';
 import { BrowserWindow, Menu, Tray, app, ipcMain, nativeImage, screen, shell } from 'electron';
 
 /*
- * MO BANANA on the desktop: your agents walk along the bottom of the screen, so you can
+ * MON Mangosteen on the desktop: your agents walk along the bottom of the screen, so you can
  * keep an eye on them without the dashboard open. A see-through, always-on-top strip
  * shows the web app's "walkers" page from the local server; clicks pass through it except
  * on a banana. A 🍌 in the menu bar shows or hides them, opens the dashboard, or quits.
@@ -129,7 +129,7 @@ function buildMenu(): Menu {
       },
     },
     { type: 'separator' },
-    { label: 'Quit MO BANANA walkers', role: 'quit' },
+    { label: 'Quit MON Mangosteen walkers', role: 'quit' },
   ]);
 }
 
@@ -167,7 +167,7 @@ if (!app.requestSingleInstanceLock()) {
 
     tray = new Tray(nativeImage.createEmpty());
     tray.setTitle('🍌');
-    tray.setToolTip('MO BANANA walkers');
+    tray.setToolTip('MON Mangosteen walkers');
     tray.setContextMenu(buildMenu());
 
     screen.on('display-metrics-changed', placeStrip);

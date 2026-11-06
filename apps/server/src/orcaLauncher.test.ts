@@ -28,7 +28,9 @@ describe("reading Orca's lists", () => {
     expect(
       reposFrom({
         ok: true,
-        result: { repos: [{ id: 'r1', path: '/code/app', displayName: 'app' }, { id: 'r2' }] },
+        result: {
+          repos: [{ id: 'r1', path: '/code/app', displayName: 'app' }, { id: 'r2' }],
+        },
       }),
     ).toEqual([{ id: 'r1', path: '/code/app', name: 'app' }]);
     expect(
@@ -84,6 +86,13 @@ describe('starting Claude Code through Orca', () => {
         '',
       ].join('\n'),
     );
+  });
+
+  it('launches Codex when selected', async () => {
+    const launcher = orcaLauncher(await fakeOrca('{"ok":true,"result":{}}'));
+    expect(await launcher.startInWorktree('w1', 'Investigate', 'codex')).toEqual({ ok: true });
+    const args = await readFile(path.join(dir, 'args'), 'utf8');
+    expect(args).toContain('--agent=codex\n');
   });
 
   it("passes Orca's refusal on, and says when Orca is not there", async () => {

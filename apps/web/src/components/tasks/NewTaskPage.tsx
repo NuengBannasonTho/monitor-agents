@@ -18,6 +18,16 @@ import { Wizard } from '../ui/Wizard';
 import styles from './NewTaskPage.module.css';
 
 type Where = 'new' | 'existing';
+type Provider = 'claude' | 'codex';
+
+const PROVIDER_TABS: readonly TabOption<Provider>[] = [
+  {
+    value: 'claude',
+    label: 'Claude Code',
+    hint: 'Can hand subtasks to saved custom agents',
+  },
+  { value: 'codex', label: 'Codex', hint: 'Starts a new Codex agent in Orca' },
+];
 
 const WHERE_TABS: readonly TabOption<Where>[] = [
   {
@@ -25,7 +35,11 @@ const WHERE_TABS: readonly TabOption<Where>[] = [
     label: 'New worktree',
     hint: 'Its own branch and folder: your other work stays as it is',
   },
-  { value: 'existing', label: 'Existing worktree', hint: 'Work in a checkout Orca already has' },
+  {
+    value: 'existing',
+    label: 'Existing worktree',
+    hint: 'Work in a checkout Orca already has',
+  },
 ];
 
 const LAST_REPO_KEY = 'agent-office:task-repo:v1';
@@ -56,11 +70,20 @@ type Status =
  * Hand work off: say what should get done, where, and (optionally) which custom agents help.
  * Orca starts Claude Code on it; the agent then shows up in the office like any other.
  */
-export function NewTaskPage({ preview }: { readonly preview: boolean }) {
+export function NewTaskPage({
+  preview,
+  helper,
+}: {
+  readonly preview: boolean;
+  readonly helper?: string | null;
+}) {
   const [places, setPlaces] = useState<TaskPlaces | null>(null);
   const [helpers, setHelpers] = useState<CustomAgentList | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [task, setTask] = useState('');
+  const [provider, setProvider] = useState<Provider>(
+    helper === '@provider:codex' ? 'codex' : 'claude',
+  );
   const [repoId, setRepoId] = useState<string | null>(lastRepo);
   const [where, setWhere] = useState<Where>('new');
   const [name, setName] = useState('');
@@ -75,18 +98,40 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
   useEffect(() => {
     if (preview) return;
     let live = true;
-    void fetchTaskPlaces().then((result) => {
-      if (!live) return;
-      if (result.ok) setPlaces(result.value);
-      else setLoadError(result.error);
-    });
-    void fetchCustomAgents().then((result) => {
-      if (live && result.ok) setHelpers(result.value);
-    });
+    void Promise.all([fetchTaskPlaces(), fetchCustomAgents()]).then(
+      ([placesResult, helpersResult]) => {
+        if (!live) return;
+        if (placesResult.ok) setPlaces(placesResult.value);
+        else setLoadError(placesResult.error);
+        if (helpersResult.ok) setHelpers(helpersResult.value);
+        if (!placesResult.ok || !helpersResult.ok || helper === null || helper === undefined)
+          return;
+        const selected = helpersResult.value.agents.find(
+          (agent) => `${agent.scope}\n${agent.file}` === helper && agent.problem === null,
+        );
+        if (selected === undefined) return;
+        setTeam([selected.name]);
+        if (selected.scope === 'user') return;
+        const folder = selected.scope.slice('project:'.length);
+        const worktree = placesResult.value.worktrees.find((item) => item.path === folder);
+        if (worktree !== undefined) {
+          setRepoId(worktree.repoId);
+          setWorktreeId(worktree.id);
+          setWhere('existing');
+          return;
+        }
+        const project = placesResult.value.repos.find((repo) => repo.path === folder);
+        if (project !== undefined) {
+          setRepoId(project.id);
+          setWhere('new');
+          return;
+        }
+      },
+    );
     return () => {
       live = false;
     };
-  }, [preview]);
+  }, [preview, helper]);
 
   const repos = places?.repos ?? [];
   const repo = repos.find((r) => r.id === repoId) ?? repos[0] ?? null;
@@ -99,6 +144,7 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
   // Yours, and this project's when an agent here works in it.
   const available: readonly CustomAgent[] = (helpers?.agents ?? []).filter(
     (a) =>
+      provider === 'claude' &&
       a.problem === null &&
       (a.scope === 'user' || (projectDir !== undefined && a.scope === `project:${projectDir}`)),
   );
@@ -118,6 +164,7 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
     if (!ready) return;
     setStatus({ kind: 'busy' });
     const result = await startTask({
+      provider,
       task,
       where:
         where === 'new'
@@ -153,7 +200,7 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
     <Page
       trail={['New task']}
       title="New task"
-      subtitle="Say what you want done. Claude Code starts on it in Orca and shows up in the office; you step in only when it needs you."
+      subtitle={`Say what you want done. ${provider === 'codex' ? 'Codex' : 'Claude Code'} starts on it in Orca and shows up in the office; you step in only when it needs you.`}
     >
       {notice !== null && (
         <p className={styles.notice} data-kind="problem">
@@ -187,21 +234,29 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
             hint: 'What should get done? Write it as you would for a teammate.',
             blocker: notice ?? (task.trim() === '' ? 'Write what should get done first.' : null),
             content: (
-              <Textarea
-                id={`${id}-task`}
-                aria-label="What should get done"
-                className={styles.task}
-                value={task}
-                rows={8}
-                onChange={(e) => {
-                  setTask(e.target.value);
-                  if (status.kind !== 'busy') setStatus({ kind: 'idle' });
-                }}
-                placeholder={
-                  'Add a dark mode toggle to the settings page, with a test.\n\nOr: find why login fails on Safari and fix it.'
-                }
-                disabled={blocked}
-              />
+              <>
+                <Tabs
+                  options={PROVIDER_TABS}
+                  value={provider}
+                  onChange={setProvider}
+                  label="Agent"
+                />
+                <Textarea
+                  id={`${id}-task`}
+                  aria-label="What should get done"
+                  className={styles.task}
+                  value={task}
+                  rows={8}
+                  onChange={(e) => {
+                    setTask(e.target.value);
+                    if (status.kind !== 'busy') setStatus({ kind: 'idle' });
+                  }}
+                  placeholder={
+                    'Add a dark mode toggle to the settings page, with a test.\n\nOr: find why login fails on Safari and fix it.'
+                  }
+                  disabled={blocked}
+                />
+              </>
             ),
           },
           {
@@ -231,7 +286,11 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
                       setWorktreeId(null);
                       rememberRepo(next);
                     }}
-                    options={repos.map((r) => ({ value: r.id, label: r.name, detail: r.path }))}
+                    options={repos.map((r) => ({
+                      value: r.id,
+                      label: r.name,
+                      detail: r.path,
+                    }))}
                   />
                 </Field>
                 <Tabs
@@ -301,12 +360,18 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
             title: 'Team',
             optional: true,
             hint:
-              members.length === 0
-                ? 'None picked: Claude hands work to your custom agents by itself when their description fits.'
-                : `The lead splits the work and hands parts to ${members.length === 1 ? 'this helper' : `these ${String(members.length)} helpers`}, then checks what comes back.`,
+              provider === 'codex'
+                ? 'Codex works on this task directly.'
+                : members.length === 0
+                  ? 'None picked: Claude hands work to your custom agents by itself when their description fits.'
+                  : `The lead splits the work and hands parts to ${members.length === 1 ? 'this helper' : `these ${String(members.length)} helpers`}, then checks what comes back.`,
             content: (
               <>
-                {available.length === 0 ? (
+                {provider === 'codex' ? (
+                  <p className={styles.empty}>
+                    Codex works directly. Saved custom agents are available with Claude Code.
+                  </p>
+                ) : available.length === 0 ? (
                   <p className={styles.empty}>
                     <CustomAgentsIcon size={16} />
                     No custom agents yet. Make a reviewer or a test runner in Custom agents, then
@@ -344,25 +409,31 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
                     })}
                   </ul>
                 )}
-                <Button
-                  variant="link"
-                  className={styles.manage}
-                  onClick={() => {
-                    navigate('custom-agents');
-                  }}
-                >
-                  Manage custom agents
-                </Button>
+                {provider === 'claude' && (
+                  <Button
+                    variant="link"
+                    className={styles.manage}
+                    onClick={() => {
+                      navigate('custom-agents');
+                    }}
+                  >
+                    Manage custom agents
+                  </Button>
+                )}
               </>
             ),
           },
           {
             id: 'review',
             title: 'Review',
-            hint: 'Check it, then start: Claude Code opens in Orca with this as its first prompt.',
+            hint: `Check it, then start: ${provider === 'codex' ? 'Codex' : 'Claude Code'} opens in Orca with this as its first prompt.`,
             content: (
               <>
                 <dl className={styles.summary}>
+                  <div>
+                    <dt>Agent</dt>
+                    <dd>{provider === 'codex' ? 'Codex' : 'Claude Code'}</dd>
+                  </div>
                   <div>
                     <dt>Runs in</dt>
                     <dd>
@@ -374,9 +445,11 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
                   <div>
                     <dt>Team</dt>
                     <dd>
-                      {members.length === 0
-                        ? 'Claude picks helpers itself'
-                        : members.map((m) => m.name).join(', ')}
+                      {provider === 'codex'
+                        ? 'Codex works directly'
+                        : members.length === 0
+                          ? 'Claude picks helpers itself'
+                          : members.map((m) => m.name).join(', ')}
                     </dd>
                   </div>
                 </dl>
@@ -398,8 +471,8 @@ export function NewTaskPage({ preview }: { readonly preview: boolean }) {
             ? status.message
             : status.kind === 'busy'
               ? where === 'new'
-                ? 'Making the worktree and starting Claude Code…'
-                : 'Starting Claude Code…'
+                ? `Making the worktree and starting ${provider === 'codex' ? 'Codex' : 'Claude Code'}…`
+                : `Starting ${provider === 'codex' ? 'Codex' : 'Claude Code'}…`
               : undefined
         }
       />

@@ -47,6 +47,18 @@
   white-space: nowrap;
 }
 
+.agentText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.provider {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
 .unread {
   flex: none;
   padding: 1px 7px;

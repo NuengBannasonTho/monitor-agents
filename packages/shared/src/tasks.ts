@@ -42,6 +42,8 @@ export const WORKTREE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,59}$/;
 export const MAX_TEAM = 12;
 
 export const StartTaskSchema = z.object({
+  /** Which Orca agent starts as the lead. */
+  provider: z.enum(['claude', 'codex']).default('claude'),
   task: z.string().trim().min(1, 'Write what should get done').max(MAX_TASK_CHARS),
   where: z.discriminatedUnion('kind', [
     z.object({
@@ -49,7 +51,10 @@ export const StartTaskSchema = z.object({
       repoId: z.string().min(1).max(200),
       name: z.string().regex(WORKTREE_NAME_PATTERN, 'Letters, digits, dots, dashes, underscores'),
     }),
-    z.object({ kind: z.literal('existing'), worktreeId: z.string().min(1).max(5_000) }),
+    z.object({
+      kind: z.literal('existing'),
+      worktreeId: z.string().min(1).max(5_000),
+    }),
   ]),
   /** Custom agents, by name, the lead hands parts of the work to; empty: it picks itself. */
   team: z

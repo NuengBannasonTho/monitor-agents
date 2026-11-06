@@ -97,7 +97,9 @@ function PanelBody({ agent }: { agent: Agent }) {
   const kind = KIND_META[agent.kind];
   // Changes with each new step, so the "now" line can animate in.
   const latestKey = activityKeys(agent.activity)[0] ?? 'none';
-  const stateVars: StateVars = { '--state-color': STATE_COLOR_VAR[agent.state] };
+  const stateVars: StateVars = {
+    '--state-color': STATE_COLOR_VAR[agent.state],
+  };
   const resume = resumeCommand(agent);
   const StateIcon = STATE_ICON[agent.state];
 
@@ -172,7 +174,7 @@ function PanelBody({ agent }: { agent: Agent }) {
             </dt>
             <dd className={styles.agentKind}>
               <KindBadge kind={agent.kind} className={styles.factBadge} size={11} />
-              {kind.label}
+              {kind.label} · {kind.provider}
             </dd>
           </div>
           <div className={styles.fact}>

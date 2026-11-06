@@ -67,6 +67,18 @@ export interface Config {
   readonly usage: boolean;
 }
 
+/**
+ * An origin under both of this machine's names: 127.0.0.1 and localhost reach the same server,
+ * and the browser sends whichever one is in the address bar. Other hosts stay as they are.
+ */
+export function withLocalNames(origin: string): string[] {
+  const url = new URL(origin);
+  const port = url.port === '' ? '' : `:${url.port}`;
+  if (url.hostname === '127.0.0.1') return [url.origin, `${url.protocol}//localhost${port}`];
+  if (url.hostname === 'localhost') return [url.origin, `${url.protocol}//127.0.0.1${port}`];
+  return [url.origin];
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = EnvSchema.safeParse(env);
   if (!parsed.success) {
@@ -76,7 +88,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (e.REMOVE_AFTER_MIN <= e.STALE_AFTER_MIN) {
     throw new Error('REMOVE_AFTER_MIN must be greater than STALE_AFTER_MIN');
   }
-  const own = [`http://127.0.0.1:${e.PORT}`, `http://localhost:${e.PORT}`];
+  const own = withLocalNames(`http://127.0.0.1:${String(e.PORT)}`);
   return {
     host: '127.0.0.1',
     port: e.PORT,
@@ -87,7 +99,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     logLevel: e.LOG_LEVEL,
     homeDir: e.AGENT_OFFICE_HOME,
     allowedOrigins:
-      e.AGENT_OFFICE_DEV_ORIGIN === undefined ? own : [...own, e.AGENT_OFFICE_DEV_ORIGIN],
+      e.AGENT_OFFICE_DEV_ORIGIN === undefined
+        ? own
+        : [...own, ...withLocalNames(e.AGENT_OFFICE_DEV_ORIGIN)],
     mock: e.AGENT_OFFICE_MOCK,
     details: e.ACTIVITY_DETAILS,
     sendToAgents: e.SEND_TO_AGENTS,

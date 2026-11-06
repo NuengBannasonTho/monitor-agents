@@ -2,10 +2,12 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClaudeCodeAdapter } from './adapters/claude-code.js';
+import { startCodexSessions } from './codexSessions.js';
 import { buildApp } from './app.js';
 import { userAgentsDir } from './customAgents.js';
 import { orcaAccountReader } from './orcaAccount.js';
 import { orcaLauncher } from './orcaLauncher.js';
+import { codexAssistantPlanner } from './assistantPlanner.js';
 import { orcaSender } from './orcaTerminal.js';
 import { pruneUploads } from './uploads.js';
 import { loadConfig } from './config.js';
@@ -54,13 +56,15 @@ async function main(): Promise<void> {
     },
     ...(config.sendToAgents ? { terminalSender: orcaSender() } : {}),
     ...(config.startAgents ? { agentLauncher: orcaLauncher() } : {}),
+    ...(config.startAgents ? { assistantPlanner: codexAssistantPlanner() } : {}),
     accountReader: orcaAccountReader(),
     ...(usage === null ? {} : { usageReader: (range) => usage.report(range) }),
     logger: { level: config.logLevel },
   });
 
   await app.fastify.listen({ host: config.host, port: config.port });
-  app.fastify.log.info(`Agent Office on http://${config.host}:${config.port}`);
+  app.fastify.log.info(`MON Mangosteen on http://${config.host}:${config.port}`);
+  const stopCodexSessions = startCodexSessions(store);
 
   const stopMock = new AbortController();
   if (config.mock) {
@@ -81,6 +85,7 @@ async function main(): Promise<void> {
     closing = true;
     app.fastify.log.info(`${signal}: shutting down`);
     stopMock.abort();
+    stopCodexSessions();
     store.dispose();
     app.close().then(
       () => process.exit(0),

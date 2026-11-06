@@ -13,14 +13,24 @@ export interface Places {
 }
 
 export type LaunchResult = { readonly ok: true } | { readonly ok: false; readonly error: string };
+export type LaunchProvider = 'claude' | 'codex';
 
 export interface AgentLauncher {
   /** Repos and worktrees Orca knows; null when Orca does not answer. */
   places(): Promise<Places | null>;
   /** A new worktree (and branch) of the repo, with Claude Code started on the prompt. */
-  startInNewWorktree(repoId: string, name: string, prompt: string): Promise<LaunchResult>;
+  startInNewWorktree(
+    repoId: string,
+    name: string,
+    prompt: string,
+    provider?: LaunchProvider,
+  ): Promise<LaunchResult>;
   /** Claude Code started on the prompt in an existing worktree. */
-  startInWorktree(worktreeId: string, prompt: string): Promise<LaunchResult>;
+  startInWorktree(
+    worktreeId: string,
+    prompt: string,
+    provider?: LaunchProvider,
+  ): Promise<LaunchResult>;
 }
 
 /** Reading Orca's lists is quick; creating a worktree can run the repo's setup first. */
@@ -37,7 +47,13 @@ export function reposFrom(reply: unknown): OrcaRepo[] {
     const id = text(repo.id);
     const path = text(repo.path);
     if (id === null || path === null) return [];
-    return [{ id, path, name: text(repo.displayName) ?? path.split('/').pop() ?? path }];
+    return [
+      {
+        id,
+        path,
+        name: text(repo.displayName) ?? path.split('/').pop() ?? path,
+      },
+    ];
   });
 }
 
@@ -79,7 +95,10 @@ export function orcaLauncher(bin: string = defaultOrcaBin()): AgentLauncher {
     try {
       return outcome(await runOrca(bin, args, LAUNCH_TIMEOUT_MS));
     } catch {
-      return { ok: false, error: 'Orca is not reachable (is the Orca app open?).' };
+      return {
+        ok: false,
+        error: 'Orca is not reachable (is the Orca app open?).',
+      };
     }
   };
   return {
@@ -95,7 +114,7 @@ export function orcaLauncher(bin: string = defaultOrcaBin()): AgentLauncher {
         return null;
       }
     },
-    startInNewWorktree(repoId, name, prompt) {
+    startInNewWorktree(repoId, name, prompt, provider = 'claude') {
       // `--x=value` keeps a value that starts with "--" from reading as a flag; --no-parent,
       // since the server's own folder says nothing about where this work belongs.
       return launch([
@@ -104,17 +123,17 @@ export function orcaLauncher(bin: string = defaultOrcaBin()): AgentLauncher {
         `--repo=id:${repoId}`,
         `--name=${name}`,
         '--no-parent',
-        '--agent=claude',
+        `--agent=${provider}`,
         '--surface=terminal',
         `--prompt=${prompt}`,
         '--json',
       ]);
     },
-    startInWorktree(worktreeId, prompt) {
+    startInWorktree(worktreeId, prompt, provider = 'claude') {
       return launch([
         'agent',
         'launch',
-        '--agent=claude',
+        `--agent=${provider}`,
         `--worktree=id:${worktreeId}`,
         '--surface=terminal',
         `--prompt=${prompt}`,

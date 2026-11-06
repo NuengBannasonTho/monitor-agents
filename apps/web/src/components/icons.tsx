@@ -100,6 +100,7 @@ export const AppearanceIcon = filled(Palette, 'AppearanceIcon');
 
 /* The sidebar's pages, and its collapse button. */
 export const NewTaskIcon = filled(AddSquare, 'NewTaskIcon');
+export const AssistantIcon = filled(MessageText, 'AssistantIcon');
 export const OfficeIcon = filled(Buildings, 'OfficeIcon');
 export const AgentsIcon = filled(People, 'AgentsIcon');
 export const CustomAgentsIcon = filled(MagicStar, 'CustomAgentsIcon');

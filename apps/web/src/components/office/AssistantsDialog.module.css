@@ -1,0 +1,87 @@
+.dialog {
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(760px, calc(100vh - 32px));
+  padding: 24px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+}
+
+.dialog::backdrop {
+  background: rgb(10 12 19 / 72%);
+  backdrop-filter: blur(3px);
+}
+
+.header,
+.sectionHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header h2 { margin: 0; font-size: 24px; }
+.header p { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.dialog h3 { margin: 24px 0 10px; font-size: 14px; }
+.sectionHeading h3 { margin-bottom: 10px; }
+.sectionHeading h3 span { color: var(--muted); }
+
+.close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.sectionHeading button {
+  margin-top: 24px;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 80px;
+  padding: 3px 9px 3px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.card:hover,
+.card:focus-visible { border-color: var(--primary); }
+
+.details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
+.details strong { display: flex; align-items: center; gap: 5px; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.details small { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.color { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--state-idle); }
+.empty { margin: 2px 0; color: var(--muted); font-size: 13px; }

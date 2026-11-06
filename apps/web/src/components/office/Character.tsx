@@ -114,7 +114,7 @@ function CharacterImpl({
   const lastEntry = agent.activity[0];
   const StateIcon = STATE_ICON[agent.state];
   const lastSummary = lastEntry?.summary;
-  const label = `${agent.desk}, ${kind.label}, ${STATE_LABEL[agent.state]}${
+  const label = `${agent.desk}, ${kind.label} by ${kind.provider}, ${STATE_LABEL[agent.state]}${
     lastSummary === undefined ? '' : `. Last: ${lastSummary}`
   }`;
 

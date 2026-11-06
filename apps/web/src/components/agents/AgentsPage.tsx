@@ -15,6 +15,7 @@ import {
   WorkIcon,
 } from '../icons';
 import { KindBadge } from '../office/KindBadge';
+import { KIND_META } from '../office/kind';
 import { STATE_COLOR_VAR, STATE_LABEL } from '../office/stateMeta';
 import { Card } from '../ui/Card';
 import type { Column } from '../ui/DataTable';
@@ -39,7 +40,10 @@ interface AgentsPageProps {
   readonly onOpen: (id: string) => void;
 }
 
-const FILTERS: readonly { readonly value: AgentFilter; readonly label: string }[] = [
+const FILTERS: readonly {
+  readonly value: AgentFilter;
+  readonly label: string;
+}[] = [
   { value: 'all', label: 'All' },
   { value: 'needs-you', label: 'Needs you' },
   { value: 'working', label: 'Working' },
@@ -61,7 +65,10 @@ export function AgentsPage({ agents, filter, selectedId, finishedIds, onOpen }: 
   const sorted = useMemo(() => sortAgents(agents), [agents]);
   const shown = sorted.filter((a) => matchesFilter(a, current) && matchesSearch(a, query));
   const count = (f: AgentFilter) => agents.filter((a) => matchesFilter(a, f)).length;
-  const tabs: PageTab<AgentFilter>[] = FILTERS.map((f) => ({ ...f, count: count(f.value) }));
+  const tabs: PageTab<AgentFilter>[] = FILTERS.map((f) => ({
+    ...f,
+    count: count(f.value),
+  }));
 
   const columns: Column<Agent>[] = [
     {
@@ -71,7 +78,10 @@ export function AgentsPage({ agents, filter, selectedId, finishedIds, onOpen }: 
       cell: (agent) => (
         <span className={styles.agent}>
           <KindBadge kind={agent.kind} size={16} className={styles.kind} />
-          <span className={styles.desk}>{agent.desk}</span>
+          <span className={styles.agentText}>
+            <span className={styles.desk}>{agent.desk}</span>
+            <span className={styles.provider}>{KIND_META[agent.kind].provider}</span>
+          </span>
           {finishedIds.has(agent.id) && (
             <span className={styles.unread} title="Finished, not opened yet">
               New
