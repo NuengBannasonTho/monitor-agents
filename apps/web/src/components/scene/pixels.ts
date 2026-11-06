@@ -37,6 +37,8 @@ export type Palette<K extends string = string> = Readonly<Record<K, Color>>;
 
 /** Parses a palette of hex strings once, so painting only deals with numbers. */
 export function parsePalette<K extends string>(hexes: Readonly<Record<K, string>>): Palette<K> {
+  // Safe: the loop fills every key of `hexes`, and Object.keys only ever lists those keys
+  // (it types them as plain strings).
   const out = {} as Record<K, Color>;
   for (const key of Object.keys(hexes) as K[]) out[key] = parseColor(hexes[key]);
   return out;
@@ -117,7 +119,7 @@ export class PixelBuffer {
   }
 
   /** Draws a sprite with its top-left at (x, y); `flip` mirrors it horizontally. */
-  sprite(s: Sprite, palette: Readonly<Record<string, Color>>, x: number, y: number, flip = false) {
+  sprite(s: Sprite, palette: Readonly<Record<string, Color>>, x: number, y: number, flip = false): void {
     const ox = Math.round(x);
     const oy = Math.round(y);
     for (const [dx, dy, key] of s.cells) {

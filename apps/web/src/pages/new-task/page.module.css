@@ -1,0 +1,220 @@
+/* New task: a wizard (ui/wizard); these style what goes in its steps. */
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.notice[data-kind='problem'] {
+  background: color-mix(in srgb, var(--state-needs-you) 12%, var(--surface));
+}
+
+.notice[data-kind='problem'] svg {
+  flex: none;
+  color: var(--state-needs-you);
+}
+
+.notice[data-kind='ok'] {
+  justify-content: space-between;
+  background: color-mix(in srgb, var(--state-running) 14%, var(--surface));
+  font-weight: 600;
+}
+
+.task {
+  min-height: 150px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 14.5px;
+}
+
+.path {
+  overflow-wrap: anywhere;
+}
+
+.path svg {
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.team {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.member:hover {
+  background: var(--surface-2);
+}
+
+.member[aria-pressed='true'] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--border);
+}
+
+.dot[style*='background'] {
+  box-shadow: none;
+}
+
+.memberText {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.memberName {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.memberAbout {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* A round tick that fills in when picked. */
+.check {
+  box-sizing: border-box;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+}
+
+.member[aria-pressed='true'] .check {
+  position: relative;
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.member[aria-pressed='true'] .check::after {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--primary-text);
+  border-width: 0 2px 2px 0;
+  content: '';
+  transform: rotate(45deg);
+}
+
+/* Review: where it runs and who helps, then the exact first prompt. */
+.summary {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.summary > div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.summary > div + div {
+  border-top: 1px solid var(--border);
+}
+
+.summary dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.summary dd {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.prompt {
+  max-height: 340px;
+  margin: 0;
+  padding: 12px 14px;
+  overflow: auto;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.manage {
+  justify-self: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member {
+    transition: none;
+  }
+}

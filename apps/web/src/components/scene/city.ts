@@ -2,7 +2,7 @@ import type { Color, Palette, PixelBuffer } from './pixels';
 import { bayer, hash2, mix, parseColor, parsePalette, valueNoise, withAlpha } from './pixels';
 import type { Disc } from './raster';
 import { blob, eachPixel, ellipseCss, rectCss, rectEach, toArt } from './raster';
-import type { SceneTheme } from './useSceneTheme';
+import type { SceneTheme } from './use-scene-theme';
 
 /*
  * The meeting zone as a downtown plaza. Sizes are CSS px; `px` (CSS px per art pixel)

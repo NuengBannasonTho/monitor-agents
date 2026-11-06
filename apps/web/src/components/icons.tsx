@@ -1,6 +1,6 @@
 import type { IconComponent, IconProps } from "reicon-react/createIcon";
 import type { AgentState } from "@agent-office/shared";
-import type { ActivityKind } from "../live/activityKind";
+import type { ActivityKind } from "../lib/activity-kind";
 import { AnglesLeft } from "reicon-react/icons/AnglesLeft";
 import { AngleDown } from "reicon-react/icons/AngleDown";
 import { Moon } from "reicon-react/icons/Moon";
@@ -123,7 +123,7 @@ export const ToolIcon = filled(CommandSquare, "ToolIcon");
 export const ModelIcon = filled(Data, "ModelIcon");
 
 /* Custom agents: new, delete, a warning about a file, reload from disk. */
-export function PlusIcon({ size = 16, ...props }: IconProps) {
+export function PlusIcon({ size = 16, ...props }: IconProps): React.JSX.Element {
   return (
     <Plus
       size={size}
@@ -138,7 +138,7 @@ export const TrashIcon = filled(Trash, "TrashIcon");
 export const WarningIcon = filled(Warning, "WarningIcon");
 export const ReloadIcon = filled(Refresh, "ReloadIcon");
 /** The send button's arrow: Reicon's outline arrow, drawn bold to read on a small disc. */
-export function ArrowIcon({ size = 16, ...props }: IconProps) {
+export function ArrowIcon({ size = 16, ...props }: IconProps): React.JSX.Element {
   return (
     <ArrowRight
       size={size}
@@ -151,7 +151,7 @@ export function ArrowIcon({ size = 16, ...props }: IconProps) {
 }
 
 /** Back to the office from the settings page; the same bold outline as the send arrow. */
-export function BackIcon({ size = 16, ...props }: IconProps) {
+export function BackIcon({ size = 16, ...props }: IconProps): React.JSX.Element {
   return (
     <ArrowLeft
       size={size}
@@ -167,7 +167,7 @@ export function BackIcon({ size = 16, ...props }: IconProps) {
 export const FileIcon = filled(DocumentText, "FileIcon");
 
 /** A plain paperclip, for attaching files (Reicon's come boxed in a circle or square). */
-export function AttachIcon({ size = 16, className, style }: IconProps) {
+export function AttachIcon({ size = 16, className, style }: IconProps): React.JSX.Element {
   return (
     <svg
       width={size}
@@ -199,7 +199,7 @@ export const DesktopWalkersIcon = filled(Monitor, "DesktopWalkersIcon");
  * A plain three-bar burger. Menu's Filled weight puts the bars inside a box, so this uses
  * the Outline bars, thickened to sit with the filled icons.
  */
-export function MenuIcon({ size = 16, ...props }: IconProps) {
+export function MenuIcon({ size = 16, ...props }: IconProps): React.JSX.Element {
   return (
     <Menu
       size={size}
@@ -239,7 +239,7 @@ export const PromptIcon = filled(MessageText, "PromptIcon");
 export const ReadIcon = filled(BookOpen, "ReadIcon");
 export const SearchIcon = filled(SearchNormal, "SearchIcon");
 /** Inside a search box: the filled glass reads as a dot at field size. */
-export function SearchFieldIcon({ size = 16, ...props }: IconProps) {
+export function SearchFieldIcon({ size = 16, ...props }: IconProps): React.JSX.Element {
   return (
     <SearchNormal
       weight="Outline"

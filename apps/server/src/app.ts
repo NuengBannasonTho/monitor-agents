@@ -6,13 +6,14 @@ import {
   AssistantChatRequestSchema,
   DeleteCustomAgentSchema,
   DesktopPatchSchema,
+  isRecord,
+  leadPrompt,
+  NO_ACCOUNT,
   SaveCustomAgentSchema,
   SendToAgentSchema,
-  NO_ACCOUNT,
   StartTaskSchema,
-  UsageRangeSchema,
   TERMINAL_HANDLE_PATTERN,
-  leadPrompt,
+  UsageRangeSchema,
 } from '@agent-office/shared';
 import type {
   AccountStatus,
@@ -34,21 +35,29 @@ import type { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOption
 import type { WebSocket } from 'ws';
 import type { Adapter } from './adapters/types.js';
 import { Coalescer } from './coalescer.js';
+import type { CustomAgentErrorCode } from './custom-agents.js';
 import {
   CustomAgentError,
   agentScopes,
   listCustomAgents,
   saveCustomAgent,
   trashCustomAgent,
-} from './customAgents.js';
-import { applyDesktopPatch, loadDesktopPrefs, saveDesktopPrefs } from './desktopPrefs.js';
-import type { AgentLauncher } from './orcaLauncher.js';
-import type { AssistantContext, AssistantPlan, AssistantPlanner } from './assistantPlanner.js';
-import type { TerminalSender } from './orcaTerminal.js';
+} from './custom-agents.js';
+import { applyDesktopPatch, loadDesktopPrefs, saveDesktopPrefs } from './desktop-prefs.js';
+import type { AgentLauncher } from './orca-launcher.js';
+import type { AssistantContext, AssistantPlan, AssistantPlanner } from './assistant-planner.js';
+import type { TerminalSender } from './orca-terminal.js';
 import { listSkinPacks } from './skins.js';
 import { UploadTooLarge, messageWithFiles, saveUploads } from './uploads.js';
 import type { AgentStore } from './store.js';
 import { tokenMatches } from './token.js';
+
+/** The HTTP status for each reason a custom agent change is refused. */
+const CUSTOM_AGENT_STATUS: Readonly<Record<CustomAgentErrorCode, number>> = {
+  invalid: 400,
+  'not-found': 404,
+  conflict: 409,
+};
 
 /** Hook payloads can carry large tool_input (e.g. a Write of a whole file). */
 const EVENTS_BODY_LIMIT = 4 * 1024 * 1024;
@@ -271,8 +280,8 @@ export async function buildApp(options: AppOptions): Promise<App> {
       };
       socket.send(JSON.stringify(snapshot));
       // The desktop app's page says so, so the dashboard can tell it is running.
-      const query = request.query as Record<string, unknown> | undefined;
-      const isDesktop = query?.client === 'desktop';
+      const query: unknown = request.query;
+      const isDesktop = isRecord(query) && query.client === 'desktop';
       if (isDesktop) {
         desktopSockets.add(socket);
         broadcast(desktopMessage());
@@ -469,7 +478,7 @@ export async function buildApp(options: AppOptions): Promise<App> {
 
   const customAgentFailure = (error: unknown, reply: FastifyReply): FastifyReply => {
     if (error instanceof CustomAgentError)
-      return reply.code(error.status).send({ error: error.message });
+      return reply.code(CUSTOM_AGENT_STATUS[error.code]).send({ error: error.message });
     throw error;
   };
 
@@ -526,8 +535,8 @@ export async function buildApp(options: AppOptions): Promise<App> {
     if (reader === undefined) {
       return reply.code(403).send({ error: 'The usage page is off (USAGE=off).' });
     }
-    const query = request.query as Record<string, unknown> | undefined;
-    const range = UsageRangeSchema.safeParse(query?.range ?? 'today');
+    const query: unknown = request.query;
+    const range = UsageRangeSchema.safeParse((isRecord(query) ? query.range : undefined) ?? 'today');
     if (!range.success) return reply.code(400).send({ error: 'range is today, 7d or 30d' });
     return reader(range.data);
   });

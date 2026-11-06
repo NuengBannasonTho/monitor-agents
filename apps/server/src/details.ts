@@ -1,6 +1,6 @@
 import path from 'node:path';
+import { isRecord, MAX_DETAIL_PARTS } from '@agent-office/shared';
 import type { DetailPart } from '@agent-office/shared';
-import { MAX_DETAIL_PARTS } from '@agent-office/shared';
 import { redactSecrets, redactTokens } from './redact.js';
 import { formatDuration, relativeToCwd } from './summarize.js';
 
@@ -33,9 +33,7 @@ function num(input: Input, key: string): number | undefined {
 }
 
 function record(value: unknown): Input {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Input)
-    : {};
+  return isRecord(value) ? value : {};
 }
 
 function lineCount(text: string): number {
@@ -375,7 +373,7 @@ export function toolResultDetail(
 }
 
 /** Why a tool call failed. */
-export function toolFailureDetail(error: string | undefined, durationMs: number | undefined) {
+export function toolFailureDetail(error: string | undefined, durationMs: number | undefined): DetailPart[] {
   const parts: DetailPart[] = [];
   if (durationMs !== undefined) parts.push(field('Took', formatDuration(durationMs)));
   if (error !== undefined && error.trim() !== '') {

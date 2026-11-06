@@ -7,9 +7,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createClaudeCodeAdapter } from './adapters/claude-code.js';
 import type { App } from './app.js';
 import { buildApp } from './app.js';
-import type { AssistantContext } from './assistantPlanner.js';
-import { loadDesktopPrefs } from './desktopPrefs.js';
-import type { AgentLauncher, Places } from './orcaLauncher.js';
+import type { AssistantContext } from './assistant-planner.js';
+import { loadDesktopPrefs } from './desktop-prefs.js';
+import type { AgentLauncher, Places } from './orca-launcher.js';
 import { AgentStore } from './store.js';
 import { ensureToken, tokenMatches } from './token.js';
 
