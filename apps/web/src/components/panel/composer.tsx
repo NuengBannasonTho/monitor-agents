@@ -38,7 +38,7 @@ export function Composer({ agent }: { agent: Agent }): React.JSX.Element {
     };
   }, [status]);
 
-  const submit = async (files: readonly File[]): Promise<boolean> => {
+  const handleSubmit = async (files: readonly File[]): Promise<boolean> => {
     setStatus({ kind: 'sending', files: files.length });
     const result = await sendToAgent(agent.id, text.trim(), files);
     if (!result.ok) {
@@ -50,7 +50,7 @@ export function Composer({ agent }: { agent: Agent }): React.JSX.Element {
     return true;
   };
 
-  const stop = async (): Promise<void> => {
+  const handleStop = async (): Promise<void> => {
     if (sending || !reachable) return;
     setStatus({ kind: 'stopping' });
     const result = await interruptAgent(agent.id);
@@ -84,7 +84,7 @@ export function Composer({ agent }: { agent: Agent }): React.JSX.Element {
         setText(next);
         if (status.kind === 'error') setStatus({ kind: 'idle' });
       }}
-      onSubmit={submit}
+      onSubmit={handleSubmit}
       label={`Message to ${agent.desk}`}
       placeholder={
         !reachable
@@ -102,7 +102,7 @@ export function Composer({ agent }: { agent: Agent }): React.JSX.Element {
         working && reachable
           ? {
               onStop: () => {
-                void stop();
+                void handleStop();
               },
               label: `Stop ${agent.desk}`,
               title: 'Stop: like pressing Esc in its terminal. The session stays open.',

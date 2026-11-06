@@ -148,7 +148,7 @@ interface WalkerProps {
 }
 
 /** A right-click handler that opens the agent's menu instead of the browser's. */
-function menuHandler(agent: Agent, onMenu: WalkerProps['onMenu']) {
+function handleMenuOf(agent: Agent, onMenu: WalkerProps['onMenu']) {
   return (event: MouseEvent<HTMLElement>): void => {
     event.preventDefault();
     onMenu?.(agent, event.clientX, event.clientY);
@@ -194,7 +194,7 @@ export function Walker({ agent, width, onMenu }: WalkerProps): React.JSX.Element
           onClick={() => {
             openAgent(agent.id);
           }}
-          onContextMenu={menuHandler(agent, onMenu)}
+          onContextMenu={handleMenuOf(agent, onMenu)}
           aria-label={`${agent.desk}, ${STATE_LABEL[agent.state]}. Open in the dashboard`}
           data-walker
         >
@@ -293,7 +293,7 @@ function MiniWalker({
         onClick={() => {
           openAgent(parent.id);
         }}
-        onContextMenu={menuHandler(parent, onMenu)}
+        onContextMenu={handleMenuOf(parent, onMenu)}
         aria-label={`${sub.type} subagent of ${parent.desk}, ${STATE_LABEL[sub.state]}`}
         title={`${sub.type} subagent · ${STATE_LABEL[sub.state]}${
           sub.summary === undefined ? '' : `\n${sub.summary}`

@@ -168,7 +168,7 @@ export function NewTaskPage({
     (where === 'new' ? repo !== null && nameValid : worktree !== null) &&
     status.kind !== 'busy';
 
-  const start = async () => {
+  const handleStart = async (): Promise<void> => {
     if (!ready) return;
     setStatus({ kind: 'busy' });
     const result = await startTask({
@@ -471,7 +471,7 @@ export function NewTaskPage({
         finishLabel="Start"
         finishIcon={<SendIcon size={16} />}
         onFinish={() => {
-          void start();
+          void handleStart();
         }}
         busy={status.kind === 'busy'}
         status={

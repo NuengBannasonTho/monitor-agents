@@ -45,7 +45,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
       setError(result.error);
     }
   }, []);
-  const refresh = useCallback(() => {
+  const handleRefresh = useCallback(() => {
     void fetchCustomAgents().then(apply);
   }, [apply]);
 
@@ -73,7 +73,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
     dirty.current = value;
   }, []);
 
-  const select = (next: Selection) => {
+  const handleSelect = (next: Selection): void => {
     if (dirty.current && !window.confirm('Discard your unsaved changes?')) return;
     dirty.current = false;
     setSelection(next);
@@ -96,7 +96,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
     );
     setSelection({ kind: 'agent', scope: agent.scope, file: agent.file });
     setJustSaved(keyOf(agent));
-    refresh();
+    handleRefresh();
   };
 
   const onDeleted = (where: string) => {
@@ -109,7 +109,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
     );
     setSelection(null);
     setTrashedTo(where);
-    refresh();
+    handleRefresh();
   };
 
   const scopes = list?.scopes ?? [];
@@ -136,7 +136,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
             onClick={() => {
               if (!dirty.current || window.confirm('Reload and discard your unsaved changes?')) {
                 dirty.current = false;
-                refresh();
+                handleRefresh();
               }
             }}
             disabled={preview}
@@ -149,7 +149,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
             icon={<PlusIcon size={16} />}
             disabled={!editable}
             onClick={() => {
-              select({ kind: 'new' });
+              handleSelect({ kind: 'new' });
             }}
           >
             New agent
@@ -197,7 +197,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
                           agent={agent}
                           active={selected !== null && keyOf(selected) === keyOf(agent)}
                           onSelect={() => {
-                            select({ kind: 'agent', scope: agent.scope, file: agent.file });
+                            handleSelect({ kind: 'agent', scope: agent.scope, file: agent.file });
                           }}
                         />
                       </li>
@@ -216,7 +216,7 @@ export function CustomAgentsPage({ preview }: { readonly preview: boolean }): Re
               className={styles.back}
               icon={<BackIcon size={15} />}
               onClick={() => {
-                select(null);
+                handleSelect(null);
               }}
             >
               All agents

@@ -94,7 +94,7 @@ export function Sidebar({
   source,
 }: SidebarProps): React.JSX.Element {
   const route = useRoute();
-  const [collapsedChoice, toggle] = useCollapsed();
+  const [collapsedChoice, handleToggleCollapsed] = useCollapsed();
   const narrow = useMediaQuery("(max-width: 760px)");
   const collapsed = collapsedChoice || narrow;
 
@@ -197,7 +197,7 @@ export function Sidebar({
             <button
               type="button"
               className={styles.logoButton}
-              onClick={toggle}
+              onClick={handleToggleCollapsed}
               aria-expanded={false}
               aria-label="Expand sidebar"
             >
@@ -222,7 +222,7 @@ export function Sidebar({
             <button
               type="button"
               className={styles.toggle}
-              onClick={toggle}
+              onClick={handleToggleCollapsed}
               aria-expanded
               aria-label="Collapse sidebar"
             >

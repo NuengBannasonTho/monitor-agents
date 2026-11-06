@@ -70,7 +70,7 @@ export function ActionCard(props: ActionCardProps): React.JSX.Element {
       setBusy(false);
     }
   };
-  const runIt = () => {
+  const handleRun = (): void => {
     void run(() => runAction(action, props));
   };
 
@@ -226,7 +226,7 @@ export function ActionCard(props: ActionCardProps): React.JSX.Element {
           }
           icon={button.icon}
           disabled={busy || preview || blocked !== null}
-          onClick={runIt}
+          onClick={handleRun}
         >
           {busy ? 'Working…' : outcome !== undefined && !outcome.ok ? 'Try again' : button.label}
         </Button>
@@ -324,7 +324,7 @@ function StartTaskCard({
             ? 'Pick a project.'
             : null;
 
-  const start = () => {
+  const handleStart = (): void => {
     void run(async () => {
       const result = await startTask({
         provider: action.provider,
@@ -416,7 +416,7 @@ function StartTaskCard({
             icon={<StartIcon size={15} />}
             disabled={busy || blocked !== null}
             title={blocked ?? undefined}
-            onClick={start}
+            onClick={handleStart}
           >
             {busy ? 'Starting…' : outcome === undefined ? 'Start' : 'Try again'}
           </Button>

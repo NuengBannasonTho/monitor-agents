@@ -48,7 +48,7 @@ export function PersonaWizard(): React.JSX.Element {
   const [draft, setDraft] = useState<AssistantPersona>(saved);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const id = useId();
-  const change = (patch: Partial<AssistantPersona>) => {
+  const handleChange = (patch: Partial<AssistantPersona>): void => {
     setDraft((d) => ({ ...d, ...patch }));
     setSavedAt(null);
   };
@@ -73,7 +73,7 @@ export function PersonaWizard(): React.JSX.Element {
                 label="Personality"
                 value={draft.style}
                 onChange={(style) => {
-                  change({ style });
+                  handleChange({ style });
                 }}
                 options={PERSONA_STYLES.map((style) => ({
                   value: style,
@@ -94,7 +94,7 @@ export function PersonaWizard(): React.JSX.Element {
                   maxLength={MAX_PERSONA_NOTES}
                   placeholder="How it should sound, what it should care about…"
                   onChange={(e) => {
-                    change({ notes: e.target.value });
+                    handleChange({ notes: e.target.value });
                   }}
                 />
               </Field>
@@ -112,7 +112,7 @@ export function PersonaWizard(): React.JSX.Element {
                   label="Ending"
                   value={draft.voice}
                   onChange={(voice) => {
-                    change({ voice });
+                    handleChange({ voice });
                   }}
                   options={PERSONA_VOICES.map((voice) => ({
                     value: voice,
@@ -125,7 +125,7 @@ export function PersonaWizard(): React.JSX.Element {
                   label="Language"
                   value={draft.language}
                   onChange={(language) => {
-                    change({ language });
+                    handleChange({ language });
                   }}
                   options={PERSONA_LANGUAGES.map((language) => ({
                     value: language,
@@ -144,7 +144,7 @@ export function PersonaWizard(): React.JSX.Element {
                   maxLength={MAX_PERSONA_CALL_ME}
                   placeholder="บอส"
                   onChange={(e) => {
-                    change({ callMe: e.target.value });
+                    handleChange({ callMe: e.target.value });
                   }}
                 />
               </Field>
@@ -157,7 +157,7 @@ export function PersonaWizard(): React.JSX.Element {
                   id={`${id}-emoji`}
                   checked={draft.emoji}
                   onChange={(emoji) => {
-                    change({ emoji });
+                    handleChange({ emoji });
                   }}
                 />
               </label>
@@ -175,7 +175,7 @@ export function PersonaWizard(): React.JSX.Element {
                 label="Color"
                 value={draft.color}
                 onChange={(color) => {
-                  change({ color });
+                  handleChange({ color });
                 }}
               />
             </Field>
@@ -231,7 +231,7 @@ export function PersonaWizard(): React.JSX.Element {
           variant="ghost"
           disabled={same(draft, DEFAULT_PERSONA)}
           onClick={() => {
-            change(DEFAULT_PERSONA);
+            handleChange(DEFAULT_PERSONA);
           }}
         >
           Reset

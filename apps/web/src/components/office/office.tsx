@@ -259,7 +259,7 @@ export function Office({
   }, [placements]);
 
   const urgent = agents.filter((a) => a.state === 'needs-you').length;
-  const toggle = (zone: Zone) => () => {
+  const handleToggle = (zone: Zone) => (): void => {
     setCollapsed(collapsed === zone ? null : zone);
     if (!reduceMotion) setAnimating(true);
   };
@@ -295,7 +295,7 @@ export function Office({
         count={loungeIds.length}
         collapsed={collapsed === 'lounge'}
         animating={animating}
-        onToggle={toggle('lounge')}
+        onToggle={handleToggle('lounge')}
         zoneRef={loungeRef}
         zoneClassName={styles.lounge}
       >
@@ -334,7 +334,7 @@ export function Office({
         urgent={urgent}
         collapsed={collapsed === 'table'}
         animating={animating}
-        onToggle={toggle('table')}
+        onToggle={handleToggle('table')}
         zoneRef={tableRef}
         zoneClassName={styles.tableZone}
       >

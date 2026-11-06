@@ -142,14 +142,14 @@ export function Walkers(): React.JSX.Element {
   const agents = USE_SIMULATOR ? simulated : stream.agents;
   const ref = useRef<HTMLDivElement>(null);
   const size = useElementSize(ref);
-  const { shown, hideAll } = useShown(stream.desktop?.walkers);
+  const { shown, hideAll: handleHideAll } = useShown(stream.desktop?.walkers);
   useReloadOnServerRestart(stream.status);
-  const { hidden, hide } = useHidden(stream.desktop?.hidden);
+  const { hidden, hide: handleHide } = useHidden(stream.desktop?.hidden);
   const [menu, setMenu] = useState<MenuAt | null>(null);
-  const openMenu = useCallback((agent: Agent, x: number, y: number) => {
+  const handleOpenMenu = useCallback((agent: Agent, x: number, y: number) => {
     setMenu({ agent, x, y });
   }, []);
-  const closeMenu = useCallback(() => {
+  const handleCloseMenu = useCallback(() => {
     setMenu(null);
   }, []);
   useClickThrough();
@@ -165,7 +165,7 @@ export function Walkers(): React.JSX.Element {
                 agents
                   .filter((agent) => !hidden.has(agent.id))
                   .map((agent) => (
-                    <Walker key={agent.id} agent={agent} width={size.width} onMenu={openMenu} />
+                    <Walker key={agent.id} agent={agent} width={size.width} onMenu={handleOpenMenu} />
                   ))}
             </AnimatePresence>
             {shown && menu !== null && size !== null && (
@@ -173,12 +173,12 @@ export function Walkers(): React.JSX.Element {
                 {...menu}
                 width={size.width}
                 height={size.height}
-                onHide={hide}
+                onHide={handleHide}
                 onOpen={(agent) => {
                   openAgent(agent.id);
                 }}
-                onHideAll={hideAll}
-                onClose={closeMenu}
+                onHideAll={handleHideAll}
+                onClose={handleCloseMenu}
               />
             )}
           </div>

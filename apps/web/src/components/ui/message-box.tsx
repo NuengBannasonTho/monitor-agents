@@ -201,7 +201,7 @@ export function MessageBox({
     [],
   );
 
-  const add = (incoming: readonly File[]): void => {
+  const handleAddFiles = (incoming: readonly File[]): void => {
     if (!attachments || incoming.length === 0) return;
     const tooBig = incoming.filter((f) => f.size > MAX_SEND_FILE_BYTES);
     const fits = incoming.filter((f) => f.size <= MAX_SEND_FILE_BYTES && f.size > 0);
@@ -216,11 +216,11 @@ export function MessageBox({
     box.current?.focus();
   };
 
-  const remove = (id: string): void => {
+  const handleRemoveFile = (id: string): void => {
     setFiles(files.filter((f) => f.id !== id));
   };
 
-  const submit = async (): Promise<void> => {
+  const handleSubmit = async (): Promise<void> => {
     if (!canSend) return;
     setFileError(null);
     if (await onSubmit(files.map((f) => f.file))) setFiles([]);
@@ -230,7 +230,7 @@ export function MessageBox({
     // Enter sends; Shift+Enter (or Enter while an input method is composing) does not.
     if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
     event.preventDefault();
-    void submit();
+    void handleSubmit();
   };
 
   // Pasting a screenshot (or copied files) attaches them; pasted text stays text.
@@ -238,13 +238,13 @@ export function MessageBox({
     const pasted = [...event.clipboardData.files];
     if (!attachments || pasted.length === 0) return;
     event.preventDefault();
-    add(pasted);
+    handleAddFiles(pasted);
   };
 
   const onDrop = (event: DragEvent<HTMLFormElement>): void => {
     event.preventDefault();
     setDragging(false);
-    if (!disabled) add([...event.dataTransfer.files]);
+    if (!disabled) handleAddFiles([...event.dataTransfer.files]);
   };
 
   const tiles = files.slice(0, SHOWN_TILES);
@@ -258,7 +258,7 @@ export function MessageBox({
       data-dragging={dragging ? 'true' : undefined}
       onSubmit={(event) => {
         event.preventDefault();
-        void submit();
+        void handleSubmit();
       }}
       onDragOver={(event) => {
         if (!attachments || disabled || !event.dataTransfer.types.includes('Files')) return;
@@ -294,7 +294,7 @@ export function MessageBox({
                 type="button"
                 className={styles.removeTile}
                 onClick={() => {
-                  remove(f.id);
+                  handleRemoveFile(f.id);
                 }}
                 aria-label={`Remove ${f.file.name}`}
               >
@@ -380,7 +380,7 @@ export function MessageBox({
               tabIndex={-1}
               aria-hidden
               onChange={(event) => {
-                add([...(event.target.files ?? [])]);
+                handleAddFiles([...(event.target.files ?? [])]);
                 event.target.value = '';
               }}
             />
@@ -395,7 +395,7 @@ export function MessageBox({
           disabled={stopMode ? stop.disabled === true : !canSend}
           onClick={() => {
             if (stopMode) stop.onStop();
-            else void submit();
+            else void handleSubmit();
           }}
           aria-label={stopMode ? stop.label : 'Send'}
           title={stopMode ? stop.title : sendTitle}

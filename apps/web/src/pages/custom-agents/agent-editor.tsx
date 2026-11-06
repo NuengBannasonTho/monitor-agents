@@ -65,7 +65,7 @@ export function AgentEditor({
   }, [dirty, onDirtyChange]);
 
   /** A patch, or a function of the latest draft (for toggles clicked in quick succession). */
-  const change = (patch: Partial<Draft> | ((d: Draft) => Partial<Draft>)) => {
+  const handleChange = (patch: Partial<Draft> | ((d: Draft) => Partial<Draft>)) => {
     const keys = Object.keys(typeof patch === 'function' ? patch(draft) : patch);
     setDraft((d) => ({ ...d, ...(typeof patch === 'function' ? patch(d) : patch) }));
     setStatus({ kind: 'idle' });
@@ -76,7 +76,7 @@ export function AgentEditor({
     setErrors((e) => Object.fromEntries(Object.entries(e).filter(([key]) => !touched.has(key))));
   };
 
-  const save = async () => {
+  const handleSave = async (): Promise<void> => {
     // Enter in a field submits too; nothing changed, nothing to write.
     if (!dirty || busy) return;
     const result = inputOf(draft);
@@ -102,7 +102,7 @@ export function AgentEditor({
     onSaved(saved.value);
   };
 
-  const remove = async () => {
+  const handleDelete = async (): Promise<void> => {
     if (agent === null) return;
     setStatus({ kind: 'busy' });
     const removed = await deleteCustomAgent({ scope: agent.scope, file: agent.file });
@@ -182,7 +182,7 @@ export function AgentEditor({
           locked
             ? undefined
             : () => {
-                void save();
+                void handleSave();
               }
         }
         finishDisabled={!dirty}
@@ -209,7 +209,7 @@ export function AgentEditor({
                     invalid={errors.name !== undefined}
                     value={draft.name}
                     onChange={(e) => {
-                      change({ name: e.target.value.toLowerCase().replace(/\s+/g, '-') });
+                      handleChange({ name: e.target.value.toLowerCase().replace(/\s+/g, '-') });
                     }}
                     placeholder="code-reviewer"
                     autoComplete="off"
@@ -242,7 +242,7 @@ export function AgentEditor({
                     invalid={errors.description !== undefined}
                     value={draft.description}
                     onChange={(e) => {
-                      change({ description: e.target.value });
+                      handleChange({ description: e.target.value });
                     }}
                     placeholder="Reviews code for bugs and style right after you change it. Use proactively."
                   />
@@ -263,7 +263,7 @@ export function AgentEditor({
                       id={`${id}-model`}
                       value={draft.model}
                       onChange={(model) => {
-                        change({ model });
+                        handleChange({ model });
                       }}
                       options={modelChoices}
                     />
@@ -283,7 +283,7 @@ export function AgentEditor({
                         data-none
                         title="No color"
                         onClick={() => {
-                          change({ color: null });
+                          handleChange({ color: null });
                         }}
                       />
                       {CUSTOM_AGENT_COLORS.map((c) => (
@@ -296,7 +296,7 @@ export function AgentEditor({
                           style={{ background: COLOR_HEX[c] }}
                           title={c}
                           onClick={() => {
-                            change({ color: c });
+                            handleChange({ color: c });
                           }}
                         />
                       ))}
@@ -324,7 +324,7 @@ export function AgentEditor({
                       checked={draft.allTools}
                       disabled={fieldsDisabled}
                       onChange={(allTools) => {
-                        change({ allTools });
+                        handleChange({ allTools });
                       }}
                     />
                   </label>
@@ -340,7 +340,7 @@ export function AgentEditor({
                               className={styles.chip}
                               aria-pressed={on}
                               onClick={() => {
-                                change((d) => ({
+                                handleChange((d) => ({
                                   tools: d.tools.includes(tool)
                                     ? d.tools.filter((t) => t !== tool)
                                     : [...d.tools, tool],
@@ -355,7 +355,7 @@ export function AgentEditor({
                       <Input
                         value={draft.otherTools}
                         onChange={(e) => {
-                          change({ otherTools: e.target.value });
+                          handleChange({ otherTools: e.target.value });
                         }}
                         placeholder="Other tools, comma-separated: mcp__github__get_issue, Bash(git diff:*)"
                         aria-label="Other tools"
@@ -382,7 +382,7 @@ export function AgentEditor({
                     rows={16}
                     value={draft.prompt}
                     onChange={(e) => {
-                      change({ prompt: e.target.value });
+                      handleChange({ prompt: e.target.value });
                     }}
                     placeholder={
                       'You are a senior code reviewer.\n\nWhen invoked:\n1. Run git diff …'
@@ -447,7 +447,7 @@ export function AgentEditor({
                     variant="danger"
                     disabled={busy}
                     onClick={() => {
-                      void remove();
+                      void handleDelete();
                     }}
                   >
                     Move to trash

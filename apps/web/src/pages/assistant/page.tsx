@@ -198,7 +198,7 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
   }, []);
 
   /** Asks MON MANG; true once the message is on its way (the box then empties). */
-  const send = async (text: string): Promise<boolean> => {
+  const handleSend = async (text: string): Promise<boolean> => {
     const message = text.trim();
     if (message === '' || busy || preview) return false;
     const history = historyOf(messages);
@@ -232,7 +232,7 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
     return true;
   };
 
-  const cancel = () => {
+  const handleCancel = (): void => {
     pending.current?.abort();
     pending.current = null;
     setBusy(false);
@@ -246,9 +246,9 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
     [],
   );
 
-  const suggest = (s: Suggestion) => {
+  const handleSuggest = (s: Suggestion): void => {
     if (s.send) {
-      void send(s.text);
+      void handleSend(s.text);
       return;
     }
     setInput(s.text);
@@ -302,7 +302,7 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
                       className={styles.chip}
                       disabled={preview || busy}
                       onClick={() => {
-                        suggest(s);
+                        handleSuggest(s);
                       }}
                     >
                       {s.send ? s.text : `${s.text.trim()}…`}
@@ -369,7 +369,7 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
               setInput(next);
               setStopped(false);
             }}
-            onSubmit={() => send(input)}
+            onSubmit={() => handleSend(input)}
             label="Message MON MANG"
             placeholder="บอก MON MANG ได้เลย เช่น ให้ Codex แก้หน้า login ใน ai-hub-frontend หรือ ตอบ agent ที่รออยู่ว่า yes"
             disabled={preview}
@@ -378,7 +378,7 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
             stop={
               busy
                 ? {
-                    onStop: cancel,
+                    onStop: handleCancel,
                     label: 'Stop MON MANG',
                     title: 'Stop: MON MANG drops this answer.',
                   }
@@ -453,7 +453,7 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
                 size="sm"
                 disabled={preview || busy}
                 onClick={() => {
-                  void send('สรุปสถานะ agents ตอนนี้ให้หน่อย ใครต้องการอะไรจากฉันบ้าง');
+                  void handleSend('สรุปสถานะ agents ตอนนี้ให้หน่อย ใครต้องการอะไรจากฉันบ้าง');
                 }}
               >
                 Ask for a summary

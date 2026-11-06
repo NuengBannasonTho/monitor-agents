@@ -52,13 +52,13 @@ export function App(): React.JSX.Element {
     [agents, selectedId],
   );
 
-  const toggleSelect = useCallback((id: string) => {
+  const handleToggleSelect = useCallback((id: string) => {
     setSelectedId((current) => (current === id ? null : id));
   }, []);
-  const open = useCallback((id: string) => {
+  const handleOpen = useCallback((id: string) => {
     setSelectedId(id);
   }, []);
-  const closePanel = useCallback(() => {
+  const handleClosePanel = useCallback(() => {
     setSelectedId(null);
   }, []);
 
@@ -68,7 +68,7 @@ export function App(): React.JSX.Element {
   const finished = useMemo(() => unseenFinished(agents, seen, baseline), [agents, seen, baseline]);
   const finishedIds = useMemo(() => new Set(finished.map((a) => a.id)), [finished]);
   useTabBadge(waiting.length, finished.length);
-  const alerts = useDesktopAlerts(agents, open);
+  const alerts = useDesktopAlerts(agents, handleOpen);
   // Opening an agent counts as reading its latest answer.
   useEffect(() => {
     if (selected !== null) markSeen(selected);
@@ -86,7 +86,7 @@ export function App(): React.JSX.Element {
                 agents={agents}
                 waiting={waiting}
                 finished={finished}
-                onOpen={open}
+                onOpen={handleOpen}
                 source={source}
               />
               <main className={styles.main}>
@@ -96,7 +96,7 @@ export function App(): React.JSX.Element {
                   <AssistantPage
                     preview={USE_SIMULATOR}
                     agents={agents}
-                    onOpen={open}
+                    onOpen={handleOpen}
                     sound={sound}
                     alerts={alerts}
                   />
@@ -114,13 +114,13 @@ export function App(): React.JSX.Element {
                     filter={route.section}
                     selectedId={selected?.id ?? null}
                     finishedIds={finishedIds}
-                    onOpen={open}
+                    onOpen={handleOpen}
                   />
                 ) : route.page === 'usage' ? (
                   <UsagePage
                     section={route.section}
                     agents={agents}
-                    onOpen={open}
+                    onOpen={handleOpen}
                     preview={USE_SIMULATOR}
                   />
                 ) : route.page === 'new-task' ? (
@@ -133,13 +133,13 @@ export function App(): React.JSX.Element {
                     selectedId={selected?.id ?? null}
                     finishedIds={finishedIds}
                     waiting={waiting}
-                    onSelect={toggleSelect}
-                    onOpen={open}
+                    onSelect={handleToggleSelect}
+                    onOpen={handleOpen}
                     preview={USE_SIMULATOR}
                   />
                 )}
               </main>
-              <AgentPanel agent={selected} onClose={closePanel} />
+              <AgentPanel agent={selected} onClose={handleClosePanel} />
             </div>
           </Tooltip.Provider>
         </SkinProvider>

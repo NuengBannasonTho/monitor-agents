@@ -65,7 +65,7 @@ export function Wizard({
   const firstBlocked = (upTo: number): number =>
     steps.findIndex((s, i) => i < upTo && s.blocker != null);
 
-  const go = (to: number) => {
+  const handleGo = (to: number): void => {
     if (to === index || to < 0 || to >= steps.length) return;
     if (to > index && !free) {
       const blocked = firstBlocked(to);
@@ -85,7 +85,7 @@ export function Wizard({
     setIndex(to);
   };
 
-  const finish = () => {
+  const handleFinish = (): void => {
     const blocked = firstBlocked(steps.length);
     if (blocked !== -1) {
       const step = steps[blocked];
@@ -116,7 +116,7 @@ export function Wizard({
                 aria-current={i === index ? 'step' : undefined}
                 disabled={!reachable(i)}
                 onClick={() => {
-                  go(i);
+                  handleGo(i);
                 }}
               >
                 <span className={styles.number} aria-hidden>
@@ -172,7 +172,7 @@ export function Wizard({
           icon={<BackIcon size={15} />}
           disabled={index === 0 || busy}
           onClick={() => {
-            go(index - 1);
+            handleGo(index - 1);
           }}
         >
           Back
@@ -182,7 +182,7 @@ export function Wizard({
             variant={canFinish ? 'secondary' : 'primary'}
             disabled={busy}
             onClick={() => {
-              go(index + 1);
+              handleGo(index + 1);
             }}
           >
             Next
@@ -194,7 +194,7 @@ export function Wizard({
             variant="primary"
             icon={finishIcon}
             disabled={busy || finishDisabled}
-            onClick={finish}
+            onClick={handleFinish}
           >
             {finishLabel}
           </Button>

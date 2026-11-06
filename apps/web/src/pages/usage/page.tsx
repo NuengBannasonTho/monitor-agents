@@ -134,7 +134,7 @@ interface UsagePageProps {
  */
 export function UsagePage({ section, agents, onOpen, preview }: UsagePageProps): React.JSX.Element {
   const [range, setRange] = useRange();
-  const { state, reload } = useUsage(preview ? null : range);
+  const { state, reload: handleReload } = useUsage(preview ? null : range);
   const now = useNow(30_000);
   const sample = useMemo(
     () => (preview ? sampleUsageReport(range, now) : null),
@@ -154,7 +154,7 @@ export function UsagePage({ section, agents, onOpen, preview }: UsagePageProps):
         icon={<ReloadIcon size={16} />}
         aria-label="Refresh"
         title="Refresh"
-        onClick={reload}
+        onClick={handleReload}
         disabled={preview}
       />
     </>

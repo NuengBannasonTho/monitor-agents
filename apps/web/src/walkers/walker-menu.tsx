@@ -43,7 +43,7 @@ export function WalkerMenu({
   onClose,
 }: WalkerMenuProps): React.JSX.Element {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const later = (ms: number): void => {
+  const scheduleClose = (ms: number): void => {
     clearTimeout(timer.current);
     timer.current = setTimeout(onClose, ms);
   };
@@ -71,7 +71,7 @@ export function WalkerMenu({
         clearTimeout(timer.current);
       }}
       onMouseLeave={() => {
-        later(LEAVE_MS);
+        scheduleClose(LEAVE_MS);
       }}
       onContextMenu={(event) => {
         event.preventDefault();
