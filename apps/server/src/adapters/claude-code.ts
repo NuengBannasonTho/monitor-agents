@@ -1,13 +1,23 @@
 import type { AgentEvent } from '@agent-office/shared';
 import { z } from 'zod';
+import {
+  fieldsDetail,
+  proseDetail,
+  toolCallDetail,
+  toolFailureDetail,
+  toolResultDetail,
+} from '../details.js';
 import { formatDuration, safeLabel, summarizeTool } from '../summarize.js';
 import type { Adapter, Clock } from './types.js';
 
 /*
  * Field names verified against Claude Code 2.1.318: the hooks reference
  * (https://code.claude.com/docs/en/hooks) and the hook input schemas shipped in
- * the CLI itself. Only the fields we use are declared; zod strips the rest, so
- * prompts, tool_input bodies and assistant messages never leave this file.
+ * the CLI itself. Only the fields we use are declared; zod strips the rest.
+ *
+ * Activity summaries never hold a prompt, tool input body or reply. With details on
+ * (the default), those go into each line's detail, redacted and size-capped by
+ * details.ts; with details off they never leave this file.
  */
 
 const Base = z.object({
@@ -25,35 +35,46 @@ const HookPayload = z.discriminatedUnion('hook_event_name', [
     hook_event_name: z.literal('SessionStart'),
     source: z.string().optional(), // startup | resume | clear | compact | fork
   }),
-  Base.extend({ hook_event_name: z.literal('UserPromptSubmit') }),
+  Base.extend({
+    hook_event_name: z.literal('UserPromptSubmit'),
+    prompt: z.string().optional(),
+  }),
   Base.extend({
     hook_event_name: z.literal('PreToolUse'),
     tool_name: z.string().min(1),
     tool_input: ToolInput.optional(),
     tool_use_id: z.string().optional(),
   }),
-  // tool_response (the tool's output) is deliberately not declared, so it is dropped.
   Base.extend({
     hook_event_name: z.literal('PostToolUse'),
     tool_name: z.string().min(1),
     tool_use_id: z.string().optional(),
     duration_ms: z.number().nonnegative().optional(),
+    tool_response: z.unknown().optional(),
   }),
   Base.extend({
     hook_event_name: z.literal('PostToolUseFailure'),
     tool_name: z.string().min(1),
     tool_use_id: z.string().optional(),
     duration_ms: z.number().nonnegative().optional(),
-    /** Only its leading "Exit code N" is read; the text itself is never kept. */
+    /** Its leading "Exit code N" goes in the summary; the text only in the detail. */
     error: z.string().optional(),
     is_interrupt: z.boolean().optional(),
   }),
   Base.extend({
     hook_event_name: z.literal('Notification'),
     notification_type: z.string().optional(),
+    message: z.string().optional(),
   }),
-  Base.extend({ hook_event_name: z.literal('Stop') }),
-  Base.extend({ hook_event_name: z.literal('SubagentStop') }),
+  Base.extend({
+    hook_event_name: z.literal('Stop'),
+    last_assistant_message: z.string().optional(),
+  }),
+  Base.extend({ hook_event_name: z.literal('SubagentStart') }),
+  Base.extend({
+    hook_event_name: z.literal('SubagentStop'),
+    last_assistant_message: z.string().optional(),
+  }),
   Base.extend({
     hook_event_name: z.literal('SessionEnd'),
     reason: z.string().optional(),
@@ -88,13 +109,34 @@ const SESSION_START_LABEL: Readonly<Record<string, string>> = {
   fork: 'Session forked',
 };
 
+/** Which subagent an event comes from, when it comes from one. */
+function subagentOf(p: HookPayload): Pick<AgentEvent, 'subagentId' | 'subagentType'> {
+  if (p.agent_id === undefined) return {};
+  return {
+    subagentId: p.agent_id,
+    subagentType: p.agent_type === undefined ? 'subagent' : safeLabel(p.agent_type, 30),
+  };
+}
+
 function subagentSuffix(p: HookPayload): string {
   return p.agent_id === undefined
     ? ''
     : ` (subagent${p.agent_type ? ` ${safeLabel(p.agent_type, 30)}` : ''})`;
 }
 
-export function createClaudeCodeAdapter(now: Clock = Date.now): Adapter {
+export interface ClaudeCodeAdapterOptions {
+  /** Keep each line's full detail (prompt, command, diff, output, reply). Default true. */
+  readonly details?: boolean;
+}
+
+export function createClaudeCodeAdapter(
+  now: Clock = Date.now,
+  { details = true }: ClaudeCodeAdapterOptions = {},
+): Adapter {
+  /** Only with details on, and only when there is something to show. */
+  const withDetail = (detail: AgentEvent['detail']) =>
+    details && detail !== undefined && detail.length > 0 ? { detail } : {};
+
   return {
     kind: 'claude-code',
     normalize(raw: unknown): AgentEvent | null {
@@ -109,23 +151,32 @@ export function createClaudeCodeAdapter(now: Clock = Date.now): Adapter {
             ...base,
             type: 'start',
             summary: SESSION_START_LABEL[p.source ?? 'startup'] ?? 'Session started',
+            ...withDetail(fieldsDetail([['Folder', p.cwd]])),
           };
         case 'UserPromptSubmit':
-          // The prompt text is intentionally never read.
-          return { ...base, type: 'prompt', summary: 'Prompt received' };
+          // The summary never holds the prompt; only the detail does.
+          return {
+            ...base,
+            type: 'prompt',
+            summary: 'Prompt received',
+            ...withDetail(proseDetail('Prompt', p.prompt)),
+          };
         case 'PreToolUse':
           return {
             ...base,
             type: 'tool',
+            ...subagentOf(p),
             toolName: p.tool_name,
             ...(p.tool_use_id === undefined ? {} : { toolId: p.tool_use_id }),
             summary: summarizeTool(p.tool_name, p.tool_input ?? {}, p.cwd) + subagentSuffix(p),
+            ...withDetail(toolCallDetail(p.tool_name, p.tool_input ?? {}, p.cwd)),
           };
         case 'PostToolUse': {
           const long = p.duration_ms !== undefined && p.duration_ms >= LONG_TOOL_MS;
           return {
             ...base,
             type: 'tool-end',
+            ...subagentOf(p),
             toolName: p.tool_name,
             ...(p.tool_use_id === undefined ? {} : { toolId: p.tool_use_id }),
             ...(long
@@ -133,6 +184,7 @@ export function createClaudeCodeAdapter(now: Clock = Date.now): Adapter {
                   summary: `${safeLabel(p.tool_name, 40)} finished after ${formatDuration(p.duration_ms ?? 0)}${subagentSuffix(p)}`,
                 }
               : {}),
+            ...withDetail(toolResultDetail(p.tool_name, p.tool_response, p.duration_ms, p.cwd)),
           };
         }
         case 'PostToolUseFailure': {
@@ -147,24 +199,45 @@ export function createClaudeCodeAdapter(now: Clock = Date.now): Adapter {
           return {
             ...base,
             type: 'tool-end',
+            ...subagentOf(p),
             toolName: p.tool_name,
             ...(p.tool_use_id === undefined ? {} : { toolId: p.tool_use_id }),
             failed: true,
             summary: what + subagentSuffix(p),
+            ...withDetail(toolFailureDetail(p.error, p.duration_ms)),
           };
         }
         case 'Notification': {
           const label = NEEDS_YOU_LABEL[p.notification_type ?? ''];
           if (label === undefined) return null;
-          return { ...base, type: 'notify', summary: label };
+          return {
+            ...base,
+            type: 'notify',
+            summary: label,
+            ...withDetail(proseDetail('Message', p.message)),
+          };
         }
         case 'Stop':
-          return { ...base, type: 'stop', summary: 'Finished' };
+          return {
+            ...base,
+            type: 'stop',
+            summary: 'Finished',
+            ...withDetail(proseDetail('Reply', p.last_assistant_message)),
+          };
+        case 'SubagentStart':
+          return {
+            ...base,
+            type: 'subagent-start',
+            ...subagentOf(p),
+            summary: `Subagent started${p.agent_type ? `: ${safeLabel(p.agent_type, 30)}` : ''}`,
+          };
         case 'SubagentStop':
           return {
             ...base,
             type: 'subagent-stop',
+            ...subagentOf(p),
             summary: `Subagent finished${p.agent_type ? `: ${safeLabel(p.agent_type, 30)}` : ''}`,
+            ...withDetail(proseDetail('Report', p.last_assistant_message)),
           };
         case 'SessionEnd':
           return {

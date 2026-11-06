@@ -18,6 +18,7 @@ export const HOOK_EVENTS: readonly { readonly event: string; readonly matcher?: 
   { event: 'PostToolUseFailure', matcher: '*' },
   { event: 'Notification' },
   { event: 'Stop' },
+  { event: 'SubagentStart' },
   { event: 'SubagentStop' },
 ];
 

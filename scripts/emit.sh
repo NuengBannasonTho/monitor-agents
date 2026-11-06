@@ -20,10 +20,19 @@ if [ ! -r "$HEADERS" ] || ! command -v curl >/dev/null 2>&1; then
   exit 0
 fi
 
+# Inside Orca, which terminal this agent runs in, so the dashboard can type to it.
+# Only a well-formed handle is passed on (nothing that could break the header).
+TERMINAL=""
+case "${ORCA_TERMINAL_HANDLE:-}" in
+  term_*[!A-Za-z0-9_-]*) ;;
+  term_?*) TERMINAL="$ORCA_TERMINAL_HANDLE" ;;
+esac
+
 curl -s -m 0.3 --connect-timeout 0.2 -o /dev/null \
   -X POST \
   -H "Content-Type: application/json" \
   -H "X-Agent-Kind: $KIND" \
+  -H "X-Orca-Terminal: $TERMINAL" \
   -H "@$HEADERS" \
   --data-binary @- \
   "http://127.0.0.1:$PORT/events" >/dev/null 2>&1 || true

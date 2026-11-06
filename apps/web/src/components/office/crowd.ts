@@ -167,13 +167,27 @@ export function planWalk(
  * A spot to land on near `wanted`: `wanted` itself if nobody's plan comes near it, else the
  * closest clear spot found around it inside `area` (or `wanted` when the camp is packed).
  */
-export function landingSpot(
-  crowd: Crowd,
-  id: string,
-  wanted: Point,
-  area: Rect,
-  now: number,
-): Point {
+/** Whether a point lies in the area (a pixel of slack for rounding). */
+export function insideArea(p: Point, area: Rect): boolean {
+  return (
+    p.x >= area.left - 1 &&
+    p.x <= area.left + area.width + 1 &&
+    p.y >= area.top - 1 &&
+    p.y <= area.top + area.height + 1
+  );
+}
+
+/** The nearest point of the area. */
+export function clampToArea(p: Point, area: Rect): Point {
+  return {
+    x: Math.min(area.left + area.width, Math.max(area.left, p.x)),
+    y: Math.min(area.top + area.height, Math.max(area.top, p.y)),
+  };
+}
+
+export function landingSpot(crowd: Crowd, id: string, spot: Point, area: Rect, now: number): Point {
+  // Never outside the camp, whatever spot was asked for.
+  const wanted = clampToArea(spot, area);
   const clear = (p: Point): boolean => crowd.gap(id, standAt(p, now), now) >= 1;
   if (clear(wanted)) return wanted;
   for (let ring = 1; ring <= 6; ring++) {

@@ -25,7 +25,8 @@
   top: 16px;
   right: 16px;
   bottom: 16px;
-  width: min(400px, calc(100vw - 32px));
+  /* Wide enough to read code and output, and to write to the agent. */
+  width: min(600px, calc(100vw - 32px));
 }
 
 .panel[data-vaul-drawer-direction='bottom'] {
@@ -98,7 +99,6 @@
 }
 
 .close:active,
-.action:active,
 .copy:active {
   transform: scale(0.96);
 }
@@ -212,42 +212,9 @@
   margin-top: -6px;
 }
 
+/* Shared button look (ui/Button); here they fill the drawer's width. */
 .action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--surface-2);
-  color: var(--text);
-  cursor: pointer;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-decoration: none;
-  transition:
-    filter 0.15s ease,
-    background-color 0.2s ease,
-    transform 0.15s ease;
-}
-
-.action:hover {
-  filter: brightness(0.96);
-}
-
-.action svg {
-  flex: none;
-}
-
-.primary {
-  background: var(--primary);
-  color: var(--primary-text);
-}
-
-.primary:hover {
-  filter: brightness(1.15);
+  width: 100%;
 }
 
 .action[data-copied='true'] {
@@ -359,50 +326,4 @@
   margin: 0;
   color: var(--muted);
   font-size: 13px;
-}
-
-.activity {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.entry {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 12.5px;
-}
-
-.entry:last-child {
-  border-bottom: 0;
-}
-
-/* Each step's icon, in the color of the state it happened in. */
-.entryIcon {
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-}
-
-.entry[data-failed='true'] .entrySummary {
-  color: var(--state-needs-you);
-}
-
-.entrySummary {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-
-.entryTime {
-  color: var(--muted);
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }

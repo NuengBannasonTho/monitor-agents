@@ -1,10 +1,11 @@
-import { MAX_ACTIVITY, deskFromCwd } from '@agent-office/shared';
+import { MAX_ACTIVITY, MAX_DETAIL_PARTS, MAX_SUBAGENTS, deskFromCwd } from '@agent-office/shared';
 import type {
   ActivityEntry,
   Agent,
   AgentEvent,
   AgentState,
   RunningTool,
+  Subagent,
 } from '@agent-office/shared';
 import { stateForTool } from './summarize.js';
 
@@ -28,6 +29,11 @@ export type AgentMap = ReadonlyMap<string, Agent>;
 
 function nextState(agent: Agent, event: AgentEvent): AgentState {
   const current = agent.state;
+  // A subagent's own steps show at its desk; the main agent keeps what it was doing (it is
+  // waiting on the subagent), unless it had been written off as stale.
+  if (event.subagentId !== undefined && (event.type === 'tool' || event.type === 'tool-end')) {
+    return current === 'stale' ? 'working' : current;
+  }
   switch (event.type) {
     case 'start':
       return 'idle';
@@ -45,16 +51,80 @@ function nextState(agent: Agent, event: AgentEvent): AgentState {
       return 'needs-you';
     case 'stop':
       return 'done';
+    case 'interrupt':
+      // The turn was cut short: back to waiting for you.
+      return 'idle';
+    case 'subagent-start':
     case 'subagent-stop':
-      // A subagent finishing does not finish the main agent.
+      // A subagent starting or finishing does not change what the main agent is doing.
       return current === 'stale' || current === 'idle' ? 'working' : current;
     case 'end':
       return current;
   }
 }
 
-function withActivity(agent: Agent, entry: ActivityEntry): Agent['activity'] {
-  return [entry, ...agent.activity].slice(0, MAX_ACTIVITY);
+function withActivity(activity: Agent['activity'], entry: ActivityEntry): Agent['activity'] {
+  return [entry, ...activity].slice(0, MAX_ACTIVITY);
+}
+
+/**
+ * A tool call's end adds its result (output, duration, error) to the line of the call
+ * itself, so a command and what it printed open together.
+ */
+function withResult(activity: Agent['activity'], event: AgentEvent): Agent['activity'] {
+  if (event.type !== 'tool-end' || event.toolId === undefined) return activity;
+  const i = activity.findIndex((e) => e.toolId === event.toolId);
+  const call = activity[i];
+  if (call === undefined) return activity;
+  const detail = [...(call.detail ?? []), ...(event.detail ?? [])].slice(0, MAX_DETAIL_PARTS);
+  const ended: ActivityEntry = defined({
+    ...call,
+    detail: detail.length === 0 ? undefined : detail,
+    failed: event.failed ?? call.failed,
+    // Matched once; the id has done its job.
+    toolId: undefined,
+  });
+  return activity.map((e, j) => (j === i ? ended : e));
+}
+
+/** "Read a.ts (subagent Explore)" -> "Read a.ts": the desk already says whose it is. */
+function withoutSubagentSuffix(summary: string): string {
+  return summary.replace(/ \(subagent[^)]*\)$/, '');
+}
+
+/** The agent's subagents after `event`: one starts, works, or finishes. */
+function nextSubagents(agent: Agent, event: AgentEvent): Agent['subagents'] {
+  const list = agent.subagents ?? [];
+  const id = event.subagentId;
+  if (id === undefined) return agent.subagents;
+  if (event.type === 'subagent-stop') {
+    const rest = list.filter((s) => s.id !== id);
+    return rest.length === 0 ? undefined : rest;
+  }
+  const existing = list.find((s) => s.id === id);
+  // Without the SubagentStart hook, the first step is the first sight of it.
+  const base: Subagent = existing ?? {
+    id,
+    type: event.subagentType ?? 'subagent',
+    state: 'called',
+    since: event.at,
+    lastSeen: event.at,
+  };
+  const updated: Subagent = {
+    ...base,
+    lastSeen: Math.max(base.lastSeen, event.at),
+    ...(event.type === 'tool'
+      ? {
+          state: stateForTool(event.toolName ?? ''),
+          ...(event.summary === undefined ? {} : { summary: withoutSubagentSuffix(event.summary) }),
+        }
+      : {}),
+  };
+  // Each keeps its place in the list (and so its desk); newcomers join the end, and past
+  // the limit the oldest make way.
+  return existing === undefined
+    ? [...list, updated].slice(-MAX_SUBAGENTS)
+    : list.map((s) => (s.id === id ? updated : s));
 }
 
 function newAgent(event: AgentEvent): Agent {
@@ -83,6 +153,8 @@ interface Timing {
 function nextTiming(agent: Agent, event: AgentEvent): Timing {
   const { turnStartedAt, tool, finishedAt, lastTurnMs } = agent;
   const same: Timing = { turnStartedAt, tool, finishedAt, lastTurnMs };
+  // The main agent's own tool and turn are not a subagent's.
+  if (event.subagentId !== undefined) return same;
   switch (event.type) {
     case 'start':
       return { ...same, turnStartedAt: undefined, tool: undefined };
@@ -108,7 +180,10 @@ function nextTiming(agent: Agent, event: AgentEvent): Timing {
         finishedAt: event.at,
         lastTurnMs: turnStartedAt === undefined ? undefined : Math.max(0, event.at - turnStartedAt),
       };
+    case 'interrupt':
+      return { ...same, turnStartedAt: undefined, tool: undefined };
     case 'notify':
+    case 'subagent-start':
     case 'subagent-stop':
     case 'end':
       return same;
@@ -149,7 +224,10 @@ export function reduce(agents: AgentMap, event: ReducerEvent): AgentMap {
     state,
     summary: event.summary ?? event.type,
     failed: event.failed,
+    toolId: event.type === 'tool' ? event.toolId : undefined,
+    detail: event.detail,
   });
+  const activity = withResult(agent.activity, event);
   const next = new Map(agents);
   next.set(
     agent.id,
@@ -159,7 +237,11 @@ export function reduce(agents: AgentMap, event: ReducerEvent): AgentMap {
       state,
       stateSince: state === agent.state ? agent.stateSince : event.at,
       lastSeen: Math.max(agent.lastSeen, event.at),
-      activity: silent ? agent.activity : withActivity(agent, entry),
+      activity: silent ? activity : withActivity(activity, entry),
+      // Stopping the turn stops its subagents too.
+      subagents: event.type === 'interrupt' ? undefined : nextSubagents(agent, event),
+      // The Orca terminal it runs in, as last reported (sessions can move).
+      terminal: event.terminal ?? agent.terminal,
     }),
   );
   return next;
@@ -196,7 +278,15 @@ function minutes(ms: number): string {
  */
 export function sweep(agents: AgentMap, now: number, policy: SweepPolicy): AgentMap {
   let next: Map<string, Agent> | null = null;
-  for (const agent of agents.values()) {
+  for (const listed of agents.values()) {
+    // A subagent silent this long missed its SubagentStop (crashed, killed): let it go.
+    const subagents = listed.subagents?.filter((s) => now - s.lastSeen < policy.removeAfterMs);
+    let agent = listed;
+    if (subagents !== undefined && subagents.length !== listed.subagents?.length) {
+      agent = defined({ ...listed, subagents: subagents.length === 0 ? undefined : subagents });
+      next ??= new Map(agents);
+      next.set(agent.id, agent);
+    }
     const silentFor = now - agent.lastSeen;
     if (agent.state === 'needs-you') {
       if (silentFor >= (policy.needsYouRemoveAfterMs ?? DEFAULT_NEEDS_YOU_REMOVE_MS)) {
@@ -227,7 +317,7 @@ export function sweep(agents: AgentMap, now: number, policy: SweepPolicy): Agent
         state: 'stale',
         stateSince: now,
         // lastSeen is unchanged: stale is a guess, not a real event.
-        activity: withActivity(agent, {
+        activity: withActivity(agent.activity, {
           at: now,
           state: 'stale',
           summary: `No events for ${minutes(policy.staleAfterMs)}`,

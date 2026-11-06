@@ -1,0 +1,498 @@
+/* The agent files on the left, grouped by where they live; the one you pick on the right. */
+
+/* ---- Notices ---- */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--state-called) 14%, var(--surface));
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.notice svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--state-called);
+}
+
+.notice[data-kind='problem'] {
+  background: color-mix(in srgb, var(--state-needs-you) 12%, var(--surface));
+}
+
+.notice[data-kind='problem'] svg {
+  color: var(--state-needs-you);
+}
+
+.notice[data-kind='ok'] {
+  background: color-mix(in srgb, var(--state-running) 12%, var(--surface));
+}
+
+.notice code {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ---- Layout ---- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.list {
+  position: sticky;
+  /* Under the page's sticky top bar (68px). */
+  top: 88px;
+  display: grid;
+  gap: 18px;
+  max-height: calc(100vh - 108px);
+  padding: 18px 12px 12px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.scope {
+  display: grid;
+  gap: 4px;
+}
+
+.scope > .muted {
+  padding: 4px 8px 0;
+}
+
+.scopeTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.scopeKind {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.scopeDir {
+  overflow: hidden;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.items {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.item:hover {
+  background: var(--surface-2);
+}
+
+.item[aria-current='true'] {
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+}
+
+/* Its color in Claude Code, or a ring for none. */
+.dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--border);
+}
+
+.dot[style*='background'] {
+  box-shadow: none;
+}
+
+.itemText {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.itemName {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemDescription {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.itemTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.itemTags span {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.item:hover .itemTags span,
+.item[aria-current='true'] .itemTags span {
+  background: var(--surface);
+}
+
+.itemTags span[data-kind='note'] {
+  color: var(--state-called);
+}
+
+.itemTags span[data-kind='problem'] {
+  color: var(--state-needs-you);
+}
+
+.pane {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Only on a narrow screen, where the editor replaces the list. */
+.pane > .back {
+  display: none;
+  justify-self: start;
+}
+
+.placeholder {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 56px 32px;
+  border: 1.5px dashed var(--border);
+  border-radius: 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.placeholder h2 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.placeholder p {
+  max-width: 420px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---- Editor ---- */
+
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  animation: editorIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes editorIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.editorHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.editorHead .dot {
+  width: 16px;
+  height: 16px;
+  margin-top: 6px;
+}
+
+.editorTitle {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.editorTitle h2 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.path {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.fields:disabled {
+  opacity: 0.75;
+}
+
+.prompt {
+  min-height: 320px;
+}
+
+/* Review: the new agent at a glance before its file is written. */
+.summary {
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.summary > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 14px;
+}
+
+.summary > div + div {
+  border-top: 1px solid var(--border);
+}
+
+.summary dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.summary dd {
+  margin: 0;
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+
+.summary code {
+  font-size: 12px;
+}
+
+.summary dd.summaryPrompt {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.swatch[data-none] {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px var(--border);
+}
+
+.swatch[data-none]::after {
+  display: block;
+  width: 1.5px;
+  height: 18px;
+  margin: 3px auto;
+  background: var(--muted);
+  content: '';
+  transform: rotate(45deg);
+}
+
+.swatch:hover {
+  transform: scale(1.1);
+}
+
+.swatch[aria-checked='true'] {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--primary);
+}
+
+.allTools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.allTools > span {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.allTools > span > span {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .list {
+    position: static;
+    max-height: none;
+  }
+
+  .layout[data-editing='true'] .list {
+    display: none;
+  }
+
+  .layout[data-editing='true'] .pane > .back {
+    display: inline-flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor {
+    animation: none;
+  }
+
+  .chip,
+  .swatch,
+  .item {
+    transition: none;
+  }
+}

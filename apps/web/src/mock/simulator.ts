@@ -1,5 +1,5 @@
 import { MAX_ACTIVITY, deskFromCwd, zoneOf } from '@agent-office/shared';
-import type { ActivityEntry, Agent, AgentKind, AgentState } from '@agent-office/shared';
+import type { ActivityEntry, Agent, AgentKind, AgentState, DetailPart } from '@agent-office/shared';
 import { hashString, seededRandom } from '../lib/seed';
 
 /**
@@ -43,6 +43,75 @@ const SUMMARIES: Readonly<Partial<Record<AgentState, readonly string[]>>> = {
   done: ['Stopped', 'Subagent finished'],
   idle: ['Idle'],
   stale: ['No events for 5 min'],
+};
+
+/** What opening a line shows, for the lines that have more to tell. */
+const SAMPLE_DETAIL: Readonly<Record<string, readonly DetailPart[]>> = {
+  'Prompt received': [
+    {
+      type: 'text',
+      label: 'Prompt',
+      text: 'The login form keeps the old session after sign-out. Find out why and fix it.',
+    },
+  ],
+  'Read src/auth/session.ts': [
+    { type: 'field', label: 'File', value: 'src/auth/session.ts' },
+    { type: 'field', label: 'Took', value: '0s' },
+  ],
+  'Grep "useSession"': [
+    { type: 'code', label: 'Pattern', code: 'useSession', lang: 'regexp' },
+    {
+      type: 'code',
+      label: 'Found',
+      code: 'src/auth/session.ts\nsrc/pages/login.tsx',
+      lang: 'text',
+    },
+  ],
+  'Edit src/auth/session.ts': [
+    { type: 'field', label: 'File', value: 'src/auth/session.ts' },
+    {
+      type: 'code',
+      label: 'Change',
+      code: '-   return session;\n+   if (session.expiresAt < Date.now()) return null;\n+   return session;',
+      lang: 'diff',
+    },
+  ],
+  'Write src/api/routes/users.ts': [
+    { type: 'field', label: 'File', value: 'src/api/routes/users.ts' },
+    {
+      type: 'code',
+      label: 'Content',
+      code: 'export async function getUser(id: string) {\n  const user = await db.users.find(id);\n  if (!user) throw new NotFound(`user ${id}`);\n  return user;\n}',
+      lang: 'typescript',
+    },
+  ],
+  'Bash pnpm test --filter api': [
+    { type: 'field', label: 'What', value: 'Run the API tests' },
+    { type: 'code', label: 'Command', code: 'pnpm test --filter api', lang: 'shellscript' },
+    { type: 'field', label: 'Took', value: '4s' },
+    {
+      type: 'code',
+      label: 'Output',
+      code: ' ✓ src/api/routes/users.test.ts (6 tests) 41ms\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)',
+      lang: 'text',
+    },
+  ],
+  'Bash git status': [
+    { type: 'code', label: 'Command', code: 'git status --short', lang: 'shellscript' },
+    {
+      type: 'code',
+      label: 'Output',
+      code: ' M src/auth/session.ts\n?? tests/session.spec.ts',
+      lang: 'text',
+    },
+  ],
+  Stopped: [
+    {
+      type: 'text',
+      label: 'Reply',
+      text: 'Fixed it. Sign-out now clears the cached session:\n\n```ts\nexport function signOut() {\n  cache.delete(SESSION_KEY);\n  session = null;\n}\n```\n\nAll 15 tests pass.',
+    },
+  ],
 };
 
 function withoutTiming(agent: Agent): Agent {
@@ -172,7 +241,11 @@ export class MockSimulator {
 
     const pool = SUMMARIES[phase.state] ?? [phase.state];
     const summary = pool[Math.floor(this.rand() * pool.length)] ?? phase.state;
-    const entry: ActivityEntry = { at: now, state: phase.state, summary };
+    const detail = SAMPLE_DETAIL[summary];
+    const entry: ActivityEntry =
+      detail === undefined
+        ? { at: now, state: phase.state, summary }
+        : { at: now, state: phase.state, summary, detail: [...detail] };
     const prev = sim.agent;
     const inTurn = zoneOf(phase.state) === 'table';
     sim.agent = {

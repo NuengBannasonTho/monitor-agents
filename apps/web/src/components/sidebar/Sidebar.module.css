@@ -1,0 +1,398 @@
+/* Edge to edge on the left, a hairline on its right; narrows to a rail of icons. */
+.sidebar {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 256px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 0 14px 14px;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  transition:
+    width 0.28s var(--ease),
+    padding 0.28s var(--ease);
+}
+
+.sidebar[data-collapsed='true'] {
+  width: 68px;
+  padding-inline: 10px;
+}
+
+/* Labels fade out as the rail narrows, and stay out of the way while hidden. */
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 0.18s ease;
+}
+
+.sidebar[data-collapsed='true'] .label,
+.sidebar[data-collapsed='true'] .title {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Brand and the collapse button, over a hairline. */
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 68px;
+  margin: 0 -14px;
+  padding: 0 14px 0 18px;
+  border-bottom: 1px solid var(--border);
+  transition: padding 0.28s var(--ease);
+}
+
+.logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: opacity 0.18s ease;
+}
+
+.toggle {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.toggle:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Collapsed: just the logo, the same height as open, so nothing below it moves. */
+.sidebar[data-collapsed='true'] .brand {
+  justify-content: center;
+  margin: 0 -10px;
+  padding: 0;
+}
+
+.sidebar[data-collapsed='true'] .title {
+  display: none;
+}
+
+/* The logo on the rail is the expand button: hover it and the logo gives way to the icon. */
+.logoButton {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.logoArt,
+.logoToggle {
+  display: grid;
+  grid-area: 1 / 1;
+  place-items: center;
+  transition:
+    opacity 0.16s ease,
+    transform 0.2s var(--ease);
+}
+
+.logoToggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* Pointing the way it will open. */
+.logoToggle svg {
+  transform: scaleX(-1);
+}
+
+.logoButton:hover .logoArt,
+.logoButton:focus-visible .logoArt {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.logoButton:hover .logoToggle,
+.logoButton:focus-visible .logoToggle {
+  opacity: 1;
+  transform: none;
+}
+
+.nav {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 18px;
+  min-height: 0;
+  padding-top: 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+
+.groupTitle {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 0.18s ease;
+}
+
+/* On the rail a hairline stands in for each group's name. */
+.sidebar[data-collapsed='true'] .groupTitle {
+  height: 1px;
+  margin: 0 6px 8px;
+  padding: 0;
+  background: var(--border);
+  color: transparent;
+}
+
+.sidebar[data-collapsed='true'] .group:first-child .groupTitle {
+  display: none;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 500;
+  text-align: left;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* On the rail the icon sits dead centre. */
+.sidebar[data-collapsed='true'] .item,
+.sidebar[data-collapsed='true'] .finished {
+  padding-inline: 14px;
+}
+
+.item:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  color: var(--text);
+}
+
+.item[aria-current='page'] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* The current page's pill; it slides from item to item (a shared layout id). */
+.active {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--surface-2);
+}
+
+.itemIcon,
+.item .label,
+.count {
+  position: relative;
+}
+
+.itemIcon {
+  flex: none;
+  color: color-mix(in srgb, var(--text) 70%, var(--muted));
+}
+
+.item[aria-current='page'] .itemIcon {
+  color: var(--text);
+}
+
+/* How many; red while someone waits on you. */
+.count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  transition: opacity 0.18s ease;
+}
+
+.count[data-urgent] {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--state-needs-you);
+  color: #fff;
+}
+
+/* On the rail only the red count stays, on the icon's corner. */
+.sidebar[data-collapsed='true'] .count {
+  position: absolute;
+  top: 3px;
+  left: 26px;
+  opacity: 0;
+}
+
+.sidebar[data-collapsed='true'] .count[data-urgent] {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  font-size: 10px;
+  opacity: 1;
+}
+
+.foot {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* Finished turns you have not opened yet. */
+.finished {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--state-running) 12%, var(--surface));
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  animation: popIn 260ms var(--ease) both;
+}
+
+.finished:hover {
+  background: color-mix(in srgb, var(--state-running) 20%, var(--surface));
+}
+
+.check {
+  flex: none;
+  color: var(--state-running);
+}
+
+.finishedCount {
+  position: absolute;
+  top: 3px;
+  left: 26px;
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--state-running);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+}
+
+.hint {
+  z-index: 60;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--popover);
+  box-shadow: var(--shadow-sm);
+  color: var(--popover-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .sidebar[data-collapsed='true'] {
+    width: 58px;
+    padding-inline: 7px;
+  }
+
+  .sidebar[data-collapsed='true'] .brand {
+    margin: 0 -7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .brand,
+  .logoArt,
+  .logoToggle,
+  .label,
+  .title,
+  .groupTitle,
+  .count,
+  .item {
+    transition: none;
+  }
+
+  .finished {
+    animation: none;
+  }
+}

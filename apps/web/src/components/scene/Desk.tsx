@@ -3,14 +3,16 @@ import { memo, useMemo } from 'react';
 import { cx } from '../../lib/cx';
 import { STATE_COLOR_VAR } from '../office/stateMeta';
 import type { Cell } from '../worker/sprite';
-import type { DeskItem, DeskSide } from './deskArt';
+import type { DeskItem, DeskSide, DeskSize } from './deskArt';
 import {
   DESK_BOTTOM_PX,
   DESK_TOP_PX,
   DESK_WIDTH_PX,
+  MINI_DESK,
   alertFrames,
   codeFrames,
   deskRuns,
+  miniDeskRuns,
   screenGlare,
 } from './deskArt';
 import styles from './Desk.module.css';
@@ -21,6 +23,8 @@ import type { SceneTheme } from './useSceneTheme';
  * desk top at the worker's hands and hides the legs behind the front panel.
  */
 export const SEAT_ABOVE_DESK_PX = 30;
+/** The same for a subagent at its small desk. */
+export const MINI_SEAT_ABOVE_DESK_PX = 24;
 
 type DeskPalette = Readonly<Record<string, string>>;
 
@@ -124,7 +128,14 @@ interface DeskProps {
   readonly theme: SceneTheme;
   /** CSS px per art pixel, matching the avatars on screen. */
   readonly px: number;
+  /** A full desk, or a subagent's small one. */
+  readonly size?: DeskSize;
 }
+
+const BOX: Readonly<Record<DeskSize, { width: number; top: number; bottom: number }>> = {
+  full: { width: DESK_WIDTH_PX, top: DESK_TOP_PX, bottom: DESK_BOTTOM_PX },
+  mini: MINI_DESK,
+};
 
 function Cells({ cells, colors }: { cells: readonly Cell[]; colors: DeskPalette }) {
   return (
@@ -136,14 +147,18 @@ function Cells({ cells, colors }: { cells: readonly Cell[]; colors: DeskPalette 
   );
 }
 
-function DeskImpl({ x, y, zIndex, side, item, state, theme, px }: DeskProps) {
-  const runs = useMemo(() => deskRuns(px, side, item), [px, side, item]);
-  const glare = useMemo(() => screenGlare(px, side), [px, side]);
+function DeskImpl({ x, y, zIndex, side, item, state, theme, px, size = 'full' }: DeskProps) {
+  const runs = useMemo(
+    () => (size === 'mini' ? miniDeskRuns(px) : deskRuns(px, side, item)),
+    [px, side, item, size],
+  );
+  const glare = useMemo(() => screenGlare(px, side, size), [px, side, size]);
   const alert = state === 'needs-you';
   const frames = useMemo(
-    () => (alert ? alertFrames(px, side) : codeFrames(px, side)),
-    [alert, px, side],
+    () => (alert ? alertFrames(px, side, size) : codeFrames(px, side, size)),
+    [alert, px, side, size],
   );
+  const box = BOX[size];
   const base = theme === 'night' ? NIGHT : DAY;
   const colors = useMemo<DeskPalette>(
     () => (state === null ? base : { ...base, a: STATE_COLOR_VAR[state] }),
@@ -153,10 +168,11 @@ function DeskImpl({ x, y, zIndex, side, item, state, theme, px }: DeskProps) {
   return (
     <svg
       className={cx(styles.desk, alert && styles.alert)}
-      style={{ left: x - DESK_WIDTH_PX / 2, top: y + DESK_TOP_PX, zIndex }}
-      width={DESK_WIDTH_PX}
-      height={DESK_BOTTOM_PX - DESK_TOP_PX}
-      viewBox={`0 ${Math.round(DESK_TOP_PX / px)} ${Math.round(DESK_WIDTH_PX / px)} ${Math.round((DESK_BOTTOM_PX - DESK_TOP_PX) / px)}`}
+      // Snapped, so a half-width that is not a whole pixel still lands on the scene's grid.
+      style={{ left: Math.round((x - box.width / 2) / px) * px, top: y + box.top, zIndex }}
+      width={box.width}
+      height={box.bottom - box.top}
+      viewBox={`0 ${Math.round(box.top / px)} ${Math.round(box.width / px)} ${Math.round((box.bottom - box.top) / px)}`}
       shapeRendering="crispEdges"
       aria-hidden
       data-occupied={state === null ? undefined : 'true'}

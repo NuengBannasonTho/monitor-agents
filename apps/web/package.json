@@ -5,19 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@agent-office/shared": "workspace:*",
     "@animate-ui/react": "^2.4.2",
+    "@fontsource/prompt": "^5.3.0",
     "motion": "^14.9.1",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "reicon-brands": "1.0.2",
     "reicon-react": "1.2.6",
+    "shiki": "^4.6.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

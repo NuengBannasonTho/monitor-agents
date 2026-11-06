@@ -26,6 +26,23 @@ export const DESK_ITEMS: readonly DeskItem[] = ['mug', 'plant', 'papers', 'none'
 /** Screen area in the left-monitor layout, CSS px. */
 const SCREEN = { x0: 5, x1: 35, y0: -20, y1: -5 } as const;
 
+/**
+ * A subagent's small desk: a laptop on a short table, drawn at the same pixel size as the
+ * full desk so the two sit side by side in a row. Two fit in the space of one full desk.
+ */
+export const MINI_DESK = { width: 50, top: -15, bottom: 25 } as const;
+/** A low laptop lid, so the subagent behind it stays in view. */
+const MINI_SCREEN = { x0: 15, x1: 35, y0: -15, y1: -10 } as const;
+
+/** Which desk the screen helpers draw for. */
+export type DeskSize = 'full' | 'mini';
+
+function specOf(size: DeskSize) {
+  return size === 'full'
+    ? { width: DESK_WIDTH_PX, screen: SCREEN }
+    : { width: MINI_DESK.width, screen: MINI_SCREEN };
+}
+
 interface Grid {
   readonly px: number;
   readonly cols: number;
@@ -37,9 +54,9 @@ function toArt(css: number, px: number): number {
   return Math.round(css / px);
 }
 
-function makeGrid(px: number): Grid {
-  const cols = toArt(DESK_WIDTH_PX, px);
-  const rows = toArt(DESK_BOTTOM_PX - DESK_TOP_PX, px);
+function makeGrid(px: number, width = DESK_WIDTH_PX, height = DESK_BOTTOM_PX - DESK_TOP_PX): Grid {
+  const cols = toArt(width, px);
+  const rows = toArt(height, px);
   return {
     px,
     cols,
@@ -49,11 +66,19 @@ function makeGrid(px: number): Grid {
 }
 
 /** Fills a CSS-px rectangle (relative to the desk-top line) with a key. */
-function fill(g: Grid, x: number, y: number, w: number, h: number, key: string): void {
+function fill(
+  g: Grid,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  key: string,
+  top = DESK_TOP_PX,
+): void {
   const x0 = toArt(x, g.px);
-  const y0 = toArt(y - DESK_TOP_PX, g.px);
+  const y0 = toArt(y - top, g.px);
   const x1 = Math.max(x0 + 1, toArt(x + w, g.px));
-  const y1 = Math.max(y0 + 1, toArt(y + h - DESK_TOP_PX, g.px));
+  const y1 = Math.max(y0 + 1, toArt(y + h - top, g.px));
   for (let r = Math.max(0, y0); r < Math.min(g.rows, y1); r++) {
     const row = g.cells[r];
     if (row === undefined) continue;
@@ -283,26 +308,78 @@ export function deskRuns(px: number, side: DeskSide, item: DeskItem): Run[] {
   return rowsToRuns(composeDesk(px, side, item)).map((r) => ({ ...r, y: r.y - offset }));
 }
 
+/** The small desk: a short table with a laptop in the middle. Same at every pixel size. */
+function composeMiniDesk(px: number): string[] {
+  const top = MINI_DESK.top;
+  const g = makeGrid(px, MINI_DESK.width, MINI_DESK.bottom - top);
+  const f = (x: number, y: number, w: number, h: number, key: string): void => {
+    fill(g, x, y, w, h, key, top);
+  };
+
+  // Laptop: a low lid with its screen, then the keyboard deck on the table.
+  f(10, -15, 30, 10, 'B');
+  f(10, -15, 30, px, 'b');
+  f(
+    MINI_SCREEN.x0,
+    MINI_SCREEN.y0,
+    MINI_SCREEN.x1 - MINI_SCREEN.x0,
+    MINI_SCREEN.y1 - MINI_SCREEN.y0,
+    's',
+  );
+  f(5, -5, 40, 5, 'G');
+  f(10, -5, 30, 5, 'k');
+
+  // Table top, its edge and a short body on two feet.
+  f(0, 0, 50, 5, 'T');
+  f(0, 5, 50, 5, 'E');
+  f(0, 0, 5, 10, 'K');
+  f(45, 0, 5, 10, 'K');
+  f(5, 10, 40, 10, 'K');
+  f(10, 10, 30, 5, 'P');
+  f(10, 15, 30, 5, 'p');
+  f(5, 20, 5, 5, 'K');
+  f(40, 20, 5, 5, 'K');
+  f(10, 20, 30, 5, 'x');
+
+  return g.cells.map((r) => r.join(''));
+}
+
+export function miniDeskRuns(px: number): Run[] {
+  const offset = toArt(-MINI_DESK.top, px);
+  return rowsToRuns(composeMiniDesk(px)).map((r) => ({ ...r, y: r.y - offset }));
+}
+
 /* ---- screen content, in art cells with y relative to the desk-top line ---- */
 
-function screenBox(px: number) {
+function screenBox(px: number, size: DeskSize) {
+  const { screen } = specOf(size);
   return {
-    x0: toArt(SCREEN.x0, px),
-    x1: toArt(SCREEN.x1, px),
-    y0: toArt(SCREEN.y0, px),
-    y1: toArt(SCREEN.y1, px),
+    x0: toArt(screen.x0, px),
+    x1: toArt(screen.x1, px),
+    y0: toArt(screen.y0, px),
+    y1: toArt(screen.y1, px),
   };
 }
 
-function mirror(cells: readonly Cell[], px: number, side: DeskSide): readonly Cell[] {
-  if (side === 'left') return cells;
-  const cols = toArt(DESK_WIDTH_PX, px);
+/** The mini desk's laptop sits in the middle, so it is never mirrored. */
+function mirror(
+  cells: readonly Cell[],
+  px: number,
+  side: DeskSide,
+  size: DeskSize,
+): readonly Cell[] {
+  if (side === 'left' || size === 'mini') return cells;
+  const cols = toArt(specOf(size).width, px);
   return cells.map(([x, y, k]): Cell => [cols - 1 - x, y, k]);
 }
 
 /** Two frames of "code" scrolling by, drawn in the agent's state color ('a'). */
-export function codeFrames(px: number, side: DeskSide): readonly (readonly Cell[])[] {
-  const s = screenBox(px);
+export function codeFrames(
+  px: number,
+  side: DeskSide,
+  size: DeskSize = 'full',
+): readonly (readonly Cell[])[] {
+  const s = screenBox(px, size);
   const step = px >= 4 ? 1 : 2;
   const width = s.x1 - s.x0;
   return [0, 1].map((frame) => {
@@ -314,13 +391,17 @@ export function codeFrames(px: number, side: DeskSide): readonly (readonly Cell[
         cells.push([x, y, 'a']);
       }
     }
-    return mirror(cells, px, side);
+    return mirror(cells, px, side, size);
   });
 }
 
 /** Needs-you: the screen flashes red with a "!", then shows just the "!". */
-export function alertFrames(px: number, side: DeskSide): readonly (readonly Cell[])[] {
-  const s = screenBox(px);
+export function alertFrames(
+  px: number,
+  side: DeskSide,
+  size: DeskSize = 'full',
+): readonly (readonly Cell[])[] {
+  const s = screenBox(px, size);
   const mid = Math.floor((s.x0 + s.x1) / 2) - 1;
   const bang: Cell[] = [];
   const barBottom = s.y1 - (px >= 4 ? 2 : 3);
@@ -329,23 +410,24 @@ export function alertFrames(px: number, side: DeskSide): readonly (readonly Cell
   const full: Cell[] = [];
   for (let y = s.y0; y < s.y1; y++) for (let x = s.x0; x < s.x1; x++) full.push([x, y, 'a']);
   return [
-    mirror([...full, ...bang], px, side),
+    mirror([...full, ...bang], px, side, size),
     mirror(
       bang.map(([x, y]): Cell => [x, y, 'a']),
       px,
       side,
+      size,
     ),
   ];
 }
 
 /** Glare on a switched-off screen. */
-export function screenGlare(px: number, side: DeskSide): readonly Cell[] {
-  const s = screenBox(px);
+export function screenGlare(px: number, side: DeskSide, size: DeskSize = 'full'): readonly Cell[] {
+  const s = screenBox(px, size);
   const cells: Cell[] = [
     [s.x0, s.y0, 'g'],
     [s.x0 + 1, s.y0, 'g'],
     [s.x0, s.y0 + 1, 'g'],
   ];
   if (px <= 3) cells.push([s.x0 + 2, s.y0, 'g'], [s.x0 + 1, s.y0 + 1, 'g'], [s.x0, s.y0 + 2, 'g']);
-  return mirror(cells, px, side);
+  return mirror(cells, px, side, size);
 }

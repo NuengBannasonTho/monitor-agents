@@ -18,17 +18,29 @@ import {
 import styles from './Avatar.module.css';
 import { SkinSprite } from './SkinSprite';
 
-export type AvatarVariant = 'office' | 'hero' | 'thumb';
+/** `mini` is a subagent at its small desk: about 60% of a worker. */
+export type AvatarVariant = 'office' | 'hero' | 'thumb' | 'mini';
 
 /** Layout box per variant. Pixel workers fill it; image skins sit bottom-aligned inside it. */
 export const AVATAR_BOX: Readonly<Record<AvatarVariant, { width: number; height: number }>> = {
   office: { width: 96, height: 140 },
   hero: { width: 132, height: 196 },
   thumb: { width: 56, height: 72 },
+  mini: { width: 58, height: 84 },
 };
-const PIXEL_WIDTH: Readonly<Record<AvatarVariant, number>> = { office: 90, hero: 126, thumb: 36 };
+const PIXEL_WIDTH: Readonly<Record<AvatarVariant, number>> = {
+  office: 90,
+  hero: 126,
+  thumb: 36,
+  mini: 54,
+};
 /** Integer upscale of the skin grid, so every sprite pixel stays square. */
-const SKIN_SCALE: Readonly<Record<AvatarVariant, number>> = { office: 2, hero: 2, thumb: 1 };
+const SKIN_SCALE: Readonly<Record<AvatarVariant, number>> = {
+  office: 2,
+  hero: 2,
+  thumb: 1,
+  mini: 1,
+};
 
 /**
  * CSS px per sprite pixel of the office avatars currently shown: 5 for pixel workers,

@@ -1,0 +1,278 @@
+/* The page is a see-through strip: only the bananas show. */
+:global(html[data-walkers]),
+:global(html[data-walkers] body),
+:global(html[data-walkers] #root) {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.strip {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The track a banana slides along: moved by a CSS transition, on the compositor. */
+.lane {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  will-change: transform;
+}
+
+/* One banana: feet on the bottom edge, name tag under its feet. */
+.walker {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.body {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.faceLeft {
+  transform: scaleX(-1);
+}
+
+/* A two-step waddle while walking. */
+.walking > * {
+  animation: waddle 0.34s steps(1, end) infinite;
+}
+
+@keyframes waddle {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* A stepped pixel shadow under its feet. */
+.shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 50px;
+  height: 8px;
+  margin-left: -25px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.tag {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 4px);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+  padding: 3px 9px 3px 6px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--tag-bg);
+  box-shadow: 0 4px 14px -2px rgba(20, 22, 40, 0.35);
+  color: var(--tag-text);
+  font: 700 11.5px/1.3 var(--font-sans, system-ui);
+  white-space: nowrap;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Waiting on you: a red tag, a hop, and a "!" above its head. */
+.urgent .tag {
+  background: var(--state-needs-you);
+  color: #fff;
+}
+
+.urgent .body > * {
+  animation: hop 0.9s steps(6, end) infinite;
+}
+
+@keyframes hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+.bubble {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  border-radius: 8px;
+  background: var(--state-needs-you);
+  box-shadow: 0 4px 12px -2px rgba(240, 84, 79, 0.6);
+  color: #fff;
+  font: 800 18px/1 var(--font-sans, system-ui);
+  animation: bubble 0.9s steps(4, end) infinite;
+}
+
+@keyframes bubble {
+  50% {
+    transform: translateY(-4px) scale(1.06);
+  }
+}
+
+/* Asleep: dimmed, standing still. */
+.asleep {
+  opacity: 0.6;
+}
+
+/* A subagent, smaller and with its kind on the tag. */
+/* Its kind shows on hover only: trailing close behind its agent, tags would pile up. */
+.mini .miniTag {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.mini:hover .miniTag {
+  opacity: 1;
+}
+
+.mini .miniTag {
+  max-width: 64px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.miniShadow {
+  width: 32px;
+  margin-left: -16px;
+}
+
+/* What it is doing, on hover: above its head, within the strip. */
+.card {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 3;
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  max-width: 280px;
+  padding: 10px 13px;
+  transform: translate(-50%, 6px);
+  border-radius: 14px;
+  background: var(--popover);
+  box-shadow: var(--shadow-lg);
+  color: var(--popover-text);
+  font: 500 12.5px/1.35 var(--font-sans, system-ui);
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.walker:hover .card {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.cardState {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.cardLast {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+.cardMuted {
+  color: var(--popover-muted);
+  font-size: 12px;
+}
+
+.cardHint {
+  color: var(--popover-muted);
+  font-size: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walking > *,
+  .urgent .body > *,
+  .bubble {
+    animation: none;
+  }
+}
+
+/* Right-click on a banana: a small menu above where you clicked. */
+.menu {
+  position: absolute;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--popover);
+  box-shadow: var(--shadow-lg);
+  color: var(--popover-text);
+  font: 500 12.5px/1.3 var(--font-sans, system-ui);
+  pointer-events: auto;
+  transform-origin: 50% 100%;
+}
+
+.menuTitle {
+  overflow: hidden;
+  padding: 4px 8px 6px;
+  color: var(--popover-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.menuItem:hover {
+  background: color-mix(in srgb, var(--popover-text) 12%, transparent);
+}
+
+.menuRule {
+  height: 1px;
+  margin: 3px 6px;
+  background: color-mix(in srgb, var(--popover-text) 14%, transparent);
+}

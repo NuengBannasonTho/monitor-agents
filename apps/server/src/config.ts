@@ -21,6 +21,31 @@ const EnvSchema = z.object({
     .enum(['0', '1', 'true', 'false'])
     .default('0')
     .transform((v) => v === '1' || v === 'true'),
+  /** Let the dashboard type messages to agents running in Orca terminals. */
+  SEND_TO_AGENTS: z
+    .enum(['0', '1', 'true', 'false', 'on', 'off'])
+    .default('on')
+    .transform((v) => v === '1' || v === 'true' || v === 'on'),
+  /** Let the dashboard start Claude Code on a task, through Orca (New task). */
+  START_AGENTS: z
+    .enum(['0', '1', 'true', 'false', 'on', 'off'])
+    .default('on')
+    .transform((v) => v === '1' || v === 'true' || v === 'on'),
+  /** Let the dashboard create, edit and delete Claude Code subagents (.claude/agents/*.md). */
+  CUSTOM_AGENTS: z
+    .enum(['0', '1', 'true', 'false', 'on', 'off'])
+    .default('on')
+    .transform((v) => v === '1' || v === 'true' || v === 'on'),
+  /** Read the transcripts for the Usage page (tokens, estimated cost, skills, subagents). */
+  USAGE: z
+    .enum(['0', '1', 'true', 'false', 'on', 'off'])
+    .default('on')
+    .transform((v) => v === '1' || v === 'true' || v === 'on'),
+  /** Keep each activity line's detail (prompt, command, diff, output, reply). */
+  ACTIVITY_DETAILS: z
+    .enum(['0', '1', 'true', 'false', 'on', 'off'])
+    .default('on')
+    .transform((v) => v === '1' || v === 'true' || v === 'on'),
 });
 
 export interface Config {
@@ -35,6 +60,11 @@ export interface Config {
   /** Origins allowed to open the WebSocket; also the Host values we accept. */
   readonly allowedOrigins: readonly string[];
   readonly mock: boolean;
+  readonly details: boolean;
+  readonly sendToAgents: boolean;
+  readonly customAgents: boolean;
+  readonly startAgents: boolean;
+  readonly usage: boolean;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -59,5 +89,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     allowedOrigins:
       e.AGENT_OFFICE_DEV_ORIGIN === undefined ? own : [...own, e.AGENT_OFFICE_DEV_ORIGIN],
     mock: e.AGENT_OFFICE_MOCK,
+    details: e.ACTIVITY_DETAILS,
+    sendToAgents: e.SEND_TO_AGENTS,
+    customAgents: e.CUSTOM_AGENTS,
+    startAgents: e.START_AGENTS,
+    usage: e.USAGE,
   };
 }

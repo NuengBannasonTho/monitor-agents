@@ -3,7 +3,7 @@ import type { Point } from '../../lib/geometry';
 import type { Rect } from '../../lib/useZoneRects';
 import type { Crowd } from './crowd';
 import type { Trajectory } from './crowd';
-import { landingSpot, planWalk, positionAt, standAt } from './crowd';
+import { insideArea, landingSpot, planWalk, positionAt, standAt } from './crowd';
 
 export interface WanderLeg {
   readonly to: Point;
@@ -106,6 +106,27 @@ export function useWander({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inCamp, crowd, id]);
 
+  // The camp changed size (a panel opened, the window shrank): anyone left outside it
+  // lands back inside, near home, instead of standing over the other panel or off screen.
+  useEffect(() => {
+    if (
+      !inCamp ||
+      crowd === null ||
+      left === undefined ||
+      top === undefined ||
+      width === undefined ||
+      height === undefined
+    ) {
+      return;
+    }
+    const box = { left, top, width, height };
+    const spot = restRef.current;
+    if (spot === null || insideArea(spot, box)) return;
+    const landed = landingSpot(crowd, id, homeRef.current, box, Date.now());
+    restRef.current = landed;
+    setRest(landed);
+  }, [inCamp, crowd, id, left, top, width, height]);
+
   // Leaving camp (or losing motion) cancels the walk immediately.
   if (!active && leg !== null) {
     setLeg(null);
@@ -182,20 +203,35 @@ export function useWander({
 
     const now = Date.now();
     const resumed = lastPath.current;
+    lastPath.current = null;
     if (
       resumed !== null &&
       now - resumed.stoppedAt < 500 &&
-      now < resumed.path.start + resumed.path.duration
+      now < resumed.path.start + resumed.path.duration &&
+      insideArea(resumed.path.to, box) &&
+      insideArea(positionAt(resumed.path, now), box)
     ) {
       // Re-run mid-walk (the camp was resized): keep the walk already under way.
       book.set(id, resumed.path, now, false);
       schedule(resumed.path.start + resumed.path.duration - now + pause());
     } else {
-      // Arriving in camp: claim the spot, and anyone walking into it re-routes.
-      book.set(id, standAt(here(now), now), now);
+      // Arriving or waking: stand where it is, or back inside if the camp shrank past it.
+      const stopped =
+        resumed === null
+          ? (restRef.current ?? homeRef.current)
+          : positionAt(resumed.path, resumed.stoppedAt);
+      const from = insideArea(stopped, box)
+        ? stopped
+        : landingSpot(book, id, homeRef.current, box, now);
+      if (from !== stopped) {
+        restRef.current = from;
+        setRest(from);
+        setLeg(null);
+      }
+      // Claim the spot, and anyone walking into it re-routes.
+      book.set(id, standAt(from, now), now);
       schedule(pause());
     }
-    lastPath.current = null;
     const unsubscribe = book.onConflict(id, plan);
     return () => {
       disposed = true;

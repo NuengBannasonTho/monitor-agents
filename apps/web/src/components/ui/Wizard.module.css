@@ -1,0 +1,239 @@
+/* One card: what is being edited, the steps, the current step, then the buttons. */
+.wizard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.header {
+  display: grid;
+  gap: 12px;
+  padding: 20px 24px 0;
+}
+
+/* ---- The steps across the top ---- */
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+/* Never narrower than its title: with many steps the row scrolls instead of overlapping. */
+.stepItem {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+}
+
+.stepItem:last-child {
+  flex: none;
+}
+
+.stepButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 4px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.stepButton:disabled {
+  cursor: default;
+}
+
+.stepButton:hover:not(:disabled) .stepTitle {
+  color: var(--text);
+}
+
+.number {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.stepItem[data-state='current'] .number {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-text);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.stepItem[data-state='done'] .number {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.stepItem[data-state='current'] .stepTitle,
+.stepItem[data-state='done'] .stepTitle {
+  color: var(--text);
+}
+
+.stepItem[data-state='current'] .stepTitle {
+  font-weight: 700;
+}
+
+.stepText {
+  display: grid;
+  white-space: nowrap;
+}
+
+.optional {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* The line to the next step fills once this one is done. */
+.connector {
+  position: relative;
+  flex: 1;
+  min-width: 24px;
+  height: 2px;
+  margin: 0 10px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.connectorFill {
+  position: absolute;
+  inset: 0;
+  background: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.connectorFill[data-on] {
+  transform: scaleX(1);
+}
+
+/* ---- The current step ---- */
+
+.body {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  padding: 22px 24px 24px;
+}
+
+.panelHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.panelHint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* ---- Back / Next / finish ---- */
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+}
+
+.status {
+  flex: 1;
+  min-width: 140px;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.status[data-refused] {
+  color: var(--state-needs-you);
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .stepTitle {
+    display: none;
+  }
+
+  .stepItem[data-state='current'] .stepTitle {
+    display: inline;
+  }
+
+  .header,
+  .panel {
+    padding-inline: 16px;
+  }
+
+  .steps,
+  .footer {
+    padding-inline: 14px;
+  }
+
+  .status {
+    flex-basis: 100%;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .number,
+  .connectorFill {
+    transition: none;
+  }
+}

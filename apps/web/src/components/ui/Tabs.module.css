@@ -1,0 +1,51 @@
+/* Segmented tabs: a soft track, the picked tab filled in the primary color. */
+.group {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition:
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.item:active {
+  transform: scale(0.96);
+}
+
+.item:hover {
+  color: var(--text);
+}
+
+.item[data-state='on'] {
+  background: var(--primary);
+  color: var(--primary-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.group[data-stretch='true'] {
+  display: flex;
+  width: 100%;
+}
+
+.group[data-stretch='true'] .item {
+  flex: 1;
+  justify-content: center;
+  padding-block: 8px;
+}

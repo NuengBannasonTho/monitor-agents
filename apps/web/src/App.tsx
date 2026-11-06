@@ -4,9 +4,18 @@ import { MotionConfig } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './App.module.css';
 import { Gallery } from './components/gallery/Gallery';
-import { Header } from './components/header/Header';
+import { AgentsPage } from './components/agents/AgentsPage';
+import { CustomAgentsPage } from './components/customAgents/CustomAgentsPage';
 import { Office } from './components/office/Office';
 import { AgentPanel } from './components/panel/AgentPanel';
+import { SettingsPage } from './components/settings/SettingsPage';
+import { NewTaskPage } from './components/tasks/NewTaskPage';
+import { UsagePage } from './components/usage/UsagePage';
+import { Sidebar } from './components/sidebar/Sidebar';
+import { navigate, useRoute } from './lib/route';
+import { NewTaskIcon } from './components/icons';
+import { Button } from './components/ui/Button';
+import { Page } from './components/ui/Page';
 import { SkinProvider } from './skins/SkinContext';
 import { useNeedsYouSound } from './sound/useNeedsYouSound';
 import { unseenFinished, waitingOnYou } from './live/attention';
@@ -34,7 +43,10 @@ export function App() {
   const agents = USE_SIMULATOR ? simulated : stream.agents;
   const source = USE_SIMULATOR ? 'preview' : stream.status;
   const sound = useNeedsYouSound(agents);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // /?page=… picks what fills the space beside the sidebar; none is the office.
+  const route = useRoute();
+  // /?agent=<id> (from a banana on the desktop) opens straight to that agent.
+  const [selectedId, setSelectedId] = useState<string | null>(() => params.get('agent'));
 
   // If the selected agent disappears (removed by the sweeper later), the panel closes.
   const selected = useMemo(
@@ -72,26 +84,69 @@ export function App() {
         <SkinProvider enabled={!USE_SIMULATOR}>
           <Tooltip.Provider delayDuration={250} skipDelayDuration={150}>
             <div className={styles.app}>
-              <Header
+              <Sidebar
+                agents={agents}
                 waiting={waiting}
                 finished={finished}
                 onOpen={open}
                 source={source}
-                sound={sound}
-                alerts={alerts}
               />
               <main className={styles.main}>
-                {SHOW_GALLERY ? (
-                  <Gallery />
-                ) : (
-                  <Office
+                {route.page === 'settings' ? (
+                  <SettingsPage
+                    section={route.section}
+                    sound={sound}
+                    alerts={alerts}
+                    desktop={USE_SIMULATOR ? null : stream.desktop}
                     agents={agents}
+                  />
+                ) : route.page === 'agents' ? (
+                  <AgentsPage
+                    agents={agents}
+                    filter={route.section}
                     selectedId={selected?.id ?? null}
                     finishedIds={finishedIds}
-                    waiting={waiting}
-                    onSelect={toggleSelect}
                     onOpen={open}
                   />
+                ) : route.page === 'usage' ? (
+                  <UsagePage
+                    section={route.section}
+                    agents={agents}
+                    onOpen={open}
+                    preview={USE_SIMULATOR}
+                  />
+                ) : route.page === 'new-task' ? (
+                  <NewTaskPage preview={USE_SIMULATOR} />
+                ) : route.page === 'custom-agents' ? (
+                  <CustomAgentsPage preview={USE_SIMULATOR} />
+                ) : SHOW_GALLERY ? (
+                  <Gallery />
+                ) : (
+                  <Page
+                    trail={['Office']}
+                    fill
+                    actions={
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={<NewTaskIcon size={16} />}
+                        onClick={() => {
+                          navigate('new-task');
+                        }}
+                      >
+                        New task
+                      </Button>
+                    }
+                  >
+                    <Office
+                      agents={agents}
+                      selectedId={selected?.id ?? null}
+                      finishedIds={finishedIds}
+                      waiting={waiting}
+                      onSelect={toggleSelect}
+                      onOpen={open}
+                    />
+                  </Page>
                 )}
               </main>
               <AgentPanel agent={selected} onClose={closePanel} />

@@ -1,0 +1,263 @@
+/* The account at the foot of the sidebar: initial, email, usage; opens the account card. */
+.card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px 6px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.card:hover,
+.card[data-state='open'] {
+  background: var(--surface-2);
+}
+
+.card[data-collapsed] {
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.card[data-collapsed] .text,
+.card[data-collapsed] .chevron {
+  display: none;
+}
+
+.text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+.name,
+.meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  flex: none;
+  color: var(--muted);
+  transform: rotate(180deg);
+}
+
+/* The initial in a disc, ringed by the 5-hour session's use. */
+.avatar {
+  --used: 0%;
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.avatar[data-ring] {
+  background: conic-gradient(var(--state-running) var(--used), var(--border) 0);
+}
+
+.initial {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* The connection, on the avatar's corner. */
+.status {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--state-idle);
+}
+
+.status[data-source='live'] {
+  background: var(--state-running);
+}
+
+.status[data-source='offline'] {
+  background: var(--state-needs-you);
+}
+
+.status[data-source='connecting'] {
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* ---- The account card ---- */
+
+.panel {
+  z-index: 70;
+  display: grid;
+  gap: 0;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.section + .section {
+  border-top: 1px solid var(--border);
+}
+
+.heading {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.muted,
+.note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.accounts {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.account[data-active] {
+  background: var(--surface-2);
+}
+
+.rowAvatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account[data-active] .rowAvatar {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.rowText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowEmail {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowKind {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.tick {
+  flex: none;
+  color: var(--text);
+}
+
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 50%, var(--surface));
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--state-idle);
+}
+
+.connection[data-source='live'] .dot {
+  background: var(--state-running);
+}
+
+.connection[data-source='offline'] .dot {
+  background: var(--state-needs-you);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .status[data-source='connecting'] {
+    animation: none;
+  }
+}

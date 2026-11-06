@@ -5,7 +5,7 @@ const REDACTED = '[REDACTED]';
  * Patterns are deliberately broad: a false positive costs a word in an activity
  * line; a false negative leaks a credential into the UI.
  */
-const RULES: readonly (readonly [RegExp, string])[] = [
+const TOKEN_RULES: readonly (readonly [RegExp, string])[] = [
   // Known token prefixes.
   [/\bsk-[A-Za-z0-9_-]{6,}/g, REDACTED], // OpenAI / Anthropic style (sk-, sk-ant-, sk-proj-)
   [/\bgh[pousr]_[A-Za-z0-9]{10,}/g, REDACTED], // GitHub tokens
@@ -15,6 +15,10 @@ const RULES: readonly (readonly [RegExp, string])[] = [
   // Authorization headers and URL credentials.
   [/\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}/gi, `$1 ${REDACTED}`],
   [/(\b[a-z][a-z0-9+.-]*:\/\/[^\s:/@]+:)[^\s@/]+@/gi, `$1${REDACTED}@`],
+];
+
+const RULES: readonly (readonly [RegExp, string])[] = [
+  ...TOKEN_RULES,
   // name=value / name: value where the name mentions a secret.
   [
     /(\b[A-Za-z0-9_.-]*(?:key|secret|token|passwd|password|pwd|credential)[A-Za-z0-9_.-]*\s*[=:]\s*)("[^"]*"|'[^']*'|[^\s&;|,]+)/gi,
@@ -24,12 +28,24 @@ const RULES: readonly (readonly [RegExp, string])[] = [
   [/(--?(?:password|passwd|token|secret|api-key|apikey|key)[\s=]+)(\S+)/gi, `$1${REDACTED}`],
 ];
 
-export function redactSecrets(text: string): string {
+function apply(rules: readonly (readonly [RegExp, string])[], text: string): string {
   let out = text;
-  for (const [pattern, replacement] of RULES) {
+  for (const [pattern, replacement] of rules) {
     out = out.replace(pattern, replacement);
   }
   return out;
+}
+
+export function redactSecrets(text: string): string {
+  return apply(RULES, text);
+}
+
+/**
+ * Only the unmistakable shapes (API tokens, auth headers, URL passwords), for source code:
+ * the `name = value` rule would blank out ordinary lines like `key={item.id}` in a diff.
+ */
+export function redactTokens(text: string): string {
+  return apply(TOKEN_RULES, text);
 }
 
 /** Truncates to `max` characters (by code point), appending an ellipsis when cut. */

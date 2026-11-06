@@ -13,7 +13,7 @@ import type { Rect } from '../../lib/useZoneRects';
 import { tagTimerStart, timingLines } from '../../live/timing';
 import { activityKind } from '../../live/activityKind';
 import { AVATAR_BOX, Avatar } from '../avatar/Avatar';
-import { ACTIVITY_ICON, STATE_ICON, TimerIcon, WaitingIcon } from '../icons';
+import { ACTIVITY_ICON, LunchIcon, STATE_ICON, TimerIcon, WaitingIcon } from '../icons';
 import styles from './Character.module.css';
 import { KindBadge } from './KindBadge';
 import { KIND_META } from './kind';
@@ -41,6 +41,8 @@ interface CharacterProps {
   readonly fresh?: boolean;
   /** The scene just changed size: jump to the new spot instead of flying across. */
   readonly instant?: boolean;
+  /** Resting in camp over your lunch break: a fork and knife on the name tag. */
+  readonly lunch?: boolean;
   readonly onSelect?: (id: string) => void;
 }
 
@@ -61,6 +63,7 @@ function CharacterImpl({
   selected = false,
   fresh = false,
   instant = false,
+  lunch = false,
   onSelect,
 }: CharacterProps) {
   const reduceMotion = useReducedMotion() ?? false;
@@ -171,6 +174,11 @@ function CharacterImpl({
             <KindBadge kind={agent.kind} className={styles.kind} size={11} />
             <span className={styles.desk}>{agent.desk}</span>
             <TagTimer agent={agent} />
+            {lunch && (
+              <span className={styles.lunch} title="On lunch break">
+                <LunchIcon size={11} />
+              </span>
+            )}
             {fresh && (
               <span className={styles.freshMark} title="Finished, not opened yet">
                 new

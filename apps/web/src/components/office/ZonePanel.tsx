@@ -14,6 +14,8 @@ interface ZonePanelProps {
   readonly hint: string;
   /** Per-state chips shown in the title bar. */
   readonly stats?: ReactNode;
+  /** Beside the title, before the collapse button (the work-hours clock). */
+  readonly aside?: ReactNode;
   readonly count: number;
   /** Agents in here waiting on you; shown in red, even when collapsed. */
   readonly urgent?: number;
@@ -35,6 +37,7 @@ export function ZonePanel({
   icon,
   hint,
   stats,
+  aside,
   count,
   urgent = 0,
   collapsed,
@@ -65,6 +68,7 @@ export function ZonePanel({
             <SlidingNumber number={count} initiallyStable />
           </span>
         </h2>
+        {!collapsed && aside !== undefined && <div className={styles.panelAside}>{aside}</div>}
         {!collapsed && <div className={styles.panelStats}>{stats}</div>}
         <button
           type="button"

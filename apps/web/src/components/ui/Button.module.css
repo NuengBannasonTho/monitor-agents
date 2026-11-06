@@ -1,0 +1,112 @@
+.button {
+  display: inline-flex;
+  text-decoration: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.button[data-size='sm'] {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.button[data-size='lg'] {
+  height: 46px;
+  padding: 0 24px;
+  font-size: 14.5px;
+  font-weight: 800;
+}
+
+.button[data-icon-only] {
+  width: 40px;
+  padding: 0;
+}
+
+.button[data-icon-only][data-size='sm'] {
+  width: 34px;
+}
+
+.button[data-variant='primary'] {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.button[data-variant='secondary'] {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.button[data-variant='secondary']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--muted) 18%, var(--surface-2));
+}
+
+/* On the page's gray, outside a card. */
+.button[data-variant='ghost'] {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+}
+
+.button[data-variant='ghost']:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.button[data-variant='danger'] {
+  background: var(--state-needs-you);
+  color: #fff;
+}
+
+.button[data-variant='danger-ghost'] {
+  background: transparent;
+  color: var(--state-needs-you);
+}
+
+.button[data-variant='danger-ghost']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--state-needs-you) 10%, transparent);
+}
+
+.button[data-variant='link'] {
+  height: auto;
+  padding: 0;
+  background: none;
+  color: var(--text);
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.button[data-variant='link']:active:not(:disabled) {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}

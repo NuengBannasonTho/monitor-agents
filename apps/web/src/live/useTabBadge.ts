@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BANANA_COLORS, BANANA_ROWS } from '../components/header/BananaLogo';
+import { BANANA_COLORS, BANANA_ROWS } from '../components/sidebar/BananaLogo';
 import { rowsToRuns } from '../components/worker/sprite';
 import { tabTitle } from './attention';
 
