@@ -25,7 +25,15 @@ export function safeFileName(name: string): string {
   return cleaned === '' ? 'file' : cleaned;
 }
 
-export class UploadTooLarge extends Error {}
+/** A file over the size limit, or an empty one; app.ts answers 413. */
+export class UploadTooLarge extends Error {
+  readonly code = 'too-large';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'UploadTooLarge';
+  }
+}
 
 /**
  * Saves the files in a folder of their own and returns their absolute paths, in order.

@@ -35,6 +35,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOption
 import type { WebSocket } from 'ws';
 import type { Adapter } from './adapters/types.js';
 import { Coalescer } from './coalescer.js';
+import type { CustomAgentErrorCode } from './custom-agents.js';
 import {
   CustomAgentError,
   agentScopes,
@@ -50,6 +51,13 @@ import { listSkinPacks } from './skins.js';
 import { UploadTooLarge, messageWithFiles, saveUploads } from './uploads.js';
 import type { AgentStore } from './store.js';
 import { tokenMatches } from './token.js';
+
+/** The HTTP status for each reason a custom agent change is refused. */
+const CUSTOM_AGENT_STATUS: Readonly<Record<CustomAgentErrorCode, number>> = {
+  invalid: 400,
+  'not-found': 404,
+  conflict: 409,
+};
 
 /** Hook payloads can carry large tool_input (e.g. a Write of a whole file). */
 const EVENTS_BODY_LIMIT = 4 * 1024 * 1024;
@@ -470,7 +478,7 @@ export async function buildApp(options: AppOptions): Promise<App> {
 
   const customAgentFailure = (error: unknown, reply: FastifyReply): FastifyReply => {
     if (error instanceof CustomAgentError)
-      return reply.code(error.status).send({ error: error.message });
+      return reply.code(CUSTOM_AGENT_STATUS[error.code]).send({ error: error.message });
     throw error;
   };
 

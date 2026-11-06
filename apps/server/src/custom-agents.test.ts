@@ -118,7 +118,7 @@ describe('writing agent files', () => {
       '---\nname: reviewer\ndescription: Reviews code after changes\ntools: Read, Grep\n' +
         'model: sonnet\ncolor: blue\n---\n\nYou review code.\n',
     );
-    expect((await rejection(saveCustomAgent(scope, input()))).status).toBe(409);
+    expect((await rejection(saveCustomAgent(scope, input()))).code).toBe('conflict');
   });
 
   it('refuses a name another file already uses', async () => {
@@ -148,22 +148,22 @@ describe('writing agent files', () => {
     const stale = await rejection(
       saveCustomAgent(scope, input({ name: 'ahhhh' }), { file: 'team.md', modifiedAt: 1 }),
     );
-    expect(stale.status).toBe(409);
+    expect(stale.code).toBe('conflict');
   });
 
   it('stays inside the agents folder and away from links', async () => {
-    expect((await rejection(saveCustomAgent(scope, input(), { file: '../x.md' }))).status).toBe(
-      400,
+    expect((await rejection(saveCustomAgent(scope, input(), { file: '../x.md' }))).code).toBe(
+      'invalid',
     );
-    expect((await rejection(saveCustomAgent(scope, input(), { file: 'gone.md' }))).status).toBe(
-      404,
+    expect((await rejection(saveCustomAgent(scope, input(), { file: 'gone.md' }))).code).toBe(
+      'not-found',
     );
     await writeFile(path.join(root, 'elsewhere.md'), MANAGED);
     await symlink(path.join(root, 'elsewhere.md'), path.join(scope.dir, 'link.md'));
     expect(
       (await rejection(saveCustomAgent(scope, input({ name: 'ahhhh' }), { file: 'link.md' })))
-        .status,
-    ).toBe(409);
+        .code,
+    ).toBe('conflict');
   });
 
   it('will not rewrite a file whose frontmatter is broken', async () => {
@@ -179,7 +179,7 @@ describe('writing agent files', () => {
     expect(path.dirname(target)).toBe(trash);
     expect(await readdir(scope.dir)).toEqual([]);
     expect(await readFile(target, 'utf8')).toContain('name: reviewer');
-    expect((await rejection(trashCustomAgent(scope, 'reviewer.md', trash))).status).toBe(404);
+    expect((await rejection(trashCustomAgent(scope, 'reviewer.md', trash))).code).toBe('not-found');
   });
 });
 

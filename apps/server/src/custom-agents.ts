@@ -28,12 +28,16 @@ const MAX_FILES = 300;
 const MAX_FILE_BYTES = 512 * 1024;
 const FRONTMATTER = /^---[ \t]*\r?\n([\s\S]*?)\r?\n?---[ \t]*(?:\r?\n|$)/;
 
+/** Why an agent file could not be saved or moved; app.ts turns it into an HTTP status. */
+export type CustomAgentErrorCode = 'invalid' | 'not-found' | 'conflict';
+
 export class CustomAgentError extends Error {
   constructor(
-    readonly status: 400 | 404 | 409,
+    readonly code: CustomAgentErrorCode,
     message: string,
   ) {
     super(message);
+    this.name = 'CustomAgentError';
   }
 }
 
@@ -242,7 +246,7 @@ export async function listCustomAgents(
 export function renderAgentText(existing: string | null, input: CustomAgentInput): string {
   const parsed = existing === null ? null : parseAgentText(existing);
   if (parsed !== null && parsed.problem !== null) {
-    throw new CustomAgentError(409, `${parsed.problem}; fix the file by hand first.`);
+    throw new CustomAgentError('conflict', `${parsed.problem}; fix the file by hand first.`);
   }
   const doc = parsed?.doc ?? new Document({});
   doc.contents ??= doc.createNode({});
@@ -266,7 +270,7 @@ function resolveInside(scope: CustomAgentScope, file: string): string {
   const full = path.resolve(scope.dir, file);
   const root = path.resolve(scope.dir) + path.sep;
   if (!full.startsWith(root) || !full.endsWith('.md') || file.includes('\0')) {
-    throw new CustomAgentError(400, 'That file is not in the agents folder.');
+    throw new CustomAgentError('invalid', 'That file is not in the agents folder.');
   }
   return full;
 }
@@ -288,7 +292,7 @@ export async function saveCustomAgent(
 ): Promise<CustomAgent> {
   const clash = await nameTaken(scope, input.name, update?.file);
   if (clash !== null) {
-    throw new CustomAgentError(409, `${clash} already uses the name "${input.name}".`);
+    throw new CustomAgentError('conflict', `${clash} already uses the name "${input.name}".`);
   }
 
   if (update === undefined) {
@@ -300,7 +304,7 @@ export async function saveCustomAgent(
       await writeFile(full, renderAgentText(null, input), { flag: 'wx', mode: 0o644 });
     } catch (error) {
       if (errnoCode(error) === 'EEXIST') {
-        throw new CustomAgentError(409, `${file} is already there.`);
+        throw new CustomAgentError('conflict', `${file} is already there.`);
       }
       throw error;
     }
@@ -312,13 +316,13 @@ export async function saveCustomAgent(
   try {
     info = await lstat(full);
   } catch {
-    throw new CustomAgentError(404, 'That agent file is gone.');
+    throw new CustomAgentError('not-found', 'That agent file is gone.');
   }
   if (!info.isFile())
-    throw new CustomAgentError(409, 'That agent file is a link; edit it where it points.');
+    throw new CustomAgentError('conflict', 'That agent file is a link; edit it where it points.');
   if (update.modifiedAt !== undefined && Math.round(info.mtimeMs) !== update.modifiedAt) {
     throw new CustomAgentError(
-      409,
+      'conflict',
       'The file changed on disk since you opened it. Reload to see it.',
     );
   }
@@ -332,7 +336,7 @@ export async function saveCustomAgent(
 
 async function mustRead(scope: CustomAgentScope, file: string): Promise<CustomAgent> {
   const agent = await readAgent({ ...scope, exists: true }, file);
-  if (agent === null) throw new CustomAgentError(404, 'The agent file could not be read back.');
+  if (agent === null) throw new CustomAgentError('not-found', 'The agent file could not be read back.');
   return agent;
 }
 
@@ -344,10 +348,10 @@ export async function trashCustomAgent(
 ): Promise<string> {
   const full = resolveInside(scope, file);
   try {
-    if (!(await lstat(full)).isFile()) throw new CustomAgentError(409, 'That is not a file.');
+    if (!(await lstat(full)).isFile()) throw new CustomAgentError('conflict', 'That is not a file.');
   } catch (error) {
     if (error instanceof CustomAgentError) throw error;
-    throw new CustomAgentError(404, 'That agent file is gone.');
+    throw new CustomAgentError('not-found', 'That agent file is gone.');
   }
   await mkdir(trashDir, { recursive: true, mode: 0o700 });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
