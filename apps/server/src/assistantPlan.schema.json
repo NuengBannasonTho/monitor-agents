@@ -1,24 +1,163 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["reply", "matches", "draft"],
+  "required": ["reply", "matches", "actions"],
   "properties": {
     "reply": { "type": "string" },
     "matches": { "type": "array", "items": { "type": "string" } },
-    "draft": {
-      "anyOf": [
-        { "type": "null" },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["task", "provider", "repoId"],
-          "properties": {
-            "task": { "type": "string" },
-            "provider": { "type": "string", "enum": ["claude", "codex"] },
-            "repoId": { "type": ["string", "null"] }
+    "actions": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "task", "provider", "repoId", "worktreeId", "team"],
+            "properties": {
+              "type": { "type": "string", "enum": ["start-task"] },
+              "task": { "type": "string" },
+              "provider": { "type": "string", "enum": ["claude", "codex"] },
+              "repoId": { "type": ["string", "null"] },
+              "worktreeId": { "type": ["string", "null"] },
+              "team": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "agentId", "text"],
+            "properties": {
+              "type": { "type": "string", "enum": ["send"] },
+              "agentId": { "type": "string" },
+              "text": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "agentId"],
+            "properties": {
+              "type": { "type": "string", "enum": ["stop", "open-agent"] },
+              "agentId": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "page", "section"],
+            "properties": {
+              "type": { "type": "string", "enum": ["open-page"] },
+              "page": {
+                "type": "string",
+                "enum": [
+                  "assistant",
+                  "office",
+                  "agents",
+                  "new-task",
+                  "usage",
+                  "custom-agents",
+                  "settings"
+                ]
+              },
+              "section": { "type": ["string", "null"] }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "theme"],
+            "properties": {
+              "type": { "type": "string", "enum": ["theme"] },
+              "theme": { "type": "string", "enum": ["light", "dark", "system"] }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "setting", "on"],
+            "properties": {
+              "type": { "type": "string", "enum": ["switch"] },
+              "setting": { "type": "string", "enum": ["sound", "alerts", "walkers"] },
+              "on": { "type": "boolean" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "style", "voice", "language", "emoji", "callMe", "notes", "color"],
+            "properties": {
+              "type": { "type": "string", "enum": ["persona"] },
+              "style": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": ["buddy", "pro", "cheerful", "mentor", "brief", "custom"]
+                  },
+                  { "type": "null" }
+                ]
+              },
+              "voice": {
+                "anyOf": [{ "type": "string", "enum": ["krub", "ka", "none"] }, { "type": "null" }]
+              },
+              "language": {
+                "anyOf": [{ "type": "string", "enum": ["auto", "th", "en"] }, { "type": "null" }]
+              },
+              "emoji": { "type": ["boolean", "null"] },
+              "callMe": { "type": ["string", "null"] },
+              "notes": { "type": ["string", "null"] },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink"]
+                  },
+                  { "type": "null" }
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "agent"],
+            "properties": {
+              "type": { "type": "string", "enum": ["custom-agent"] },
+              "agent": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "description", "tools", "model", "color", "prompt"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "tools": {
+                    "anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }]
+                  },
+                  "model": { "type": ["string", "null"] },
+                  "color": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "red",
+                          "orange",
+                          "yellow",
+                          "green",
+                          "cyan",
+                          "blue",
+                          "purple",
+                          "pink"
+                        ]
+                      },
+                      { "type": "null" }
+                    ]
+                  },
+                  "prompt": { "type": "string" }
+                }
+              }
+            }
           }
-        }
-      ]
+        ]
+      }
     }
   }
 }

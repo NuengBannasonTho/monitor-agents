@@ -1,12 +1,13 @@
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { ServerMessageSchema } from '@agent-office/shared';
+import { DEFAULT_PERSONA, ServerMessageSchema } from '@agent-office/shared';
 import type { ServerMessage } from '@agent-office/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createClaudeCodeAdapter } from './adapters/claude-code.js';
 import type { App } from './app.js';
 import { buildApp } from './app.js';
+import type { AssistantContext } from './assistantPlanner.js';
 import { loadDesktopPrefs } from './desktopPrefs.js';
 import type { AgentLauncher, Places } from './orcaLauncher.js';
 import { AgentStore } from './store.js';
@@ -594,6 +595,7 @@ describe('starting a task', () => {
     prompt: string;
     provider?: string;
   }[];
+  let seen: AssistantContext | null = null;
   const places: Places = {
     repos: [{ id: 'r1', name: 'app', path: '/code/app' }],
     worktrees: [
@@ -632,12 +634,34 @@ describe('starting a task', () => {
       adapters: [],
       allowedOrigins: [ORIGIN],
       agentLauncher: launcher,
-      assistantPlanner: (request, repos) =>
-        Promise.resolve({
-          reply: `Found ${repos[0]?.name ?? 'nothing'} for ${request.message}`,
+      assistantPlanner: (request, context) => {
+        seen = context;
+        return Promise.resolve({
+          reply: `Found ${context.repos[0]?.name ?? 'nothing'} for ${request.message} as ${request.persona.style}`,
           matches: ['r1', 'unknown'],
-          draft: { task: 'Fix login', provider: 'codex', repoId: 'unknown' },
-        }),
+          actions: [
+            {
+              type: 'start-task',
+              task: 'Fix login',
+              provider: 'claude',
+              repoId: 'unknown',
+              worktreeId: null,
+              team: ['reviewer', 'nobody'],
+            },
+            {
+              type: 'start-task',
+              task: 'Fix it there',
+              provider: 'codex',
+              repoId: null,
+              worktreeId: 'w1',
+              team: ['reviewer'],
+            },
+            { type: 'send', agentId: 's1', text: 'yes' },
+            { type: 'stop', agentId: 'gone' },
+            { type: 'theme', theme: 'dark' },
+          ],
+        });
+      },
       customAgents: {
         userDir: path.join(dir, 'agents'),
         trashDir: dir,
@@ -666,7 +690,7 @@ describe('starting a task', () => {
     expect(res.json()).toEqual({ enabled: true, reachable: true, ...places });
   });
 
-  it('chats about known projects without trusting project IDs from the planner', async () => {
+  it('answers as MON MANG, trusting only ids the server knows', async () => {
     const chat = (body: unknown, origin = ORIGIN) =>
       taskApp.fastify.inject({
         method: 'POST',
@@ -676,13 +700,51 @@ describe('starting a task', () => {
       });
     expect((await chat({ message: 'find app' }, 'https://other.example')).statusCode).toBe(403);
     expect((await chat({ message: '' })).statusCode).toBe(400);
+    store.apply({
+      sessionId: 's1',
+      kind: 'claude-code',
+      cwd: '/code/app',
+      type: 'start',
+      at: Date.now(),
+    });
     const response = await chat({ message: 'find app', history: [] });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
-      reply: 'Found app for find app',
-      matches: [{ id: 'r1', name: 'app' }],
-      draft: { task: 'Fix login', provider: 'codex', repoId: null },
+    expect(response.json()).toEqual({
+      reply: 'Found app for find app as buddy',
+      matches: [{ id: 'r1', name: 'app', path: '/code/app' }],
+      actions: [
+        {
+          type: 'start-task',
+          task: 'Fix login',
+          provider: 'claude',
+          repoId: null,
+          worktreeId: null,
+          team: ['reviewer'],
+        },
+        {
+          type: 'start-task',
+          task: 'Fix it there',
+          provider: 'codex',
+          repoId: 'r1',
+          worktreeId: 'w1',
+          team: [],
+        },
+        { type: 'send', agentId: 's1', text: 'yes' },
+        { type: 'theme', theme: 'dark' },
+      ],
     });
+    expect(seen?.agents.map((a) => a.id)).toEqual(['s1']);
+    expect(seen?.customAgents).toEqual([
+      { name: 'reviewer', description: 'Reviews code', scope: 'yours' },
+    ]);
+
+    const persona = { ...DEFAULT_PERSONA, style: 'pro' };
+    expect((await chat({ message: 'hi', persona })).json()).toMatchObject({
+      reply: 'Found app for hi as pro',
+    });
+    expect((await chat({ message: 'hi', persona: { ...persona, style: 'rude' } })).statusCode).toBe(
+      400,
+    );
   });
 
   it('starts Claude Code in a new worktree, telling the lead about its team', async () => {

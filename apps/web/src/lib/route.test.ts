@@ -4,12 +4,12 @@ import { parseRoute } from './route';
 describe('parseRoute', () => {
   it('reads the page and, on settings, its section', () => {
     expect(parseRoute('')).toEqual({
-      page: 'office',
+      page: 'assistant',
       section: null,
       helper: null,
     });
-    expect(parseRoute('?page=assistant')).toEqual({
-      page: 'assistant',
+    expect(parseRoute('?page=office')).toEqual({
+      page: 'office',
       section: null,
       helper: null,
     });
@@ -45,9 +45,9 @@ describe('parseRoute', () => {
     });
   });
 
-  it('falls back to the office for an unknown page, and reads the old ?settings=', () => {
+  it('falls back to MON MANG for an unknown page, and reads the old ?settings=', () => {
     expect(parseRoute('?page=nope&mock')).toEqual({
-      page: 'office',
+      page: 'assistant',
       section: null,
       helper: null,
     });
