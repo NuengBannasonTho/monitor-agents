@@ -10,7 +10,7 @@ import { navigate, useRoute } from '../../lib/route';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import {
   AgentsIcon,
-  AssistantIcon,
+  ChatRoundedCallIcon,
   CampIcon,
   CustomAgentsIcon,
   FinishedIcon,
@@ -98,7 +98,7 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
     {
       title: 'Work',
       items: [
-        { id: 'assistant', label: 'Assistant', Icon: AssistantIcon, page: 'assistant' },
+        { id: 'assistant', label: 'Assistant', Icon: ChatRoundedCallIcon, page: 'assistant' },
         {
           id: 'new-task',
           label: 'New task',

@@ -43,6 +43,7 @@ import { Layers } from 'reicon-react/icons/Layers';
 import { Menu } from 'reicon-react/icons/Menu';
 import { ListCheck } from 'reicon-react/icons/ListCheck';
 import { MessageText } from 'reicon-react/icons/MessageText';
+import { ChatRoundCall } from 'reicon-react/icons/ChatRoundCall';
 import { MoonSleep } from 'reicon-react/icons/MoonSleep';
 import { PenWriting } from 'reicon-react/icons/PenWriting';
 import { PlayCircle } from 'reicon-react/icons/PlayCircle';
@@ -100,7 +101,8 @@ export const AppearanceIcon = filled(Palette, 'AppearanceIcon');
 
 /* The sidebar's pages, and its collapse button. */
 export const NewTaskIcon = filled(AddSquare, 'NewTaskIcon');
-export const AssistantIcon = filled(MessageText, 'AssistantIcon');
+export const AssistantIcon = filled(ChatRoundCall, 'AssistantIcon');
+export const ChatRoundedCallIcon = filled(ChatRoundCall, 'ChatRoundedCallIcon');
 export const OfficeIcon = filled(Buildings, 'OfficeIcon');
 export const AgentsIcon = filled(People, 'AgentsIcon');
 export const CustomAgentsIcon = filled(MagicStar, 'CustomAgentsIcon');
