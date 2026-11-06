@@ -19,7 +19,7 @@
     padding 0.28s var(--ease);
 }
 
-.sidebar[data-collapsed='true'] {
+.sidebar[data-collapsed="true"] {
   width: 68px;
   padding-inline: 10px;
 }
@@ -33,8 +33,8 @@
   transition: opacity 0.18s ease;
 }
 
-.sidebar[data-collapsed='true'] .label,
-.sidebar[data-collapsed='true'] .title {
+.sidebar[data-collapsed="true"] .label,
+.sidebar[data-collapsed="true"] .title {
   opacity: 0;
   pointer-events: none;
 }
@@ -110,13 +110,13 @@
 }
 
 /* Collapsed: just the logo, the same height as open, so nothing below it moves. */
-.sidebar[data-collapsed='true'] .brand {
+.sidebar[data-collapsed="true"] .brand {
   justify-content: center;
   margin: 0 -10px;
   padding: 0;
 }
 
-.sidebar[data-collapsed='true'] .title {
+.sidebar[data-collapsed="true"] .title {
   display: none;
 }
 
@@ -204,7 +204,7 @@
 }
 
 /* On the rail a hairline stands in for each group's name. */
-.sidebar[data-collapsed='true'] .groupTitle {
+.sidebar[data-collapsed="true"] .groupTitle {
   height: 1px;
   margin: 0 6px 8px;
   padding: 0;
@@ -212,7 +212,7 @@
   color: transparent;
 }
 
-.sidebar[data-collapsed='true'] .group:first-child .groupTitle {
+.sidebar[data-collapsed="true"] .group:first-child .groupTitle {
   display: none;
 }
 
@@ -239,8 +239,8 @@
 }
 
 /* On the rail the icon sits dead centre. */
-.sidebar[data-collapsed='true'] .item,
-.sidebar[data-collapsed='true'] .finished {
+.sidebar[data-collapsed="true"] .item,
+.sidebar[data-collapsed="true"] .finished {
   padding-inline: 14px;
 }
 
@@ -249,7 +249,7 @@
   color: var(--text);
 }
 
-.item[aria-current='page'] {
+.item[aria-current="page"] {
   color: var(--text);
   font-weight: 600;
 }
@@ -273,7 +273,7 @@
   color: color-mix(in srgb, var(--text) 70%, var(--muted));
 }
 
-.item[aria-current='page'] .itemIcon {
+.item[aria-current="page"] .itemIcon {
   color: var(--text);
 }
 
@@ -299,14 +299,14 @@
 }
 
 /* On the rail only the red count stays, on the icon's corner. */
-.sidebar[data-collapsed='true'] .count {
+.sidebar[data-collapsed="true"] .count {
   position: absolute;
   top: 3px;
   left: 26px;
   opacity: 0;
 }
 
-.sidebar[data-collapsed='true'] .count[data-urgent] {
+.sidebar[data-collapsed="true"] .count[data-urgent] {
   min-width: 17px;
   height: 17px;
   padding: 0 4px;
@@ -387,12 +387,12 @@
 }
 
 @media (max-width: 760px) {
-  .sidebar[data-collapsed='true'] {
+  .sidebar[data-collapsed="true"] {
     width: 58px;
     padding-inline: 7px;
   }
 
-  .sidebar[data-collapsed='true'] .brand {
+  .sidebar[data-collapsed="true"] .brand {
     margin: 0 -7px;
   }
 }

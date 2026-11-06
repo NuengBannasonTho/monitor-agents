@@ -1,7 +1,16 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { Rectangle } from 'electron';
-import { BrowserWindow, Menu, Tray, app, ipcMain, nativeImage, screen, shell } from 'electron';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import type { Rectangle } from "electron";
+import {
+  BrowserWindow,
+  Menu,
+  Tray,
+  app,
+  ipcMain,
+  nativeImage,
+  screen,
+  shell,
+} from "electron";
 
 /*
  * MON MANG on the desktop: your agents walk along the bottom of the screen, so you can
@@ -10,7 +19,7 @@ import { BrowserWindow, Menu, Tray, app, ipcMain, nativeImage, screen, shell } f
  * on a banana. A 🍌 in the menu bar shows or hides them, opens the dashboard, or quits.
  */
 
-const PORT = process.env.AGENT_OFFICE_PORT ?? '4777';
+const PORT = process.env.AGENT_OFFICE_PORT ?? "4777";
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 /** Tall enough for a banana, its name tag and the card shown on hover. */
 const STRIP_HEIGHT = 300;
@@ -52,7 +61,7 @@ function createStrip(): BrowserWindow {
   const win = new BrowserWindow({
     ...stripBounds(),
     transparent: true,
-    backgroundColor: '#00000000',
+    backgroundColor: "#00000000",
     frame: false,
     hasShadow: false,
     resizable: false,
@@ -65,34 +74,34 @@ function createStrip(): BrowserWindow {
     focusable: false,
     show: false,
     webPreferences: {
-      preload: path.join(here, 'preload.cjs'),
+      preload: path.join(here, "preload.cjs"),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
     },
   });
   // Above other windows, on every Space, over full-screen apps too.
-  win.setAlwaysOnTop(true, 'floating');
+  win.setAlwaysOnTop(true, "floating");
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // Clicks go to whatever is underneath; the page turns this off over a banana.
   win.setIgnoreMouseEvents(true, { forward: true });
 
   // The page only ever shows the walkers; links open in your browser.
-  win.webContents.on('will-navigate', (event) => {
+  win.webContents.on("will-navigate", (event) => {
     event.preventDefault();
   });
-  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   // Server not running yet: keep trying quietly.
-  win.webContents.on('did-finish-load', () => {
+  win.webContents.on("did-finish-load", () => {
     pageReady = true;
   });
-  win.webContents.on('did-fail-load', () => {
+  win.webContents.on("did-fail-load", () => {
     pageReady = false;
     setTimeout(() => {
       if (!win.isDestroyed()) load(win);
     }, RETRY_MS);
   });
-  win.once('ready-to-show', () => {
+  win.once("ready-to-show", () => {
     if (shown) win.showInactive();
   });
   load(win);
@@ -101,35 +110,37 @@ function createStrip(): BrowserWindow {
 
 function openDashboard(agentId?: string): void {
   const url =
-    agentId === undefined ? BASE_URL : `${BASE_URL}/?agent=${encodeURIComponent(agentId)}`;
+    agentId === undefined
+      ? BASE_URL
+      : `${BASE_URL}/?agent=${encodeURIComponent(agentId)}`;
   void shell.openExternal(url);
 }
 
 function buildMenu(): Menu {
   return Menu.buildFromTemplate([
     {
-      label: 'Open dashboard',
+      label: "Open dashboard",
       click: () => {
         openDashboard();
       },
     },
     {
-      label: 'Show walkers',
-      type: 'checkbox',
+      label: "Show walkers",
+      type: "checkbox",
       checked: shown,
       click: () => {
         // The page saves the choice on the server, so the dashboard switch follows; with
         // the server down, just flip it here.
         if (strip !== null && pageReady) {
-          strip.webContents.send('walkers:toggle');
+          strip.webContents.send("walkers:toggle");
         } else {
           shown = !shown;
           applyShown();
         }
       },
     },
-    { type: 'separator' },
-    { label: 'Quit MON MANG walkers', role: 'quit' },
+    { type: "separator" },
+    { label: "Quit MON MANG walkers", role: "quit" },
   ]);
 }
 
@@ -139,18 +150,21 @@ function placeStrip(): void {
 
 /** Only the messages the page may send, and only well-formed. */
 function listen(): void {
-  ipcMain.on('walkers:click-through', (event, through: unknown) => {
-    if (event.sender !== strip?.webContents || typeof through !== 'boolean') return;
+  ipcMain.on("walkers:click-through", (event, through: unknown) => {
+    if (event.sender !== strip?.webContents || typeof through !== "boolean")
+      return;
     strip.setIgnoreMouseEvents(through, { forward: true });
   });
-  ipcMain.on('walkers:shown', (event, next: unknown) => {
-    if (event.sender !== strip?.webContents || typeof next !== 'boolean') return;
+  ipcMain.on("walkers:shown", (event, next: unknown) => {
+    if (event.sender !== strip?.webContents || typeof next !== "boolean")
+      return;
     shown = next;
     applyShown();
   });
-  ipcMain.on('walkers:open', (event, agentId: unknown) => {
+  ipcMain.on("walkers:open", (event, agentId: unknown) => {
     if (event.sender !== strip?.webContents) return;
-    if (typeof agentId === 'string' && /^[\w-]{1,128}$/.test(agentId)) openDashboard(agentId);
+    if (typeof agentId === "string" && /^[\w-]{1,128}$/.test(agentId))
+      openDashboard(agentId);
     else openDashboard();
   });
 }
@@ -166,15 +180,15 @@ if (!app.requestSingleInstanceLock()) {
     strip = createStrip();
 
     tray = new Tray(nativeImage.createEmpty());
-    tray.setTitle('🍌');
-    tray.setToolTip('MON MANG walkers');
+    tray.setTitle("🍌");
+    tray.setToolTip("MON MANG walkers");
     tray.setContextMenu(buildMenu());
 
-    screen.on('display-metrics-changed', placeStrip);
-    screen.on('display-added', placeStrip);
-    screen.on('display-removed', placeStrip);
+    screen.on("display-metrics-changed", placeStrip);
+    screen.on("display-added", placeStrip);
+    screen.on("display-removed", placeStrip);
   });
 
   // Closing the strip is not quitting: only the menu does that.
-  app.on('window-all-closed', () => undefined);
+  app.on("window-all-closed", () => undefined);
 }

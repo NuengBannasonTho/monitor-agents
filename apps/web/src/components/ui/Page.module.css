@@ -43,7 +43,7 @@
   white-space: nowrap;
 }
 
-.crumb[aria-current='page'] {
+.crumb[aria-current="page"] {
   border-radius: 7px;
   background: var(--surface);
   box-shadow: var(--shadow-sm);

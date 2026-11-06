@@ -1,13 +1,13 @@
-import { zoneOf } from '@agent-office/shared';
-import type { Agent } from '@agent-office/shared';
-import { Tooltip } from '@animate-ui/react/primitives/radix-ui/tooltip';
-import { motion } from 'motion/react';
-import { useCallback, useState } from 'react';
-import type { IconProps } from 'reicon-react/createIcon';
-import { APP_WORDMARK } from '../../lib/brand';
-import type { Page } from '../../lib/route';
-import { navigate, useRoute } from '../../lib/route';
-import { useMediaQuery } from '../../lib/useMediaQuery';
+import { zoneOf } from "@agent-office/shared";
+import type { Agent } from "@agent-office/shared";
+import { Tooltip } from "@animate-ui/react/primitives/radix-ui/tooltip";
+import { motion } from "motion/react";
+import { useCallback, useState } from "react";
+import type { IconProps } from "reicon-react/createIcon";
+import { APP_WORDMARK } from "../../lib/brand";
+import type { Page } from "../../lib/route";
+import { navigate, useRoute } from "../../lib/route";
+import { useMediaQuery } from "../../lib/useMediaQuery";
 import {
   AgentsIcon,
   ChatRoundedCallIcon,
@@ -21,11 +21,11 @@ import {
   SidebarIcon,
   UsageIcon,
   WorkIcon,
-} from '../icons';
-import type { Source } from './AccountCard';
-import { AccountCard } from './AccountCard';
-import { MonLogo } from './MonLogo';
-import styles from './Sidebar.module.css';
+} from "../icons";
+import type { Source } from "./AccountCard";
+import { AccountCard } from "./AccountCard";
+import { MonLogo } from "./MonLogo";
+import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
   readonly agents: readonly Agent[];
@@ -38,11 +38,11 @@ interface SidebarProps {
   readonly source: Source;
 }
 
-const COLLAPSED_KEY = 'agent-office:sidebar-collapsed:v1';
+const COLLAPSED_KEY = "agent-office:sidebar-collapsed:v1";
 
 function readCollapsed(): boolean {
   try {
-    return window.localStorage.getItem(COLLAPSED_KEY) === '1';
+    return window.localStorage.getItem(COLLAPSED_KEY) === "1";
   } catch {
     return false;
   }
@@ -54,7 +54,7 @@ function useCollapsed(): [boolean, () => void] {
   const toggle = useCallback(() => {
     setCollapsed((was) => {
       try {
-        window.localStorage.setItem(COLLAPSED_KEY, was ? '0' : '1');
+        window.localStorage.setItem(COLLAPSED_KEY, was ? "0" : "1");
       } catch {
         // Storage blocked: the choice lasts until reload.
       }
@@ -86,80 +86,93 @@ interface NavGroup {
  * groups, what needs you, and the connection. Collapses to a rail of icons (always, on a
  * narrow screen).
  */
-export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarProps) {
+export function Sidebar({
+  agents,
+  waiting,
+  finished,
+  onOpen,
+  source,
+}: SidebarProps) {
   const route = useRoute();
   const [collapsedChoice, toggle] = useCollapsed();
-  const narrow = useMediaQuery('(max-width: 760px)');
+  const narrow = useMediaQuery("(max-width: 760px)");
   const collapsed = collapsedChoice || narrow;
 
-  const working = agents.filter((a) => zoneOf(a.state) === 'table' && a.state !== 'needs-you');
-  const resting = agents.filter((a) => zoneOf(a.state) === 'lounge');
+  const working = agents.filter(
+    (a) => zoneOf(a.state) === "table" && a.state !== "needs-you",
+  );
+  const resting = agents.filter((a) => zoneOf(a.state) === "lounge");
   const groups: readonly NavGroup[] = [
     {
-      title: 'Work',
+      title: "Work",
       items: [
-        { id: 'assistant', label: 'Assistant', Icon: ChatRoundedCallIcon, page: 'assistant' },
         {
-          id: 'new-task',
-          label: 'New task',
-          Icon: NewTaskIcon,
-          page: 'new-task',
+          id: "assistant",
+          label: "Assistant",
+          Icon: ChatRoundedCallIcon,
+          page: "assistant",
         },
-        { id: 'office', label: 'Office', Icon: OfficeIcon, page: 'office' },
         {
-          id: 'agents',
-          label: 'Agents',
+          id: "new-task",
+          label: "New task",
+          Icon: NewTaskIcon,
+          page: "new-task",
+        },
+        { id: "office", label: "Office", Icon: OfficeIcon, page: "office" },
+        {
+          id: "agents",
+          label: "Agents",
           Icon: AgentsIcon,
-          page: 'agents',
+          page: "agents",
           count: agents.length,
         },
-        { id: 'usage', label: 'Usage', Icon: UsageIcon, page: 'usage' },
+        { id: "usage", label: "Usage", Icon: UsageIcon, page: "usage" },
       ],
     },
     {
-      title: 'Focus',
+      title: "Focus",
       items: [
         {
-          id: 'needs-you',
-          label: 'Needs you',
+          id: "needs-you",
+          label: "Needs you",
           Icon: NeedsYouIcon,
-          page: 'agents',
-          section: 'needs-you',
+          page: "agents",
+          section: "needs-you",
           count: waiting.length,
           urgent: waiting.length > 0,
         },
         {
-          id: 'working',
-          label: 'Working',
+          id: "working",
+          label: "Working",
           Icon: WorkIcon,
-          page: 'agents',
-          section: 'working',
+          page: "agents",
+          section: "working",
           count: working.length,
         },
         {
-          id: 'resting',
-          label: 'Resting',
+          id: "resting",
+          label: "Resting",
           Icon: CampIcon,
-          page: 'agents',
-          section: 'resting',
+          page: "agents",
+          section: "resting",
           count: resting.length,
         },
       ],
     },
     {
-      title: 'Setup',
+      title: "Setup",
       items: [
         {
-          id: 'custom-agents',
-          label: 'Custom agents',
+          id: "custom-agents",
+          label: "Custom agents",
           Icon: CustomAgentsIcon,
-          page: 'custom-agents',
+          page: "custom-agents",
         },
         {
-          id: 'settings',
-          label: 'Settings',
+          id: "settings",
+          label: "Settings",
           Icon: SettingsIcon,
-          page: 'settings',
+          page: "settings",
         },
       ],
     },
@@ -168,8 +181,11 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
   const isActive = (item: NavItem): boolean => {
     if (route.page !== item.page) return false;
     // Agents itself is "all"; its Focus items are its filters. Settings keeps its section.
-    if (item.page !== 'agents') return true;
-    const filter = route.section === null || route.section === 'all' ? undefined : route.section;
+    if (item.page !== "agents") return true;
+    const filter =
+      route.section === null || route.section === "all"
+        ? undefined
+        : route.section;
     return filter === item.section;
   };
 
@@ -199,7 +215,7 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
           </span>
         )}
         <span className={styles.title}>
-          <span className={styles.titleMain}>{APP_WORDMARK.main}</span>{' '}
+          <span className={styles.titleMain}>{APP_WORDMARK.main}</span>{" "}
         </span>
         {!collapsed && (
           <Hint label="Collapse sidebar" enabled>
@@ -228,7 +244,7 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
                   <button
                     type="button"
                     className={styles.item}
-                    aria-current={active ? 'page' : undefined}
+                    aria-current={active ? "page" : undefined}
                     aria-label={collapsed ? item.label : undefined}
                     onClick={() => {
                       if (!active) navigate(item.page, item.section ?? null);
@@ -239,7 +255,7 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
                         layoutId="sidebar-active"
                         className={styles.active}
                         transition={{
-                          type: 'spring',
+                          type: "spring",
                           stiffness: 520,
                           damping: 42,
                         }}
@@ -265,8 +281,8 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
 
       <p className="visually-hidden" aria-live="polite">
         {waiting.length === 0
-          ? 'No agents need you'
-          : `${String(waiting.length)} agent${waiting.length === 1 ? '' : 's'} need you`}
+          ? "No agents need you"
+          : `${String(waiting.length)} agent${waiting.length === 1 ? "" : "s"} need you`}
       </p>
 
       <div className={styles.foot}>
@@ -284,7 +300,7 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
               title={
                 collapsed
                   ? undefined
-                  : `Finished, not opened yet: ${finished.map((a) => a.desk).join(', ')}`
+                  : `Finished, not opened yet: ${finished.map((a) => a.desk).join(", ")}`
               }
             >
               <FinishedIcon size={18} className={styles.check} />
