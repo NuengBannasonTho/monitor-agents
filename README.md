@@ -84,3 +84,18 @@ pnpm uninstall-hooks
 - Agents stay in the office while a long tool call runs, for up to 30 minutes (`TOOL_STALE_AFTER_MIN`).
 - Restarting the server clears the office until new events arrive.
 - `pnpm dev` runs the dashboard from source at **http://127.0.0.1:1111** (or `localhost:1111`), reloading as you edit, with the server on 4777 behind it. LocatorJS is on there: hold Option/Alt and click any part of the page to open that component in your editor. It is not in `pnpm start`'s build.
+
+## Code layout
+
+```
+apps/web/src/
+├── api/<topic>/       <topic>.services.ts (fetch), .hooks.ts (React hooks), .models.ts (types)
+├── pages/<name>/      page.tsx, plus schema.ts and the parts only that page uses
+├── types/<topic>/     <topic>.types.ts
+├── components/        shared UI (components/ui is the one place for buttons, fields, the wizard…)
+├── hooks/  lib/       app-wide hooks; plain logic
+apps/server/src/       Fastify server, hooks adapter, Orca and Codex bridges
+packages/shared/src/   zod schemas and types both sides use, and type guards (isRecord…)
+```
+
+Files and folders are kebab-case; values and functions camelCase, event handlers `handle…` (props `on…`); types and components PascalCase; constants UPPER_SNAKE_CASE. Exported functions state their return type, and data from outside (JSON, storage, errors) is narrowed with a guard rather than cast. `pnpm lint` and `pnpm test` (`scripts/coding-standards.test.ts`) check these.
