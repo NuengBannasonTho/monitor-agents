@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cityHorizonPx, paintCity } from './city';
-import { DESK_BOTTOM_PX, DESK_TOP_PX, DESK_WIDTH_PX, codeFrames, composeDesk } from './deskArt';
+import { DESK_BOTTOM_PX, DESK_TOP_PX, DESK_WIDTH_PX, codeFrames, composeDesk } from './desk-art';
 import { forestLandmarks, paintForest } from './forest';
 import { PixelBuffer, parseColor, sprite, withAlpha } from './pixels';
 

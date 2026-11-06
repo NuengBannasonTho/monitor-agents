@@ -1,5 +1,5 @@
 import type { Point } from '../../lib/geometry';
-import type { Rect } from '../../lib/useZoneRects';
+import type { Rect } from '../../hooks/use-zone-rects';
 
 /*
  * Keeps the strollers in Base Camp from walking into each other. Every character there

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CUSTOM_AGENT_COLORS, CustomAgentInputSchema } from './customAgents.js';
+import { CUSTOM_AGENT_COLORS, CustomAgentInputSchema } from './custom-agents.js';
 import { MAX_SEND_CHARS } from './domain.js';
 import { MAX_TASK_CHARS, OrcaRepoSchema } from './tasks.js';
 

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+import { App } from './app';
 // Prompt (Google Fonts), bundled with the app: no request to Google, works offline. Only the
 // weights the UI uses; each covers Thai and Latin, loaded per script as text needs it.
 import '@fontsource/prompt/400.css';
@@ -10,7 +10,7 @@ import '@fontsource/prompt/600.css';
 import '@fontsource/prompt/700.css';
 import '@fontsource/prompt/800.css';
 import './styles/global.css';
-import { Walkers } from './walkers/Walkers';
+import { Walkers } from './walkers/walkers';
 
 /** /?walkers is the desktop strip (apps/desktop): just the walking bananas. */
 const WALKERS = new URLSearchParams(window.location.search).has('walkers');

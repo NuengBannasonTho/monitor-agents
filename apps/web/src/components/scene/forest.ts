@@ -3,7 +3,7 @@ import type { Color, Palette, PixelBuffer, Sprite } from './pixels';
 import { bayer, hash2, parsePalette, sprite, valueNoise, withAlpha } from './pixels';
 import type { Disc, Tones } from './raster';
 import { blob, eachPixel, ellipseCss, pine, rectCss } from './raster';
-import type { SceneTheme } from './useSceneTheme';
+import type { SceneTheme } from './use-scene-theme';
 
 /*
  * The lounge as a forest glade. Every size below is in CSS px; `px` (CSS px per art pixel)

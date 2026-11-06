@@ -3,9 +3,9 @@ import { setPersona } from '../../lib/persona';
 import type { Page } from '../../lib/route';
 import { navigate } from '../../lib/route';
 import { setThemeChoice } from '../../lib/theme';
-import { saveCustomAgent } from '../../live/customAgents';
-import { setDesktopWalkers } from '../../live/desktop';
-import { interruptAgent, sendToAgent } from '../../live/sendToAgent';
+import { saveCustomAgent } from '../../api/custom-agents/custom-agents.services';
+import { setDesktopWalkers } from '../../api/desktop/desktop.services';
+import { interruptAgent, sendToAgent } from '../../api/agents/agents.services';
 
 /** What became of an action; kept with the message, so a reload shows it too. */
 export interface Outcome {

@@ -1,6 +1,6 @@
 import type { IconComponent, IconProps } from "reicon-react/createIcon";
 import type { AgentState } from "@agent-office/shared";
-import type { ActivityKind } from "../live/activityKind";
+import type { ActivityKind } from "../lib/activity-kind";
 import { AnglesLeft } from "reicon-react/icons/AnglesLeft";
 import { AngleDown } from "reicon-react/icons/AngleDown";
 import { Moon } from "reicon-react/icons/Moon";

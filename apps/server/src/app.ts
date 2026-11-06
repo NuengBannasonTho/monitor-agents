@@ -40,11 +40,11 @@ import {
   listCustomAgents,
   saveCustomAgent,
   trashCustomAgent,
-} from './customAgents.js';
-import { applyDesktopPatch, loadDesktopPrefs, saveDesktopPrefs } from './desktopPrefs.js';
-import type { AgentLauncher } from './orcaLauncher.js';
-import type { AssistantContext, AssistantPlan, AssistantPlanner } from './assistantPlanner.js';
-import type { TerminalSender } from './orcaTerminal.js';
+} from './custom-agents.js';
+import { applyDesktopPatch, loadDesktopPrefs, saveDesktopPrefs } from './desktop-prefs.js';
+import type { AgentLauncher } from './orca-launcher.js';
+import type { AssistantContext, AssistantPlan, AssistantPlanner } from './assistant-planner.js';
+import type { TerminalSender } from './orca-terminal.js';
 import { listSkinPacks } from './skins.js';
 import { UploadTooLarge, messageWithFiles, saveUploads } from './uploads.js';
 import type { AgentStore } from './store.js';
