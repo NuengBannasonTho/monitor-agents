@@ -11,9 +11,11 @@ import type { AlertPermission } from '../../live/useDesktopAlerts';
 import type { WorkHours } from '../../lib/workHours';
 import { parseTime, setWorkHours, useWorkHours } from '../../lib/workHours';
 import { useSkins } from '../../skins/SkinContext';
+import { PersonaWizard } from '../assistant/PersonaWizard';
 import {
   AlertsIcon,
   AppearanceIcon,
+  AssistantIcon,
   CostumeIcon,
   DarkModeIcon,
   DeskModeIcon,
@@ -58,7 +60,8 @@ interface SettingsPageProps extends SettingsProps {
   readonly section: string | null;
 }
 
-type SectionId = 'notifications' | 'appearance' | 'desktop' | 'work-hours' | 'costumes';
+type SectionId =
+  'assistant' | 'notifications' | 'appearance' | 'desktop' | 'work-hours' | 'costumes';
 
 interface SectionMeta {
   readonly id: SectionId;
@@ -74,7 +77,15 @@ const NOTIFICATIONS: SectionMeta = {
   Icon: AlertsIcon,
 };
 
+const ASSISTANT: SectionMeta = {
+  id: 'assistant',
+  title: 'MON MANG',
+  hint: 'Your assistant’s personality: who it is, how it talks to you and its color',
+  Icon: AssistantIcon,
+};
+
 const SECTIONS: readonly SectionMeta[] = [
+  ASSISTANT,
   NOTIFICATIONS,
   {
     id: 'appearance',
@@ -147,10 +158,18 @@ export function SettingsPage({ section, ...props }: SettingsPageProps) {
   const skins = useSkins();
   // Costumes only once the server has a skin pack installed.
   const sections = SECTIONS.filter((s) => s.id !== 'costumes' || skins.packs.length > 0);
-  const current = sections.find((s) => s.id === section) ?? NOTIFICATIONS;
+  const current = sections.find((s) => s.id === section) ?? ASSISTANT;
 
   return (
-    <Page trail={['Settings', current.title]} title="Settings" subtitle="Changes apply right away.">
+    <Page
+      trail={['Settings', current.title]}
+      title="Settings"
+      subtitle={
+        current.id === 'assistant'
+          ? 'Save at the end; MON MANG talks this way from your next message.'
+          : 'Changes apply right away.'
+      }
+    >
       <PageTabs
         tabs={sections.map(({ id, title, Icon }) => ({
           value: id,
@@ -163,23 +182,30 @@ export function SettingsPage({ section, ...props }: SettingsPageProps) {
         }}
         label="Settings sections"
       />
-      <Card key={current.id} className={styles.content} aria-labelledby="settings-title">
-        <header className={styles.contentHeader}>
-          <h2 id="settings-title" className={styles.contentTitle}>
-            {current.title}
-          </h2>
-          <p className={styles.contentHint}>{current.hint}</p>
-        </header>
-        <div className={styles.list}>
-          <SectionRows id={current.id} {...props} />
-        </div>
-      </Card>
+      {current.id === 'assistant' ? (
+        // A form in steps, saved at the end: its own card.
+        <PersonaWizard />
+      ) : (
+        <Card key={current.id} className={styles.content} aria-labelledby="settings-title">
+          <header className={styles.contentHeader}>
+            <h2 id="settings-title" className={styles.contentTitle}>
+              {current.title}
+            </h2>
+            <p className={styles.contentHint}>{current.hint}</p>
+          </header>
+          <div className={styles.list}>
+            <SectionRows id={current.id} {...props} />
+          </div>
+        </Card>
+      )}
     </Page>
   );
 }
 
 function SectionRows({ id, sound, alerts, desktop, agents }: SettingsProps & { id: SectionId }) {
   switch (id) {
+    case 'assistant':
+      return null;
     case 'notifications':
       return (
         <>

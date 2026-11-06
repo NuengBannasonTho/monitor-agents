@@ -2,6 +2,7 @@ import { leadPrompt, worktreeNameFor, WORKTREE_NAME_PATTERN } from '@agent-offic
 import type { CustomAgent, CustomAgentList, TaskPlaces } from '@agent-office/shared';
 import { useEffect, useId, useState } from 'react';
 import { navigate } from '../../lib/route';
+import { clearTaskDraft, peekTaskDraft } from '../../lib/taskDraft';
 import { fetchCustomAgents } from '../../live/customAgents';
 import { fetchTaskPlaces, startTask } from '../../live/tasks';
 import { COLOR_HEX } from '../customAgents/colors';
@@ -80,16 +81,23 @@ export function NewTaskPage({
   const [places, setPlaces] = useState<TaskPlaces | null>(null);
   const [helpers, setHelpers] = useState<CustomAgentList | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [task, setTask] = useState('');
+  // A task MON MANG drafted, to finish here.
+  const [draft] = useState(peekTaskDraft);
+  useEffect(() => {
+    clearTaskDraft();
+  }, []);
+  const [task, setTask] = useState(draft?.task ?? '');
   const [provider, setProvider] = useState<Provider>(
-    helper === '@provider:codex' ? 'codex' : 'claude',
+    draft?.provider ?? (helper === '@provider:codex' ? 'codex' : 'claude'),
   );
-  const [repoId, setRepoId] = useState<string | null>(lastRepo);
-  const [where, setWhere] = useState<Where>('new');
+  const [repoId, setRepoId] = useState<string | null>(() => draft?.repoId ?? lastRepo());
+  const [where, setWhere] = useState<Where>(
+    draft !== null && draft.worktreeId !== null ? 'existing' : 'new',
+  );
   const [name, setName] = useState('');
   const [nameEdited, setNameEdited] = useState(false);
-  const [worktreeId, setWorktreeId] = useState<string | null>(null);
-  const [team, setTeam] = useState<readonly string[]>([]);
+  const [worktreeId, setWorktreeId] = useState<string | null>(draft?.worktreeId ?? null);
+  const [team, setTeam] = useState<readonly string[]>(draft?.team ?? []);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   // Each started task opens a fresh wizard at step one.
   const [runs, setRuns] = useState(0);

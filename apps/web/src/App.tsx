@@ -114,8 +114,16 @@ export function App() {
                 source={source}
               />
               <main className={styles.main}>
-                {route.page === 'assistant' ? (
-                  <AssistantPage preview={USE_SIMULATOR} />
+                {SHOW_GALLERY ? (
+                  <Gallery />
+                ) : route.page === 'assistant' ? (
+                  <AssistantPage
+                    preview={USE_SIMULATOR}
+                    agents={agents}
+                    onOpen={open}
+                    sound={sound}
+                    alerts={alerts}
+                  />
                 ) : route.page === 'settings' ? (
                   <SettingsPage
                     section={route.section}
@@ -143,8 +151,6 @@ export function App() {
                   <NewTaskPage preview={USE_SIMULATOR} helper={route.helper} />
                 ) : route.page === 'custom-agents' ? (
                   <CustomAgentsPage preview={USE_SIMULATOR} />
-                ) : SHOW_GALLERY ? (
-                  <Gallery />
                 ) : (
                   <Page
                     trail={['Office']}

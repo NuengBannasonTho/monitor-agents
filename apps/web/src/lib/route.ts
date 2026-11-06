@@ -3,7 +3,8 @@ import { useMemo, useSyncExternalStore } from 'react';
 /**
  * Which page is showing, kept in the query string so a reload stays put and the browser's
  * Back button walks back through pages: /?page=agents, /?page=settings&section=desktop.
- * No page is the office. The query string, not a path: the server only serves index.html at /.
+ * No page is MON MANG, the assistant. The query string, not a path: the server only serves
+ * index.html at /.
  */
 export type Page =
   'assistant' | 'new-task' | 'office' | 'agents' | 'usage' | 'custom-agents' | 'settings';
@@ -25,6 +26,8 @@ const PAGES: readonly Page[] = [
   'custom-agents',
   'settings',
 ];
+/** What / shows: MON MANG, the assistant. */
+export const HOME: Page = 'assistant';
 /** pushState fires no event of its own; this one tells the hook to read the URL again. */
 const CHANGE_EVENT = 'agent-office:route';
 
@@ -46,7 +49,7 @@ export function parseRoute(query: string): Route {
   const oldSettings = params.get('settings');
   if (page === null && oldSettings !== null)
     return { page: 'settings', section: oldSettings, helper: null };
-  const known = PAGES.find((p) => p === page) ?? 'office';
+  const known = PAGES.find((p) => p === page) ?? HOME;
   const hasSection = known === 'settings' || known === 'agents' || known === 'usage';
   return {
     page: known,
@@ -73,7 +76,7 @@ export function navigate(
   if (current.page === page && current.section === section && current.helper === helper) return;
   const url = new URL(window.location.href);
   url.searchParams.delete('settings');
-  if (page === 'office') url.searchParams.delete('page');
+  if (page === HOME) url.searchParams.delete('page');
   else url.searchParams.set('page', page);
   if (section === null) url.searchParams.delete('section');
   else url.searchParams.set('section', section);

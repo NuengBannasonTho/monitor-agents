@@ -16,6 +16,7 @@ import {
 } from '@agent-office/shared';
 import type {
   AccountStatus,
+  AssistantAction,
   AssistantChatResponse,
   AgentKind,
   CustomAgentList,
@@ -42,7 +43,7 @@ import {
 } from './customAgents.js';
 import { applyDesktopPatch, loadDesktopPrefs, saveDesktopPrefs } from './desktopPrefs.js';
 import type { AgentLauncher } from './orcaLauncher.js';
-import type { AssistantPlanner } from './assistantPlanner.js';
+import type { AssistantContext, AssistantPlan, AssistantPlanner } from './assistantPlanner.js';
 import type { TerminalSender } from './orcaTerminal.js';
 import { listSkinPacks } from './skins.js';
 import { UploadTooLarge, messageWithFiles, saveUploads } from './uploads.js';
@@ -75,7 +76,7 @@ export interface AppOptions {
   readonly uploadsDir?: string;
   /** Starts Claude Code on a task (New task); absent turns that off (START_AGENTS=off). */
   readonly agentLauncher?: AgentLauncher;
-  /** Read-only chat coordinator; absent turns the Assistant page off. */
+  /** MON MANG's read-only planner; absent turns the assistant off. */
   readonly assistantPlanner?: AssistantPlanner;
   /** The Claude account and its usage, as Orca reports it. */
   readonly accountReader?: () => Promise<AccountStatus>;
@@ -116,6 +117,50 @@ function parseJsonSafely(body: string): unknown {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * The planner's answer with only ids the server knows: unknown projects become "not sure",
+ * a worktree brings its project, unknown agents drop their action, and the team keeps only
+ * custom agents that exist (Claude only).
+ */
+export function checkedAnswer(
+  plan: AssistantPlan,
+  context: AssistantContext,
+): AssistantChatResponse {
+  const repos = new Map(context.repos.map((repo) => [repo.id, repo]));
+  const agents = new Set(context.agents.map((agent) => agent.id));
+  const helpers = new Set(context.customAgents.map((agent) => agent.name));
+  const matches = [...new Set(plan.matches)].flatMap((id) => {
+    const repo = repos.get(id);
+    return repo === undefined ? [] : [repo];
+  });
+  const actions = plan.actions.flatMap((action): AssistantAction[] => {
+    switch (action.type) {
+      case 'start-task': {
+        const worktree = context.worktrees.find((w) => w.id === action.worktreeId);
+        const repoId = worktree?.repoId ?? action.repoId;
+        return [
+          {
+            ...action,
+            worktreeId: worktree?.id ?? null,
+            repoId: repoId !== null && repos.has(repoId) ? repoId : null,
+            team:
+              action.provider === 'codex'
+                ? []
+                : [...new Set(action.team)].filter((name) => helpers.has(name)),
+          },
+        ];
+      }
+      case 'send':
+      case 'stop':
+      case 'open-agent':
+        return agents.has(action.agentId) ? [action] : [];
+      default:
+        return [action];
+    }
+  });
+  return { reply: plan.reply, matches: matches.slice(0, 8), actions };
 }
 
 export async function buildApp(options: AppOptions): Promise<App> {
@@ -487,7 +532,33 @@ export async function buildApp(options: AppOptions): Promise<App> {
     return reader(range.data);
   });
 
-  /** A read-only Codex turn answers and drafts work using Orca's known projects. */
+  /** A slow reader is left out of the assistant's context rather than holding up its answer. */
+  const within = async <T>(
+    read: (() => Promise<T | null>) | undefined,
+    ms: number,
+  ): Promise<T | null> => {
+    if (read === undefined) return null;
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      return await Promise.race([
+        read(),
+        new Promise<null>((resolve) => {
+          timer = setTimeout(() => {
+            resolve(null);
+          }, ms);
+        }),
+      ]);
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  /**
+   * MON MANG: a read-only Codex turn answers, knowing the projects, agents, custom agents and
+   * usage, and proposes actions. Every id it names is checked here; the dashboard acts.
+   */
   fastify.post(
     '/api/assistant/chat',
     async (request, reply): Promise<AssistantChatResponse | FastifyReply> => {
@@ -495,36 +566,49 @@ export async function buildApp(options: AppOptions): Promise<App> {
       if (origin !== undefined && !allowedOrigins.has(origin)) return reply.code(403).send();
       const parsed = AssistantChatRequestSchema.safeParse(request.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Write a shorter message.' });
-      if (options.assistantPlanner === undefined || options.agentLauncher === undefined)
+      const planner = options.assistantPlanner;
+      if (planner === undefined)
         return reply.code(503).send({ error: 'The assistant is not available on this server.' });
-      const places = await options.agentLauncher.places();
-      if (places === null) return reply.code(502).send({ error: 'Orca is not reachable.' });
+      const { agentLauncher: launcher, usageReader } = options;
+      const [places, helpers, usageToday, account] = await Promise.all([
+        within(launcher && (() => launcher.places()), 5_000),
+        within(async () => listCustomAgents(await agentFolders()), 3_000),
+        within(usageReader && (() => usageReader('today')), 2_000),
+        within(options.accountReader, 2_000),
+      ]);
+      const context: AssistantContext = {
+        orca: places !== null,
+        repos: places?.repos ?? [],
+        worktrees: places?.worktrees ?? [],
+        agents: options.store.snapshot(),
+        customAgents: (helpers ?? [])
+          .filter((agent) => agent.problem === null)
+          .map((agent) => ({
+            name: agent.name,
+            description: agent.description,
+            scope: agent.scope === 'user' ? 'yours' : agent.scope.slice('project:'.length),
+          })),
+        usageToday,
+        account,
+        now: Date.now(),
+      };
+      // The stop button (or leaving the page) closes the request: stop Codex with it.
+      const gone = new AbortController();
+      reply.raw.on('close', () => {
+        if (!reply.raw.writableFinished) gone.abort();
+      });
       try {
-        const plan = await options.assistantPlanner(parsed.data, places.repos);
-        const byId = new Map(places.repos.map((repo) => [repo.id, repo]));
-        const matches = [...new Set(plan.matches)].flatMap((id) => {
-          const repo = byId.get(id);
-          return repo === undefined ? [] : [repo];
-        });
-        return {
-          reply: plan.reply,
-          matches,
-          draft:
-            plan.draft === null
-              ? null
-              : {
-                  ...plan.draft,
-                  repoId:
-                    plan.draft.repoId !== null && byId.has(plan.draft.repoId)
-                      ? plan.draft.repoId
-                      : null,
-                },
-        };
+        const plan = await planner(parsed.data, context, gone.signal);
+        return checkedAnswer(plan, context);
       } catch (error) {
+        if (gone.signal.aborted) {
+          request.log.info('assistant chat stopped by the browser');
+          return reply;
+        }
         request.log.warn({ err: error }, 'assistant chat failed');
-        return reply
-          .code(502)
-          .send({ error: 'Codex could not answer. Check its account and try again.' });
+        return reply.code(502).send({
+          error: 'MON MANG could not answer (Codex failed). Check its account and try again.',
+        });
       }
     },
   );

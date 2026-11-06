@@ -1,0 +1,24 @@
+.avatar {
+  display: block;
+  flex: none;
+  border-radius: 28%;
+  box-shadow: var(--shadow-sm);
+}
+
+.avatar[data-busy] {
+  animation: breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    transform: scale(0.9);
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar[data-busy] {
+    animation: none;
+    opacity: 0.75;
+  }
+}
