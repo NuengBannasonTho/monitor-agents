@@ -1,18 +1,8 @@
-/**
- * The app's name and mark (docs/mon-mongosteen-full.png): a mangosteen seen from above,
- * three white segments under a purple leaf, on the dark rounded tile that is the logo's "O".
- * The shapes are traced from docs/mon-mongosteen.png on a 64 x 64 tile.
- *
- * public/favicon.svg is markSvg() written out: regenerate it when changing the mark.
- */
-
-/** The wordmark as the logo sets it: big, then small underneath. */
-export const APP_WORDMARK = { main: 'MON', sub: 'Mangosteen' } as const;
-export const APP_NAME = `${APP_WORDMARK.main} ${APP_WORDMARK.sub}`;
+export const APP_WORDMARK = { main: 'MON MANG' } as const;
+export const APP_NAME = 'MON MANG' as const;
 
 export const MARK = {
   tile: '#0b0b0d',
-  /** Corner radius on the 64 x 64 tile, as round as the logo's "O". */
   radius: 18,
   flesh: '#ffffff',
   leafColor: '#8647bd',
@@ -23,7 +13,6 @@ export const MARK = {
     'M31.6 33.8C32.1 33.7 32.6 33.9 33.1 34C33.6 34.2 34.1 34.6 34.5 34.9C34.9 35.2 35.3 35.5 35.8 35.8C36.2 36.2 36.6 36.5 37 36.9C37.4 37.2 37.7 37.6 38.1 38C38.5 38.4 38.8 38.8 39.2 39.2C39.5 39.6 39.8 40 40.1 40.5C40.4 40.9 40.6 41.4 40.8 41.9C41 42.4 41.1 42.9 41.2 43.5C41.3 44 41.3 44.5 41.2 45.1C41.2 45.6 41.1 46.1 41 46.6C40.8 47.1 40.6 47.6 40.4 48.1C40.1 48.6 39.8 49 39.5 49.4C39.1 49.8 38.7 50.2 38.3 50.5C37.9 50.9 37.5 51.2 37 51.4C36.5 51.7 36 51.9 35.5 52C35 52.2 34.5 52.4 34 52.5C33.5 52.5 32.9 52.6 32.4 52.6C31.9 52.6 31.3 52.6 30.8 52.6C30.3 52.5 29.7 52.4 29.2 52.3C28.7 52.2 28.2 52 27.7 51.8C27.2 51.6 26.8 51.3 26.3 51C25.9 50.7 25.4 50.4 25.1 50C24.7 49.7 24.3 49.3 24 48.8C23.7 48.4 23.5 47.9 23.3 47.4C23.1 46.9 22.9 46.4 22.8 45.9C22.7 45.4 22.7 44.8 22.7 44.3C22.7 43.8 22.8 43.2 22.9 42.7C23.1 42.2 23.3 41.7 23.5 41.2C23.7 40.7 24 40.3 24.3 39.9C24.6 39.4 24.9 39 25.3 38.6C25.6 38.2 26 37.8 26.4 37.5C26.8 37.1 27.2 36.7 27.6 36.4C28 36 28.4 35.7 28.8 35.4C29.2 35 29.6 34.7 30.1 34.4C30.6 34.2 31.1 33.9 31.6 33.8Z',
 } as const;
 
-/** The mark as a standalone SVG document, with `extra` markup drawn over it (a badge). */
 export function markSvg(extra = ''): string {
   return (
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>` +

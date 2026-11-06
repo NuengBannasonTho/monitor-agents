@@ -26,7 +26,7 @@ export type AssistantPlanner = (
 const SCHEMA = fileURLToPath(new URL('./assistantPlan.schema.json', import.meta.url));
 
 function promptFor(request: AssistantChatRequest, repos: readonly OrcaRepo[]): string {
-  return `You are MON Mangosteen's personal coordinator. Answer in the user's language, usually Thai. You help find Orca projects and turn requests into a draft coding task. Do not run tools, edit files, or start an agent. The app will show a separate Start button for any draft.
+  return `You are MON MANG's personal coordinator. Answer in the user's language, usually Thai. You help find Orca projects and turn requests into a draft coding task. Do not run tools, edit files, or start an agent. The app will show a separate Start button for any draft.
 
 Use only the listed project IDs. If more than one project could fit, leave draft.repoId null and put the likely IDs in matches. If the user wants only to find or discuss a project, set draft null. If the user asks for work to be done, set draft.task to a clear faithful task, provider to codex unless the user explicitly asks for Claude, and repoId to the exact matching project ID only when confident. Never claim work has started. Keep reply brief. Include relevant project IDs in matches, at most 8.
 

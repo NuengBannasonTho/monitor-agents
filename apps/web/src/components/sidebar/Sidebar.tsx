@@ -177,7 +177,6 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
     <aside className={styles.sidebar} data-collapsed={collapsed}>
       <div className={styles.brand}>
         {collapsed && !narrow ? (
-          // On the rail the logo is the way back out: hovering it turns it into the button.
           <Hint label="Expand sidebar" enabled>
             <button
               type="button"
@@ -201,7 +200,6 @@ export function Sidebar({ agents, waiting, finished, onOpen, source }: SidebarPr
         )}
         <span className={styles.title}>
           <span className={styles.titleMain}>{APP_WORDMARK.main}</span>{' '}
-          <span className={styles.titleSub}>{APP_WORDMARK.sub}</span>
         </span>
         {!collapsed && (
           <Hint label="Collapse sidebar" enabled>

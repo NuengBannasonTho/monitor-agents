@@ -48,8 +48,8 @@ describe('attention', () => {
   });
 
   it('puts the count in the tab title', () => {
-    expect(tabTitle(0, 0)).toBe('MON Mangosteen');
-    expect(tabTitle(2, 1)).toBe('(2) Needs you – MON Mangosteen');
-    expect(tabTitle(0, 3)).toBe('(3) Finished – MON Mangosteen');
+    expect(tabTitle(0, 0)).toBe('MON MANG');
+    expect(tabTitle(2, 1)).toBe('(2) Needs you – MON MANG');
+    expect(tabTitle(0, 3)).toBe('(3) Finished – MON MANG');
   });
 });

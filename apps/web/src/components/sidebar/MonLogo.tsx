@@ -6,7 +6,7 @@ interface MonLogoProps {
   readonly size?: number;
 }
 
-/** The app mark: a mangosteen from above on a dark rounded tile (see lib/brand). */
+/** The app mark: a MANG from above on a dark rounded tile (see lib/brand). */
 export function MonLogo({ size = 32 }: MonLogoProps) {
   return (
     <svg className={styles.logo} width={size} height={size} viewBox="0 0 64 64" aria-hidden>

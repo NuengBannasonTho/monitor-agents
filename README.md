@@ -1,4 +1,4 @@
-<h1 align="center">MON Mangosteen</h1>
+<h1 align="center">MON MANG</h1>
 
 <p align="center">
   A local pixel office for your Claude Code and Codex agents in Orca.<br>
@@ -25,7 +25,7 @@ pnpm install-hooks
 pnpm diagnose
 ```
 
-Open **http://127.0.0.1:4777**, then start Claude Code in your Orca worktrees. Restart existing sessions after installing hooks. Keep `pnpm start` running. After updating MON Mangosteen, run `pnpm install-hooks` again to add any new hooks.
+Open **http://127.0.0.1:4777**, then start Claude Code in your Orca worktrees. Restart existing sessions after installing hooks. Keep `pnpm start` running. After updating MON MANG, run `pnpm install-hooks` again to add any new hooks.
 
 ## Features
 
@@ -33,7 +33,7 @@ Open **http://127.0.0.1:4777**, then start Claude Code in your Orca worktrees. R
 - A sidebar down the left edge (collapse it to icons with the button beside the name; remembered) switches between **New task**, **Office**, **Agents**, **Usage**, **Custom agents** and **Settings**; its **Focus** group jumps straight to who needs you, who is working and who is resting. Each page has its own address (`/?page=agents`), so a reload or the Back button keeps your place.
 - The foot of the sidebar shows the Claude account your agents run on and how much of its usage is left (this 5-hour session and this week, with when each resets), as Orca reports it; the ring around its initial fills with the session. Open it to see every Claude account Orca knows, the active one ticked; switching is done in Orca's settings (its CLI cannot switch Claude accounts yet). Only names and numbers are read, never a token.
 - Pixel workers show agent activity and highlight permission/input requests. The sidebar, tab title and icon show who is waiting on you, and unread finishes get a green **new** flag.
-- Local Codex sessions also appear in Office and Agents while their rollout files are active. MON Mangosteen reads Codex's local session events from `CODEX_HOME` (or `~/.codex`) and Orca's Codex accounts; it shows turn starts, completed commands and turn finishes without calling a model. Sending messages from an agent drawer still requires a Claude Code terminal in Orca.
+- Local Codex sessions also appear in Office and Agents while their rollout files are active. MON MANG reads Codex's local session events from `CODEX_HOME` (or `~/.codex`) and Orca's Codex accounts; it shows turn starts, completed commands and turn finishes without calling a model. Sending messages from an agent drawer still requires a Claude Code terminal in Orca.
 - **New task** hands work off without opening a terminal: choose Claude Code or Codex, write what should get done, and pick a project and either a new worktree (its own branch and folder, named after the task) or an existing one. With Claude Code, you can also select a **team** of saved custom agents. Orca starts the selected provider with the task as its first prompt; with a Claude team, the prompt makes it the lead, splitting the work, handing parts to those subagents (in parallel where it can) and checking what comes back. You can read that prompt before starting. The live session then shows up in the office, while the saved assistant remains available for later work. Needs Orca running; set `START_AGENTS=off` to turn it off.
 - **Agents** lists every agent as a card to scan instead of a scene to watch: who needs you first, then who is working, with its folder, current step, subagents and last turn. Filter by state or search by desk or folder; click one for its drawer.
 - **Usage** keeps an eye on what the agents use, today, over 7 days or 30 days: an estimated cost at API list prices (by the hour or day, main agents and subagents apart), tokens, requests, and what prompt caching saved; your Claude plan's 5-hour and weekly limits; cost by model and tokens by kind. Below, one tab each for **Sessions** (how full each one's context is now, its peak and compactions, cost and work), **Skills** (how often each was used, whether you typed it or Claude chose it, and roughly how many tokens it adds to the context), **Subagents** (runs, cost and cost per run by kind), **Tools** (calls, MCP tools by server) and **Projects**. It reads Claude Code's own transcripts on this machine (`~/.claude/projects`, `$CLAUDE_CONFIG_DIR/projects` and Orca's Claude profiles): only numbers and names, never a prompt or reply. On a Claude plan you pay the plan, not per token; the cost is what the same use would cost on the API.

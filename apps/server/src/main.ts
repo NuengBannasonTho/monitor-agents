@@ -63,7 +63,7 @@ async function main(): Promise<void> {
   });
 
   await app.fastify.listen({ host: config.host, port: config.port });
-  app.fastify.log.info(`MON Mangosteen on http://${config.host}:${config.port}`);
+  app.fastify.log.info(`MON MANG on http://${config.host}:${config.port}`);
   const stopCodexSessions = startCodexSessions(store);
 
   const stopMock = new AbortController();
