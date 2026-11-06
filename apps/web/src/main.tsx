@@ -26,6 +26,16 @@ if (container === null) {
 if (import.meta.env.DEV) {
   void import('@locator/runtime').then(({ default: setupLocatorUI }) => {
     setupLocatorUI();
+    // Its panels are white but leave most text in the default color, which our
+    // `color-scheme: light dark` turns white when the system is dark: white on white.
+    // Keep them light. Locator mounts on the next tick, so this runs right after it.
+    setTimeout(() => {
+      const shadow = document.getElementById('locatorjs-wrapper')?.shadowRoot;
+      if (shadow === null || shadow === undefined) return;
+      const style = document.createElement('style');
+      style.textContent = '#locatorjs-layer { color-scheme: light; color: #111827; }';
+      shadow.append(style);
+    }, 0);
   });
 }
 
