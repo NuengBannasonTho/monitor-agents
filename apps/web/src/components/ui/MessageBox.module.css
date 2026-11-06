@@ -1,4 +1,7 @@
-/* Pinned under the drawer's scrolling body: a soft card, files peeking out from behind it. */
+/*
+ * The box to write in (an agent's drawer, MON MANG): a soft card, files peeking out from
+ * behind it. In a drawer it is pinned under the scrolling body on a white strip.
+ */
 .composer {
   position: relative;
   display: grid;
@@ -8,6 +11,13 @@
   padding: 10px 18px 14px;
   border-top: 1px solid var(--border);
   background: var(--surface);
+}
+
+/* On a page: no strip of its own, just the card on the page's background. */
+.composer[data-variant='page'] {
+  padding: 12px 0 0;
+  border-top: 0;
+  background: transparent;
 }
 
 /* ---- Attached files: a fanned little stack tucked behind the card's top edge ---- */
@@ -152,6 +162,15 @@
 
 .card[data-roomy='true'] .line {
   margin: 0 8px;
+}
+
+/* No paperclip: the text starts near the left edge. */
+.card[data-attach='off'] .line {
+  margin-left: 14px;
+}
+
+.card[data-attach='off'][data-roomy='true'] .line {
+  margin-left: 8px;
 }
 
 /* "3 files": how many go with the message; click to drop them all. */
