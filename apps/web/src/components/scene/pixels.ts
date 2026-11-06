@@ -37,6 +37,8 @@ export type Palette<K extends string = string> = Readonly<Record<K, Color>>;
 
 /** Parses a palette of hex strings once, so painting only deals with numbers. */
 export function parsePalette<K extends string>(hexes: Readonly<Record<K, string>>): Palette<K> {
+  // Safe: the loop fills every key of `hexes`, and Object.keys only ever lists those keys
+  // (it types them as plain strings).
   const out = {} as Record<K, Color>;
   for (const key of Object.keys(hexes) as K[]) out[key] = parseColor(hexes[key]);
   return out;

@@ -11,6 +11,7 @@ import {
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { errnoCode, isRecord } from '@agent-office/shared';
 import type { CustomAgent, CustomAgentInput, CustomAgentScope } from '@agent-office/shared';
 import { Document, isMap, isSeq, parseDocument } from 'yaml';
 
@@ -177,7 +178,8 @@ function describe(
   modifiedAt: number,
 ): CustomAgent {
   const parsed = parseAgentText(raw);
-  const fields = (parsed.doc?.toJS() ?? {}) as Record<string, unknown>;
+  const doc: unknown = parsed.doc?.toJS();
+  const fields = isRecord(doc) ? doc : {};
   const fallbackName = path.basename(file, '.md');
   return {
     scope,
@@ -297,7 +299,7 @@ export async function saveCustomAgent(
       // wx: never replace a file that appeared meanwhile.
       await writeFile(full, renderAgentText(null, input), { flag: 'wx', mode: 0o644 });
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      if (errnoCode(error) === 'EEXIST') {
         throw new CustomAgentError(409, `${file} is already there.`);
       }
       throw error;
@@ -354,7 +356,7 @@ export async function trashCustomAgent(
     await rename(full, target);
   } catch (error) {
     // Another disk: copy, then remove.
-    if ((error as NodeJS.ErrnoException).code !== 'EXDEV') throw error;
+    if (errnoCode(error) !== 'EXDEV') throw error;
     await copyFile(full, target);
     await unlink(full);
   }

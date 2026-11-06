@@ -1,6 +1,7 @@
 import { open, readdir, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { isRecord } from '@agent-office/shared';
 import type { AgentEvent } from '@agent-office/shared';
 import { safeLabel } from './summarize.js';
 import type { AgentStore } from './store.js';
@@ -16,9 +17,7 @@ interface Session {
 }
 
 function object(value: unknown): RecordValue | null {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as RecordValue)
-    : null;
+  return isRecord(value) ? value : null;
 }
 
 function text(value: unknown): string | null {

@@ -266,7 +266,8 @@ export function MessageBox({
         setDragging(true);
       }}
       onDragLeave={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+        const to = event.relatedTarget;
+        if (!(to instanceof Node && event.currentTarget.contains(to))) setDragging(false);
       }}
       onDrop={onDrop}
     >
@@ -277,8 +278,8 @@ export function MessageBox({
               key={f.id}
               className={styles.tile}
               style={{
-                ['--i' as string]: i,
-                ['--tilt' as string]: `${String((i % 2 === 0 ? -1 : 1) * (3 + i))}deg`,
+                '--i': i,
+                '--tilt': `${String((i % 2 === 0 ? -1 : 1) * (3 + i))}deg`,
               }}
               title={f.file.name}
             >
@@ -305,7 +306,7 @@ export function MessageBox({
           {more > 0 && (
             <li
               className={cx(styles.tile, styles.moreTile)}
-              style={{ ['--i' as string]: tiles.length }}
+              style={{ '--i': tiles.length }}
             >
               +{more}
             </li>

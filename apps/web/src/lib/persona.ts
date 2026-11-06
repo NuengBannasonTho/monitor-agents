@@ -1,4 +1,4 @@
-import { AssistantPersonaSchema, DEFAULT_PERSONA } from '@agent-office/shared';
+import { AssistantPersonaSchema, DEFAULT_PERSONA, isRecord } from '@agent-office/shared';
 import type { AssistantPersona } from '@agent-office/shared';
 import { useSyncExternalStore } from 'react';
 
@@ -11,9 +11,10 @@ function read(): AssistantPersona {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw === null) return DEFAULT_PERSONA;
+    const stored: unknown = JSON.parse(raw);
     const parsed = AssistantPersonaSchema.safeParse({
       ...DEFAULT_PERSONA,
-      ...(JSON.parse(raw) as object),
+      ...(isRecord(stored) ? stored : {}),
     });
     return parsed.success ? parsed.data : DEFAULT_PERSONA;
   } catch {

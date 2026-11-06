@@ -192,6 +192,8 @@ function nextTiming(agent: Agent, event: AgentEvent): Timing {
 
 /** Drops keys whose value is undefined, so optional fields stay absent. */
 function defined<T extends object>(value: T): T {
+  // Safe: only keys whose value is undefined go, and every field of T that can be undefined is
+  // optional; Object.fromEntries just cannot say what it returns.
   return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
 }
 

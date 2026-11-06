@@ -1,4 +1,4 @@
-import { AssistantChatResponseSchema, runsAtOnce, zoneOf } from '@agent-office/shared';
+import { AssistantChatResponseSchema, isRecord, runsAtOnce, zoneOf } from '@agent-office/shared';
 import type { Agent, AssistantChatResponse, TaskPlaces } from '@agent-office/shared';
 import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -56,8 +56,8 @@ function savedMessages(): Message[] {
     if (!Array.isArray(value)) return [];
     const items: unknown[] = value;
     return items.slice(-KEEP).flatMap((item): Message[] => {
-      if (typeof item !== 'object' || item === null) return [];
-      const m = item as Record<string, unknown>;
+      if (!isRecord(item)) return [];
+      const m = item;
       if (
         typeof m.id !== 'number' ||
         (m.role !== 'user' && m.role !== 'assistant') ||
@@ -258,7 +258,7 @@ export function AssistantPage({ preview, agents, onOpen, sound, alerts }: Assist
   const waiting = agents.filter((a) => a.state === 'needs-you');
   const working = agents.filter((a) => zoneOf(a.state) === 'table' && a.state !== 'needs-you');
   const resting = agents.filter((a) => zoneOf(a.state) === 'lounge');
-  const accent = { '--persona': COLOR_HEX[persona.color] } as CSSProperties;
+  const accent: CSSProperties = { '--persona': COLOR_HEX[persona.color] };
 
   return (
     <Page

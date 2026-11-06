@@ -2,8 +2,6 @@ import type { CSSProperties } from 'react';
 import { rowsToRuns } from '../worker/sprite';
 
 /** Inline style that also carries CSS custom properties. */
-export type CSSVars = CSSProperties & Readonly<Record<`--${string}`, string>>;
-
 interface SpriteSvgProps {
   /** One entry per animation frame; each is rows of palette keys ('.' = clear). */
   readonly frames: readonly (readonly string[])[];
@@ -12,7 +10,7 @@ interface SpriteSvgProps {
   readonly cell: number;
   readonly className?: string;
   readonly frameClassNames?: readonly (string | undefined)[];
-  readonly style?: CSSVars;
+  readonly style?: CSSProperties;
 }
 
 /** Small DOM pixel sprite for the animated bits of a scene (flames, clouds, butterflies). */

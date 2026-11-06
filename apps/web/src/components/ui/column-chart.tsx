@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react';
 import { Hint } from './hint';
 import styles from './column-chart.module.css';
 
@@ -77,7 +76,7 @@ export function ColumnChart({ series, columns, format, label }: ColumnChartProps
           </div>
           <div
             className={styles.columns}
-            style={{ '--count': String(columns.length) } as CSSProperties}
+            style={{ '--count': String(columns.length) }}
           >
             {columns.map((c) => {
               const sum = total(c);
@@ -129,7 +128,7 @@ export function ColumnChart({ series, columns, format, label }: ColumnChartProps
         <span />
         <div
           className={styles.labels}
-          style={{ '--count': String(columns.length) } as CSSProperties}
+          style={{ '--count': String(columns.length) }}
         >
           {columns.map((c) => (
             <span key={c.key}>{c.axisLabel}</span>

@@ -1,4 +1,5 @@
 export * from './domain.js';
+export * from './guards.js';
 export * from './zones.js';
 export * from './skins.js';
 export * from './custom-agents.js';

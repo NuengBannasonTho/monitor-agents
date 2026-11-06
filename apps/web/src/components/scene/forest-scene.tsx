@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { seededRandom } from '../../lib/seed';
 import { forestLandmarks, paintForest } from './forest';
@@ -6,7 +7,6 @@ import type { PixelBuffer } from './pixels';
 import { valueNoise } from './pixels';
 import styles from './scene.module.css';
 import { SpriteSvg } from './sprite-svg';
-import type { CSSVars } from './sprite-svg';
 import type { SceneTheme } from './use-scene-theme';
 
 /** Hand-drawn flames for big pixels. */
@@ -57,7 +57,7 @@ const BUTTERFLY_WINGS = ['#ffffff', '#ffd94a', '#ff9ec7'] as const;
 interface Floater {
   readonly left: string;
   readonly top: string;
-  readonly style: CSSVars;
+  readonly style: CSSProperties;
 }
 
 function floaters(
@@ -128,14 +128,10 @@ function ForestSceneImpl({ width, height, theme, px }: SceneProps) {
           <span
             key={at}
             className={styles.spark}
-            style={
-              {
-                left: Math.round((flameCols * at) / 1) * px,
+            style={{ left: Math.round((flameCols * at) / 1) * px,
                 width: mote,
                 height: mote,
-                '--delay': `${-0.8 * i}s`,
-              } as CSSVars
-            }
+                '--delay': `${-0.8 * i}s`, }}
           />
         ))}
       </div>

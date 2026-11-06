@@ -1,3 +1,4 @@
+import { stringField } from '@agent-office/shared';
 import type { SendResult } from './agents.models';
 
 async function post(url: string, body?: unknown): Promise<SendResult> {
@@ -8,15 +9,14 @@ async function post(url: string, body?: unknown): Promise<SendResult> {
       body: JSON.stringify(body ?? {}),
     });
     if (response.ok) return { ok: true };
-    const reply = (await response.json().catch(() => ({}))) as { error?: unknown };
+    const reply: unknown = await response.json().catch(() => null);
     return {
       ok: false,
       error:
-        typeof reply.error === 'string'
-          ? reply.error
-          : response.status === 404
-            ? 'Restart the server (pnpm start) to type to agents from here.'
-            : 'Could not send it.',
+        stringField(reply, 'error') ??
+        (response.status === 404
+          ? 'Restart the server (pnpm start) to type to agents from here.'
+          : 'Could not send it.'),
     };
   } catch {
     return { ok: false, error: 'The server is not reachable.' };

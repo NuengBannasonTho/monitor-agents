@@ -1,4 +1,4 @@
-import { AssistantChatResponseSchema } from '@agent-office/shared';
+import { AssistantChatResponseSchema, stringField } from '@agent-office/shared';
 import type { AssistantChatRequest, AssistantChatResponse } from '@agent-office/shared';
 import type { Result } from '../../types/result/result.types';
 
@@ -17,14 +17,9 @@ export async function askAssistant(
       body: JSON.stringify(body),
       ...(signal === undefined ? {} : { signal }),
     });
-    const json = (await response.json()) as unknown;
+    const json: unknown = await response.json();
     if (!response.ok) {
-      const error =
-        typeof json === 'object' && json !== null && 'error' in json ? json.error : null;
-      return {
-        ok: false,
-        error: typeof error === 'string' ? error : 'The assistant could not answer.',
-      };
+      return { ok: false, error: stringField(json, 'error') ?? 'The assistant could not answer.' };
     }
     const parsed = AssistantChatResponseSchema.safeParse(json);
     return parsed.success

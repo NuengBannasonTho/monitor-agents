@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import styles from './share-bar.module.css';
 
 interface ShareBarProps {
@@ -24,7 +24,7 @@ export function ShareBar({ label, value, max, note }: ShareBarProps): React.JSX.
         {note !== undefined && <span className={styles.note}>{note}</span>}
       </span>
       <span className={styles.track} aria-hidden>
-        <span className={styles.fill} style={{ '--value': `${String(width)}%` } as CSSProperties} />
+        <span className={styles.fill} style={{ '--value': `${String(width)}%` }} />
       </span>
     </span>
   );

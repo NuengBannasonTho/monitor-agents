@@ -113,10 +113,11 @@ function toolCall(session: Session, subagent?: { id: string; type: string }): Pa
           : roll < 0.62
             ? (() => {
                 const [oldText, newText] = pick(EDITS);
-                return [
+                const edit: [string, Payload] = [
                   'Edit',
                   { file_path: abs(pick(FILES)), old_string: oldText, new_string: newText },
-                ] as [string, Payload];
+                ];
+                return edit;
               })()
             : roll < 0.68
               ? [

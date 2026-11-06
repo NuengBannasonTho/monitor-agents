@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import styles from './meter.module.css';
 
 interface MeterProps {
@@ -28,7 +28,7 @@ export function Meter({ label, percent, detail }: MeterProps): React.JSX.Element
       >
         <span
           className={styles.fill}
-          style={{ '--value': `${String(clamped)}%` } as CSSProperties}
+          style={{ '--value': `${String(clamped)}%` }}
         />
       </div>
       {detail !== undefined && <span className={styles.detail}>{detail}</span>}

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import styles from './stat-card.module.css';
 
 const SEGMENTS = 16;
@@ -25,7 +25,7 @@ export function StatCard({ value, display, label, detail, icon, total, color }: 
   return (
     <div
       className={styles.card}
-      style={color === undefined ? undefined : ({ '--tone': color } as CSSProperties)}
+      style={color === undefined ? undefined : { '--tone': color }}
     >
       <span className={styles.value}>{display ?? value}</span>
       {detail !== undefined && <span className={styles.detail}>{detail}</span>}

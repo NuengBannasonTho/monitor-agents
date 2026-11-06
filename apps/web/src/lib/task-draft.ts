@@ -1,3 +1,4 @@
+import { isRecord } from '@agent-office/shared';
 /**
  * A task MON MANG drafted, handed to the New task page to finish there: kept in this tab's
  * session storage until that page has read it.
@@ -22,9 +23,8 @@ export function handOffTaskDraft(draft: TaskDraft): void {
 
 export function peekTaskDraft(): TaskDraft | null {
   try {
-    const value = JSON.parse(window.sessionStorage.getItem(KEY) ?? 'null') as unknown;
-    if (typeof value !== 'object' || value === null) return null;
-    const d = value as Record<string, unknown>;
+    const d: unknown = JSON.parse(window.sessionStorage.getItem(KEY) ?? 'null');
+    if (!isRecord(d)) return null;
     if (typeof d.task !== 'string' || (d.provider !== 'claude' && d.provider !== 'codex'))
       return null;
     return {

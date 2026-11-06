@@ -6,13 +6,14 @@ import {
   AssistantChatRequestSchema,
   DeleteCustomAgentSchema,
   DesktopPatchSchema,
+  isRecord,
+  leadPrompt,
+  NO_ACCOUNT,
   SaveCustomAgentSchema,
   SendToAgentSchema,
-  NO_ACCOUNT,
   StartTaskSchema,
-  UsageRangeSchema,
   TERMINAL_HANDLE_PATTERN,
-  leadPrompt,
+  UsageRangeSchema,
 } from '@agent-office/shared';
 import type {
   AccountStatus,
@@ -271,8 +272,8 @@ export async function buildApp(options: AppOptions): Promise<App> {
       };
       socket.send(JSON.stringify(snapshot));
       // The desktop app's page says so, so the dashboard can tell it is running.
-      const query = request.query as Record<string, unknown> | undefined;
-      const isDesktop = query?.client === 'desktop';
+      const query: unknown = request.query;
+      const isDesktop = isRecord(query) && query.client === 'desktop';
       if (isDesktop) {
         desktopSockets.add(socket);
         broadcast(desktopMessage());
@@ -526,8 +527,8 @@ export async function buildApp(options: AppOptions): Promise<App> {
     if (reader === undefined) {
       return reply.code(403).send({ error: 'The usage page is off (USAGE=off).' });
     }
-    const query = request.query as Record<string, unknown> | undefined;
-    const range = UsageRangeSchema.safeParse(query?.range ?? 'today');
+    const query: unknown = request.query;
+    const range = UsageRangeSchema.safeParse((isRecord(query) ? query.range : undefined) ?? 'today');
     if (!range.success) return reply.code(400).send({ error: 'range is today, 7d or 30d' });
     return reader(range.data);
   });

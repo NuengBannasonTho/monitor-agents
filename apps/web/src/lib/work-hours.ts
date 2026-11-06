@@ -1,3 +1,4 @@
+import { isRecord } from '@agent-office/shared';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
 /** Your working day, as "HH:MM" times. Shown beside the office; agents are never paused. */
@@ -97,7 +98,8 @@ function read(): WorkHours {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw === null) return DEFAULT_WORK_HOURS;
-    const value = JSON.parse(raw) as Partial<Record<keyof WorkHours, unknown>>;
+    const stored: unknown = JSON.parse(raw);
+    const value: Readonly<Record<string, unknown>> = isRecord(stored) ? stored : {};
     const time = (v: unknown, fallback: string): string =>
       typeof v === 'string' && parseTime(v) !== null ? v : fallback;
     const flag = (v: unknown, fallback: boolean): boolean =>

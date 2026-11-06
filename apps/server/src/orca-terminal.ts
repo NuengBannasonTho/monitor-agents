@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { isRecord } from '@agent-office/shared';
 
 /*
  * Typing to an agent from the dashboard, through Orca's CLI (`orca terminal ...`). The text
@@ -65,7 +66,7 @@ export function defaultOrcaBin(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 export function record(value: unknown): Record<string, unknown> {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+  return isRecord(value) ? value : {};
 }
 
 /** Orca's CLI; `ORCA_BIN` overrides where it is (it is on PATH inside Orca terminals). */

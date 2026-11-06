@@ -1,6 +1,5 @@
 import type { AccountStatus, ClaudeAccount } from '@agent-office/shared';
 import { Popover } from '@animate-ui/react/primitives/radix-ui/popover';
-import type { CSSProperties } from 'react';
 import { APP_NAME } from '../../lib/brand';
 import { useAccount } from '../../api/account/account.hooks';
 import { CopiedIcon, ExpandIcon } from '../icons';
@@ -167,7 +166,7 @@ function Avatar({
     <span
       className={styles.avatar}
       data-ring={used === null ? undefined : true}
-      style={used === null ? undefined : ({ '--used': `${String(used)}%` } as CSSProperties)}
+      style={used === null ? undefined : { '--used': `${String(used)}%` }}
     >
       <span className={styles.initial}>{email === null ? '?' : initialOf(email)}</span>
       <span className={styles.status} data-source={source} aria-hidden />

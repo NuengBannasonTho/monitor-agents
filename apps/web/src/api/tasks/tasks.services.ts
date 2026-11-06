@@ -1,4 +1,4 @@
-import { TaskPlacesSchema } from '@agent-office/shared';
+import { stringField, TaskPlacesSchema } from '@agent-office/shared';
 import type { StartTask, TaskPlaces } from '@agent-office/shared';
 import type { Result } from '../../types/result/result.types';
 
@@ -24,19 +24,16 @@ export async function startTask(body: StartTask): Promise<Result<string>> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const reply = (await response.json().catch(() => ({}))) as { error?: unknown; where?: unknown };
+    const reply: unknown = await response.json().catch(() => null);
     if (!response.ok) {
       return {
         ok: false,
         error:
-          typeof reply.error === 'string'
-            ? reply.error
-            : response.status === 404
-              ? OLD_SERVER
-              : 'Could not start it.',
+          stringField(reply, 'error') ??
+          (response.status === 404 ? OLD_SERVER : 'Could not start it.'),
       };
     }
-    return { ok: true, value: typeof reply.where === 'string' ? reply.where : '' };
+    return { ok: true, value: stringField(reply, 'where') ?? '' };
   } catch {
     return { ok: false, error: 'The server is not reachable.' };
   }
